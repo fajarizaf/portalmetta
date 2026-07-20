@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `ProductSpecField` MODIFY `type` ENUM('TEXT', 'TEXTAREA', 'NUMBER', 'DROPDOWN', 'CHECKBOX') NOT NULL;

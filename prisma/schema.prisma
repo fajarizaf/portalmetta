@@ -1,0 +1,437 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id                   String                 @id @default(cuid())
+  email                String                 @unique
+  name                 String?
+  passwordHash         String
+  roleId               String
+  companyId            String?
+  resetToken           String?                @unique
+  resetTokenExpiry     DateTime?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  address              String?
+  phoneNumber          String?
+  billingContactName   String?
+  billingEmail         String?
+  billingPhoneNumber   String?
+  country              String?
+  partnerType          PartnerType?
+  technicalContactName String?
+  technicalEmail       String?
+  technicalPhoneNumber String?
+  jobTitle             String?
+  picForCompanies      Company[]              @relation("CompanyPIC")
+  assignedDocs         DocRecord[]            @relation("DocRecordAssignedTo")
+  createdDocs          DocRecord[]            @relation("DocRecordCreatedBy")
+  updatedDocs          DocRecord[]            @relation("DocRecordUpdatedBy")
+  company              Company?               @relation("CompanyCustomers", fields: [companyId], references: [id])
+  role                 Role                   @relation(fields: [roleId], references: [id])
+  assignedBranches     UserBranchAssignment[]
+
+  @@index([companyId], map: "User_companyId_fkey")
+  @@index([roleId], map: "User_roleId_fkey")
+}
+
+model Role {
+  id             String           @id @default(cuid())
+  name           String
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  branchId       String?
+  docPermissions DocPermission[]
+  branch         Branch?          @relation(fields: [branchId], references: [id])
+  permissions    RolePermission[]
+  users          User[]
+
+  @@unique([branchId, name])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@index([permissionId], map: "RolePermission_permissionId_fkey")
+}
+
+model Company {
+  id                 String    @id @default(cuid())
+  name               String    @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  address            String?
+  companyEmail       String?
+  companyPhoneNumber String?
+  fax                String?
+  isDataCenter       Boolean   @default(false)
+  parentId           String?
+  logoUrl            String?
+  picId              String?
+  branches           Branch[]
+  parent             Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  children           Company[] @relation("CompanyHierarchy")
+  pic                User?     @relation("CompanyPIC", fields: [picId], references: [id])
+  customers          User[]    @relation("CompanyCustomers")
+
+  @@index([parentId], map: "Company_parentId_fkey")
+  @@index([picId], map: "Company_picId_fkey")
+}
+
+model Branch {
+  id                String                 @id @default(cuid())
+  name              String
+  code              String                 @unique
+  companyId         String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  company           Company?               @relation(fields: [companyId], references: [id])
+  buildings         Building[]
+  docNamingCounters DocNamingCounter[]
+  docRecords        DocRecord[]
+  docTypes          DocType[]
+  docWorkflows      DocWorkflow[]
+  products          Product[]
+  productGroups     ProductGroup[]
+  roles             Role[]
+  admins            UserBranchAssignment[]
+  inventory         Inventory[]
+
+  @@index([companyId], map: "Branch_companyId_fkey")
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  name      String
+  branchId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  floors    Floor[]
+
+  @@index([branchId], map: "Building_branchId_fkey")
+}
+
+model Floor {
+  id         String   @id @default(cuid())
+  level      Int
+  buildingId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  building   Building @relation(fields: [buildingId], references: [id])
+  rooms      Room[]
+
+  @@index([buildingId], map: "Floor_buildingId_fkey")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  floorId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  floor     Floor    @relation(fields: [floorId], references: [id])
+
+  @@index([floorId], map: "Room_floorId_fkey")
+}
+
+model UserBranchAssignment {
+  userId     String
+  branchId   String
+  assignedAt DateTime @default(now())
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, branchId])
+  @@index([branchId], map: "UserBranchAssignment_branchId_fkey")
+}
+
+model ProductGroup {
+  id          String         @id @default(cuid())
+  name        String
+  branchId    String
+  parentId    String?
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  products    Product[]
+  branch      Branch         @relation(fields: [branchId], references: [id])
+  parent      ProductGroup?  @relation("ProductGroupHierarchy", fields: [parentId], references: [id])
+  children    ProductGroup[] @relation("ProductGroupHierarchy")
+
+  @@index([branchId])
+  @@index([parentId], map: "ProductGroup_parentId_fkey")
+}
+
+model Product {
+  id             String             @id @default(cuid())
+  name           String
+  branchId       String
+  groupId        String?
+  classification PaymentModel
+  active         Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  description    String?
+  orderMode      OrderMode          @default(DIRECT)
+  branch         Branch             @relation(fields: [branchId], references: [id])
+  group          ProductGroup?      @relation(fields: [groupId], references: [id])
+  prices         ProductPrice[]
+  specs          ProductSpecField[]
+  inventory      Inventory[]
+
+  @@index([branchId])
+  @@index([groupId], map: "Product_groupId_fkey")
+}
+
+model ProductSpecField {
+  id        String    @id @default(cuid())
+  productId String
+  key       String
+  label     String
+  type      FieldType
+  required  Boolean   @default(false)
+  config    Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([productId, key])
+}
+
+model ProductPrice {
+  id           String       @id @default(cuid())
+  productId    String
+  currency     String       @default("IDR")
+  basePrice    Int          @default(0)
+  setupFee     Int          @default(0)
+  pricingModel PricingModel
+  config       Json?
+  validFrom    DateTime?
+  validTo      DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@index([productId], map: "ProductPrice_productId_fkey")
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  productId String
+  branchId  String
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  movements InventoryMovement[]
+
+  @@unique([productId, branchId])
+  @@index([productId])
+  @@index([branchId])
+}
+
+model InventoryMovement {
+  id          String    @id @default(cuid())
+  inventoryId String
+  quantity    Int       // Positive for IN, Negative for OUT
+  reference   String?   // DocRecord ID or Code
+  type        String    // "IN" | "OUT" | "ADJUSTMENT"
+  createdAt   DateTime  @default(now())
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@index([inventoryId])
+}
+
+model DocType {
+  id             String             @id @default(cuid())
+  key            String             @unique
+  name           String
+  description    String?
+  branchId       String?
+  config         Json?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  icon           String?
+  hasPreview     Boolean            @default(false)
+  fields         DocField[]
+  namingCounters DocNamingCounter[]
+  permissions    DocPermission[]
+  records        DocRecord[]
+  childRows      DocRow[]           @relation("DocRowChildType")
+  branch         Branch?            @relation(fields: [branchId], references: [id])
+  workflows      DocWorkflow[]
+
+  @@index([branchId])
+}
+
+model DocField {
+  id        String    @id @default(cuid())
+  docTypeId String
+  key       String
+  label     String
+  type      FieldType
+  required  Boolean   @default(false)
+  order     Int       @default(0)
+  config    Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  readOnly  Boolean   @default(false)
+  docType   DocType   @relation(fields: [docTypeId], references: [id])
+
+  @@unique([docTypeId, key])
+}
+
+model DocRecord {
+  id           String      @id @default(cuid())
+  docTypeId    String
+  branchId     String?
+  status       String?
+  data         Json
+  createdById  String?
+  updatedById  String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  code         String?     @unique
+  docStatus    Int?
+  parentId     String?
+  assignedToId String?
+  assignedTo   User?       @relation("DocRecordAssignedTo", fields: [assignedToId], references: [id])
+  branch       Branch?     @relation(fields: [branchId], references: [id])
+  createdBy    User?       @relation("DocRecordCreatedBy", fields: [createdById], references: [id])
+  docType      DocType     @relation(fields: [docTypeId], references: [id])
+  parent       DocRecord?  @relation("DocRecordHierarchy", fields: [parentId], references: [id])
+  children     DocRecord[] @relation("DocRecordHierarchy")
+  updatedBy    User?       @relation("DocRecordUpdatedBy", fields: [updatedById], references: [id])
+  rows         DocRow[]
+
+  @@index([docTypeId])
+  @@index([branchId])
+  @@index([parentId])
+  @@index([assignedToId], map: "DocRecord_assignedToId_fkey")
+  @@index([createdById], map: "DocRecord_createdById_fkey")
+  @@index([updatedById], map: "DocRecord_updatedById_fkey")
+}
+
+model DocRow {
+  id             String    @id @default(cuid())
+  recordId       String
+  childDocTypeId String?
+  idx            Int       @default(0)
+  data           Json
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  childDocType   DocType?  @relation("DocRowChildType", fields: [childDocTypeId], references: [id])
+  record         DocRecord @relation(fields: [recordId], references: [id])
+
+  @@index([recordId])
+  @@index([childDocTypeId], map: "DocRow_childDocTypeId_fkey")
+}
+
+model DocPermission {
+  id        String   @id @default(cuid())
+  docTypeId String
+  roleId    String
+  canCreate Boolean  @default(false)
+  canRead   Boolean  @default(true)
+  canWrite  Boolean  @default(false)
+  canDelete Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  canAssign Boolean  @default(false)
+  docType   DocType  @relation(fields: [docTypeId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([docTypeId, roleId])
+  @@index([roleId], map: "DocPermission_roleId_fkey")
+}
+
+model DocWorkflow {
+  id                 String   @id @default(cuid())
+  docTypeId          String
+  branchId           String?
+  name               String
+  config             Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  dontOverrideStatus Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  branch             Branch?  @relation(fields: [branchId], references: [id])
+  docType            DocType  @relation(fields: [docTypeId], references: [id])
+
+  @@unique([docTypeId, branchId])
+  @@index([branchId])
+}
+
+model DocNamingCounter {
+  id        String   @id @default(cuid())
+  docTypeId String
+  branchId  String?
+  series    String
+  seq       Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  docType   DocType  @relation(fields: [docTypeId], references: [id])
+
+  @@unique([docTypeId, branchId, series])
+  @@index([docTypeId, branchId])
+  @@index([branchId], map: "DocNamingCounter_branchId_fkey")
+}
+
+enum PartnerType {
+  RESELLER
+  END_USER
+}
+
+enum PaymentModel {
+  FREE
+  ONETIME
+  RECURRING
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  PRICE
+  DROPDOWN
+  CHECKBOX
+  DATE
+  DATETIME
+  LINK
+  TABLE
+  ATTACHMENT
+}
+
+enum PricingModel {
+  FIXED
+  DISCOUNT
+  TIERED
+}
+
+enum OrderMode {
+  DIRECT
+  REQUEST
+}
