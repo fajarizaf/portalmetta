@@ -9,73 +9,73 @@ Portal manajemen data center terintegrasi untuk PT Metta Data Center, menyediaka
 ## Arsitektur Sistem
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                         METTADC PORTAL                                    │
-├────────────────────────────────┬─────────────────────────────────────────┤
-│         ADMIN PANEL            │          CUSTOMER PORTAL                 │
-│       (Role: ADMIN)            │    (Role: Customer/Sales/Finances)       │
-├────────────────────────────────┴─────────────────────────────────────────┤
-│                                                                          │
-│   ┌─────────────┐  ┌──────────────┐  ┌─────────────────────────────┐    │
-│   │  Dashboard   │  │  Master Data │  │   Document Engine (ERP)     │    │
-│   │  Admin       │  │  Management  │  │  ┌────────┐  ┌──────────┐  │    │
-│   └─────────────┘  └──────────────┘  │  │DocType │  │Workflow  │  │    │
-│                                       │  │Config  │  │Engine    │  │    │
-│   ┌─────────────┐  ┌──────────────┐  │  └────────┘  └──────────┘  │    │
-│   │  Location   │  │  Rack        │  │  ┌────────┐  ┌──────────┐  │    │
-│   │  Management │  │  Mapping     │  │  │Dynamic │  │Preview   │  │    │
-│   └─────────────┘  └──────────────┘  │  │Fields  │  │Template  │  │    │
-│                                       │  └────────┘  └──────────┘  │    │
-│   ┌─────────────┐  ┌──────────────┐  └─────────────────────────────┘    │
-│   │  Product    │  │  Billing &   │                                      │
-│   │  Management │  │  Subscription│  ┌─────────────────────────────┐    │
-│   └─────────────┘  └──────────────┘  │     Sales & Ordering        │    │
-│                                       │  ┌────────┐  ┌──────────┐  │    │
-│   ┌─────────────┐  ┌──────────────┐  │  │Quotati-│  │Sales     │  │    │
-│   │  User &     │  │  Inventory   │  │  │on      │  │Order     │  │    │
-│   │  Role Mgmt  │  │  Management  │  │  └────────┘  └──────────┘  │    │
-│   └─────────────┘  └──────────────┘  │  ┌────────┐  ┌──────────┐  │    │
-│                                       │  │Work    │  │Cross     │  │    │
-│                                       │  │Order   │  │Connect   │  │    │
-│                                       │  └────────┘  └──────────┘  │    │
-│                                       └─────────────────────────────┘    │
-├──────────────────────────────────────────────────────────────────────────┤
-│                       MIDDLEWARE & AUTH                                   │
-│   ┌──────────────┐  ┌───────────────┐  ┌─────────────────────────┐      │
-│   │  NextAuth.js │  │  RBAC         │  │  Branch-level Scoping   │      │
-│   │  (JWT)       │  │  Permissions  │  │  (Cookie-based)         │      │
-│   └──────────────┘  └───────────────┘  └─────────────────────────┘      │
-├──────────────────────────────────────────────────────────────────────────┤
+┌───────────────────────────────────────────────────────────────────────────┐
+│                          METTADC PORTAL                                   │
+├──────────────────────────────────┬────────────────────────────────────────┤
+│          ADMIN PANEL             │         CUSTOMER PORTAL                │
+│        (Role: ADMIN)             │   (Role: Customer/Sales/Finances)      │
+├──────────────────────────────────┴────────────────────────────────────────┤
+│                                                                           │
+│  ┌────────────┐  ┌────────────┐  ┌──────────────────────────────────┐    │
+│  │ Dashboard  │  │ Master     │  │  Document Engine (ERP)           │    │
+│  │ Admin      │  │ Data Mgmt  │  │  ┌────────┐  ┌───────────┐      │    │
+│  └────────────┘  └────────────┘  │  │DocType │  │ Workflow  │      │    │
+│                                  │  │ Config  │  │ Engine    │      │    │
+│  ┌────────────┐  ┌────────────┐  │  └────────┘  └───────────┘      │    │
+│  │ Location   │  │ Rack       │  │  ┌────────┐  ┌───────────┐      │    │
+│  │ Management │  │ Mapping    │  │  │Dynamic │  │ Preview   │      │    │
+│  └────────────┘  └────────────┘  │  │ Fields │  │ Template  │      │    │
+│                                  │  └────────┘  └───────────┘      │    │
+│  ┌────────────┐  ┌────────────┐  └──────────────────────────────────┘    │
+│  │ Product    │  │ Billing &  │                                           │
+│  │ Management │  │ Subscript. │  ┌──────────────────────────────────┐    │
+│  └────────────┘  └────────────┘  │  Sales & Ordering                │    │
+│                                  │  ┌────────┐  ┌───────────┐      │    │
+│  ┌────────────┐  ┌────────────┐  │  │Quotati-│  │ Sales     │      │    │
+│  │ User &     │  │ Inventory  │  │  │on      │  │ Order     │      │    │
+│  │ Role Mgmt  │  │ Management │  │  └────────┘  └───────────┘      │    │
+│  └────────────┘  └────────────┘  │  ┌────────┐  ┌───────────┐      │    │
+│                                  │  │Work    │  │ Cross     │      │    │
+│                                  │  │Order   │  │ Connect   │      │    │
+│                                  │  └────────┘  └───────────┘      │    │
+│                                  └──────────────────────────────────┘    │
+├───────────────────────────────────────────────────────────────────────────┤
+│                       MIDDLEWARE & AUTH                                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────────────┐        │
+│  │ NextAuth.js │  │ RBAC        │  │ Branch-level Scoping      │        │
+│  │ (JWT)       │  │ Permissions │  │ (Cookie-based)            │        │
+│  └─────────────┘  └─────────────┘  └───────────────────────────┘        │
+├───────────────────────────────────────────────────────────────────────────┤
 │                         DATA LAYER                                        │
-│   ┌──────────────┐  ┌───────────────┐  ┌─────────────────────────┐      │
-│   │  Prisma ORM  │  │  MariaDB      │  │  Server Actions         │      │
-│   │  v7          │  │  Database     │  │  + API Routes           │      │
-│   └──────────────┘  └───────────────┘  └─────────────────────────┘      │
-├──────────────────────────────────────────────────────────────────────────┤
-│                      EXTERNAL SERVICES                                    │
-│   ┌──────────────┐  ┌───────────────┐                                   │
-│   │  Nodemailer  │  │  Puppeteer    │                                   │
-│   │  (SMTP)      │  │  (PDF Gen)    │                                   │
-│   └──────────────┘  └───────────────┘                                   │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────────────┐        │
+│  │ Prisma ORM  │  │ MariaDB     │  │ Server Actions            │        │
+│  │ v7          │  │ Database    │  │ + API Routes              │        │
+│  └─────────────┘  └─────────────┘  └───────────────────────────┘        │
+├───────────────────────────────────────────────────────────────────────────┤
+│                      EXTERNAL SERVICES                                     │
+│  ┌─────────────┐  ┌─────────────┐                                        │
+│  │ Nodemailer  │  │ Puppeteer   │                                        │
+│  │ (SMTP)      │  │ (PDF Gen)   │                                        │
+│  └─────────────┘  └─────────────┘                                        │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Framework** | Next.js 16.1 (App Router) |
-| **UI Library** | React 19 + TypeScript 5 |
-| **Styling** | Tailwind CSS v4 + shadcn/ui (Radix UI) |
-| **ORM** | Prisma v7 |
-| **Database** | MariaDB 10 |
-| **Auth** | NextAuth.js v4 (Credentials + JWT) |
-| **Rich Text** | CKEditor 5 |
-| **PDF** | Puppeteer (HTML-to-PDF) |
-| **Email** | Nodemailer (SMTP) |
-| **Validation** | Zod v4 + react-hook-form |
+| Layer            | Technology                                    |
+|------------------|-----------------------------------------------|
+| **Framework**    | Next.js 16.1 (App Router)                     |
+| **UI Library**   | React 19 + TypeScript 5                       |
+| **Styling**      | Tailwind CSS v4 + shadcn/ui (Radix UI)        |
+| **ORM**          | Prisma v7                                     |
+| **Database**     | MariaDB 10                                    |
+| **Auth**         | NextAuth.js v4 (Credentials + JWT)            |
+| **Rich Text**    | CKEditor 5                                   |
+| **PDF**          | Puppeteer (HTML-to-PDF)                       |
+| **Email**        | Nodemailer (SMTP)                             |
+| **Validation**   | Zod v4 + react-hook-form                      |
 
 ---
 
@@ -86,122 +86,123 @@ Portal manajemen data center terintegrasi untuk PT Metta Data Center, menyediaka
 Sistem manajemen dokumen dinamis yang dapat dikonfigurasi sepenuhnya melalui UI Admin. Mendukung berbagai jenis dokumen bisnis tanpa perubahan kode.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    DOCUMENT ENGINE ARCHITECTURE                          │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│   DocType Configuration                                                 │
-│   ┌─────────────────────────────────────────────────────────────────┐   │
-│   │  DocType: "Quotation"                                           │   │
-│   │                                                                  │   │
-│   │   ┌──────────────┐  ┌─────────────┐  ┌───────────────────────┐  │   │
-│   │   │ Fields       │  │ Naming      │  │ Workflow              │  │   │
-│   │   │ ──────────── │  │ ─────────── │  │ ────────────────────  │  │   │
-│   │   │ • customer   │  │ QT-#####    │  │ Draft → Submitted →  │  │   │
-│   │   │ • date       │  │ Auto-incr.  │  │   ↓                  │  │   │
-│   │   │ • total      │  │ Per branch  │  │ Approved             │  │   │
-│   │   │ • items[]    │  │             │  │   ↓                  │  │   │
-│   │   └──────────────┘  └─────────────┘  │ Rejected             │  │   │
-│   │                                      └───────────────────────┘  │   │
-│   │   ┌──────────────┐  ┌─────────────┐                            │   │
-│   │   │ Child Rows   │  │ Preview     │  ┌───────────────────────┐  │   │
-│   │   │ ──────────── │  │ ─────────── │  │ Hooks                 │  │   │
-│   │   │ • product    │  │ HTML/       │  │ • on_submit → create  │  │   │
-│   │   │ • qty        │  │ Mustache    │  │   SO                  │  │   │
-│   │   │ • price      │  │ Template    │  │                       │  │   │
-│   │   │ • amount     │  │             │  │                       │  │   │
-│   │   └──────────────┘  └─────────────┘  └───────────────────────┘  │   │
-│   └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│   Document Lifecycle:                                                   │
-│                                                                         │
-│   Create → Edit → Submit → Approve/Reject → Complete                    │
-│     │                                              │                    │
-│     │  ← Child docs auto-created                   │                    │
-│     └──────────────────────────────────────────────┘                    │
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                     DOCUMENT ENGINE ARCHITECTURE                          │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  DocType Configuration                                                    │
+│  ┌───────────────────────────────────────────────────────────────────┐    │
+│  │  DocType: "Quotation"                                             │    │
+│  │                                                                    │    │
+│  │  ┌───────────────┐  ┌──────────────┐  ┌────────────────────────┐  │    │
+│  │  │ Fields        │  │ Naming       │  │ Workflow               │  │    │
+│  │  │ ───────────── │  │ ──────────── │  │ ────────────────────   │  │    │
+│  │  │ • customer    │  │ QT-#####     │  │ Draft → Submitted      │  │    │
+│  │  │ • date        │  │ Auto-incr.   │  │   ↓                    │  │    │
+│  │  │ • total       │  │ Per branch   │  │ Approved               │  │    │
+│  │  │ • items[]     │  │              │  │   ↓                    │  │    │
+│  │  └───────────────┘  └──────────────┘  │ Rejected               │  │    │
+│  │                                       └────────────────────────┘  │    │
+│  │  ┌───────────────┐  ┌──────────────┐  ┌────────────────────────┐  │    │
+│  │  │ Child Rows    │  │ Preview      │  │ Hooks                  │  │    │
+│  │  │ ───────────── │  │ ──────────── │  │ ────────────────────   │  │    │
+│  │  │ • product     │  │ HTML/        │  │ on_submit → create SO  │  │    │
+│  │  │ • qty         │  │ Mustache     │  │                        │  │    │
+│  │  │ • price       │  │ Template     │  │                        │  │    │
+│  │  │ • amount      │  │              │  │                        │  │    │
+│  │  └───────────────┘  └──────────────┘  └────────────────────────┘  │    │
+│  └───────────────────────────────────────────────────────────────────┘    │
+│                                                                           │
+│  Document Lifecycle:                                                      │
+│                                                                           │
+│  Create → Edit → Submit → Approve/Reject → Complete                       │
+│    │                                                 │                    │
+│    │  ← Child docs auto-created                      │                    │
+│    └─────────────────────────────────────────────────┘                    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Jenis Dokumen yang Didukung:**
 
-| Dokumen | Keterangan | Alur |
-|---------|-----------|------|
-| **Quotation** | Penawaran harga ke customer | Create → Submit → Approve → Auto SO |
-| **Sales Order** | Pesanan penjualan | Create → Submit → Approve → Auto SO |
-| **Work Order** | Instrukerja pengerjaan | Create → Submit → Approve |
-| **Invoice** | Tagihan customer | Auto-generate dari subscription |
-| **Support Ticket** | Tiket dukungan | Create → Assign → Resolved |
-| **Visitor Request** | Permintaan kunjungan | Create → Approve → Completed |
-| **Cross-Connect** | Koneksi antar rack | Create → Submit → Approve |
-| **Goods In** | Barang masuk | Create → Approve → Inventory + |
-| **Goods Out** | Barang keluar | Create → Approve → Inventory - |
-| **Subscription** | Langganan layanan | Auto-created dari SO approved |
+| Dokumen          | Keterangan                     | Alur                                    |
+|------------------|--------------------------------|-----------------------------------------|
+| **Quotation**    | Penawaran harga ke customer    | Create → Submit → Approve → Auto SO     |
+| **Sales Order**  | Pesanan penjualan              | Create → Submit → Approve → Auto SO     |
+| **Work Order**   | Instruksi pengerjaan           | Create → Submit → Approve               |
+| **Invoice**      | Tagihan customer               | Auto-generate dari subscription         |
+| **Support Ticket** | Tiket dukungan              | Create → Assign → Resolved              |
+| **Visitor Request** | Permintaan kunjungan       | Create → Approve → Completed            |
+| **Cross-Connect** | Koneksi antar rack           | Create → Submit → Approve               |
+| **Goods In**     | Barang masuk                   | Create → Approve → Inventory +          |
+| **Goods Out**    | Barang keluar                  | Create → Approve → Inventory -          |
+| **Subscription** | Langganan layanan              | Auto-created dari SO approved           |
 
 **Field Types yang Didukung:**
 
-| Tipe | Kegunaan |
-|------|----------|
-| `TEXT` | Input teks singkat |
-| `TEXTAREA` | Input teks panjang |
-| `NUMBER` | Angka |
-| `PRICE` | Harga (format Rupiah) |
-| `DROPDOWN` | Pilihan dari daftar |
-| `CHECKBOX` | Boolean (ya/tidak) |
-| `DATE` | Tanggal |
-| `DATETIME` | Tanggal + waktu |
-| `LINK` | Relasi ke data lain |
-| `TABLE` | Tabel baris (child rows) |
-| `ATTACHMENT` | Upload file |
+| Tipe          | Kegunaan                   |
+|---------------|----------------------------|
+| `TEXT`        | Input teks singkat         |
+| `TEXTAREA`    | Input teks panjang         |
+| `NUMBER`      | Angka                      |
+| `PRICE`       | Harga (format Rupiah)      |
+| `DROPDOWN`    | Pilihan dari daftar        |
+| `CHECKBOX`    | Boolean (ya/tidak)         |
+| `DATE`        | Tanggal                    |
+| `DATETIME`    | Tanggal + waktu            |
+| `LINK`        | Relasi ke data lain        |
+| `TABLE`       | Tabel baris (child rows)   |
+| `ATTACHMENT`  | Upload file                |
 
 ---
 
 ### 2. Sales & Order Management
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          SALES FLOW                                       │
-│                                                                          │
-│   Customer Portal              Admin Panel                               │
-│   ┌───────────┐               ┌───────────┐                              │
-│   │  Browse   │               │  Create   │                              │
-│   │  Product  │──────────────▶│  Quotation│                              │
-│   └───────────┘               └─────┬─────┘                              │
+┌───────────────────────────────────────────────────────────────────────────┐
+│                            SALES FLOW                                     │
+│                                                                           │
+│  Customer Portal              Admin Panel                                 │
+│  ┌───────────┐                ┌───────────┐                               │
+│  │  Browse   │                │  Create   │                               │
+│  │  Product  │───────────────▶│  Quotation│                               │
+│  └───────────┘                └─────┬─────┘                               │
 │                                     │                                     │
-│                               ┌─────▼─────┐                              │
-│                               │  Submit   │                              │
-│                               └─────┬─────┘                              │
+│                               ┌─────▼─────┐                               │
+│                               │  Submit   │                               │
+│                               └─────┬─────┘                               │
 │                                     │                                     │
-│                        ┌────────────▼────────────┐                       │
-│                        │    Approve / Reject     │                       │
-│                        └────────────┬────────────┘                       │
+│                        ┌────────────▼────────────┐                        │
+│                        │   Approve / Reject      │                        │
+│                        └────────────┬────────────┘                        │
 │                                     │                                     │
 │                  ┌──────────────────┼──────────────────┐                  │
 │                  ▼                  ▼                  ▼                  │
-│           ┌────────────┐    ┌────────────┐    ┌────────────┐            │
-│           │Sales Order │    │   Work     │    │   Cross    │            │
-│           │ (Auto)     │    │   Order    │    │  Connect   │            │
-│           └──────┬─────┘    └────────────┘    └────────────┘            │
-│                  │                                                       │
-│           ┌──────▼─────┐                                                 │
-│           │Subscription│  ← Auto-created                                 │
-│           │   (Auto)   │                                                 │
-│           └──────┬─────┘                                                 │
-│                  │                                                       │
-│           ┌──────▼─────┐                                                 │
-│           │  Invoice   │  ← Auto-generated (single/bulk/prorate)        │
-│           └────────────┘                                                 │
-└──────────────────────────────────────────────────────────────────────────┘
+│           ┌────────────┐    ┌────────────┐    ┌────────────┐             │
+│           │Sales Order │    │   Work     │    │   Cross    │             │
+│           │ (Auto)     │    │   Order    │    │  Connect   │             │
+│           └──────┬─────┘    └────────────┘    └────────────┘             │
+│                  │                                                        │
+│           ┌──────▼─────┐                                                  │
+│           │Subscription│  ← Auto-created                                  │
+│           │   (Auto)   │                                                  │
+│           └──────┬─────┘                                                  │
+│                  │                                                        │
+│           ┌──────▼─────┐                                                  │
+│           │  Invoice   │  ← Auto-generated (single/bulk/prorate)         │
+│           └────────────┘                                                  │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Fitur Ordering:**
 
-| Mode | Keterangan |
-|------|-----------|
-| **Direct Order** | Customer langsung memesan produk tertentu |
-| **Request Order** | Customer mengajukan permintaan, menunggu approval admin |
-| **Multi-Item Order** | Pemesanan beberapa item sekaligus |
+| Mode              | Keterangan                                          |
+|-------------------|-----------------------------------------------------|
+| **Direct Order**  | Customer langsung memesan produk tertentu            |
+| **Request Order** | Customer mengajukan permintaan, menunggu approval   |
+| **Multi-Item**    | Pemesanan beberapa item sekaligus                    |
 
 **Auto-generation:**
+
 - Quotation di-approve → otomatis membuat **Sales Order**
 - SO di-approve → otomatis membuat **Subscription** aktif
 - Subscription aktif → otomatis generate **Invoice**
@@ -211,39 +212,39 @@ Sistem manajemen dokumen dinamis yang dapat dikonfigurasi sepenuhnya melalui UI 
 ### 3. Billing & Subscription Management
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────────────────────┐
 │                         BILLING CYCLE                                     │
-│                                                                          │
-│   ┌─────────────────┐                                                    │
-│   │  Subscription   │                                                    │
-│   │  (Active)       │                                                    │
-│   └────────┬────────┘                                                    │
-│            │                                                              │
-│            ├──▶ Monthly Billing                                          │
-│            │     ┌────────────────────────────┐                          │
-│            │     │  Pro-rata Calculation      │                          │
-│            │     │  ────────────────────────  │                          │
-│            │     │  Prorate = (sisa hari / 30)│                          │
-│            │     │           × monthly_price  │                          │
-│            │     └────────────────────────────┘                          │
-│            │                                                              │
-│            ├──▶ Quarterly Billing                                        │
-│            │     (3 bulan × price, prorate awal)                         │
-│            │                                                              │
-│            ├──▶ Annual Billing                                           │
-│            │     (12 bulan × price, prorate awal)                        │
-│            │                                                              │
-│            └──▶ Setup Fee (One-time)                                     │
-│                  (Tagihan pertama kali)                                   │
-│                                                                          │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Invoice Generation                                               │   │
-│   │   ┌────────────┐    ┌────────────┐    ┌────────────┐            │   │
-│   │   │   Single   │    │    Bulk    │    │   Email    │            │   │
-│   │   │  Generate  │    │  Generate  │    │  Delivery  │            │   │
-│   │   └────────────┘    └────────────┘    └────────────┘            │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
+│                                                                           │
+│  ┌───────────────┐                                                        │
+│  │ Subscription  │                                                        │
+│  │ (Active)      │                                                        │
+│  └───────┬───────┘                                                        │
+│          │                                                                 │
+│          ├──▶ Monthly Billing                                             │
+│          │     ┌─────────────────────────────────┐                        │
+│          │     │  Pro-rata Calculation            │                        │
+│          │     │  ─────────────────────────────  │                        │
+│          │     │  Prorate = (sisa hari / 30)     │                        │
+│          │     │           × monthly_price       │                        │
+│          │     └─────────────────────────────────┘                        │
+│          │                                                                 │
+│          ├──▶ Quarterly Billing                                           │
+│          │     (3 bulan × price, prorate awal)                            │
+│          │                                                                 │
+│          ├──▶ Annual Billing                                              │
+│          │     (12 bulan × price, prorate awal)                           │
+│          │                                                                 │
+│          └──▶ Setup Fee (One-time)                                        │
+│                (Tagihan pertama kali)                                      │
+│                                                                           │
+│  ┌───────────────────────────────────────────────────────────────────┐    │
+│  │  Invoice Generation                                               │    │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │    │
+│  │  │   Single     │  │    Bulk      │  │    Email     │           │    │
+│  │  │  Generate    │  │  Generate    │  │  Delivery    │           │    │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘           │    │
+│  └───────────────────────────────────────────────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Fitur Billing:**
@@ -261,87 +262,87 @@ Sistem manajemen dokumen dinamis yang dapat dikonfigurasi sepenuhnya melalui UI 
 ### 4. Product Management
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────────────────────┐
 │                       PRODUCT HIERARCHY                                   │
-│                                                                          │
-│   ┌──────────────────────────────┐                                       │
-│   │        Product Group          │                                       │
-│   │   ─────────────────────────  │                                       │
-│   │   • Colocation                │                                       │
-│   │     ├─ Rack Space             │                                       │
-│   │     └─ Cross Connect          │                                       │
-│   │   • Managed Service           │                                       │
-│   │     ├─ Server                 │                                       │
-│   │     └─ Storage                │                                       │
-│   │   • Network                   │                                       │
-│   │     ├─ Bandwidth              │                                       │
-│   │     └─ VPN                    │                                       │
-│   └──────────────────────────────┘                                       │
-│                    │                                                      │
-│                    ▼                                                      │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Product: "Rack 42U"                                             │   │
-│   │   ┌─────────────┐  ┌──────────────┐  ┌────────────────────────┐  │   │
-│   │   │ Pricing     │  │ Spec Fields  │  │ Order Mode             │  │   │
-│   │   │ ─────────── │  │ ──────────── │  │ ─────────────────────  │  │   │
-│   │   │ FIXED:      │  │ • U Size     │  │ DIRECT or REQUEST      │  │   │
-│   │   │  12U = 2M   │  │ • Power (VA) │  │                        │  │   │
-│   │   │  24U = 4M   │  │ • Bandwidth  │  │                        │  │   │
-│   │   │  42U = 7M   │  │              │  │                        │  │   │
-│   │   │ TIERED:     │  │ Type:        │  │                        │  │   │
-│   │   │  1-5 = 100K │  │ TEXT/DROPDOWN│  │                        │  │   │
-│   │   │  6-20 = 90K │  │ /NUMBER/etc  │  │                        │  │   │
-│   │   └─────────────┘  └──────────────┘  └────────────────────────┘  │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
+│                                                                           │
+│  ┌─────────────────────────────────────┐                                 │
+│  │          Product Group               │                                 │
+│  │  ────────────────────────────────── │                                 │
+│  │  • Colocation                        │                                 │
+│  │    ├─ Rack Space                     │                                 │
+│  │    └─ Cross Connect                  │                                 │
+│  │  • Managed Service                   │                                 │
+│  │    ├─ Server                         │                                 │
+│  │    └─ Storage                        │                                 │
+│  │  • Network                           │                                 │
+│  │    ├─ Bandwidth                      │                                 │
+│  │    └─ VPN                            │                                 │
+│  └──────────────────┬──────────────────┘                                 │
+│                     │                                                     │
+│                     ▼                                                     │
+│  ┌───────────────────────────────────────────────────────────────────┐    │
+│  │  Product: "Rack 42U"                                              │    │
+│  │  ┌──────────────┐  ┌───────────────┐  ┌──────────────────────┐   │    │
+│  │  │ Pricing      │  │ Spec Fields   │  │ Order Mode           │   │    │
+│  │  │ ──────────── │  │ ───────────── │  │ ──────────────────── │   │    │
+│  │  │ FIXED:       │  │ • U Size      │  │ DIRECT or REQUEST    │   │    │
+│  │  │  12U = 2M    │  │ • Power (VA)  │  │                      │   │    │
+│  │  │  24U = 4M    │  │ • Bandwidth   │  │                      │   │    │
+│  │  │  42U = 7M    │  │               │  │                      │   │    │
+│  │  │ TIERED:      │  │ Type:         │  │                      │   │    │
+│  │  │  1-5  = 100K │  │ TEXT/DROPDOWN │  │                      │   │    │
+│  │  │  6-20 = 90K  │  │ /NUMBER/etc   │  │                      │   │    │
+│  │  └──────────────┘  └───────────────┘  └──────────────────────┘   │    │
+│  └───────────────────────────────────────────────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Fitur Product:**
 
-| Fitur | Keterangan |
-|-------|-----------|
-| **Hierarchical Groups** | Parent-child product groups |
-| **Fixed Pricing** | Harga tetap per varian |
-| **Discount Pricing** | Diskon dari harga dasar |
-| **Tiered Pricing** | Harga berdasarkan volume/kuantitas |
-| **Spec Fields** | Dynamic specification fields per produk |
-| **Order Mode** | Direct (langsung) atau Request (perlu approval) |
-| **Classification** | FREE, ONETIME, RECURRING |
+| Fitur                 | Keterangan                                    |
+|-----------------------|-----------------------------------------------|
+| **Hierarchical Groups** | Parent-child product groups                  |
+| **Fixed Pricing**     | Harga tetap per varian                        |
+| **Discount Pricing**  | Diskon dari harga dasar                       |
+| **Tiered Pricing**    | Harga berdasarkan volume/kuantitas            |
+| **Spec Fields**       | Dynamic specification fields per produk       |
+| **Order Mode**        | Direct (langsung) atau Request (perlu approval) |
+| **Classification**    | FREE, ONETIME, RECURRING                      |
 
 ---
 
 ### 5. Inventory & Goods Management
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        INVENTORY FLOW                                      │
-│                                                                          │
-│   Goods In                               Goods Out                        │
-│   ┌─────────────┐                        ┌─────────────┐                  │
-│   │   Create    │                        │   Create    │                  │
-│   │   Request   │                        │   Request   │                  │
-│   └──────┬──────┘                        └──────┬──────┘                  │
-│          │                                       │                         │
-│   ┌──────▼──────┐                        ┌──────▼──────┐                  │
-│   │   Approve   │                        │   Approve   │                  │
-│   └──────┬──────┘                        └──────┬──────┘                  │
-│          │                                       │                         │
-│   ┌──────▼──────┐                        ┌──────▼──────┐                  │
-│   │  Inventory  │                        │  Inventory  │                  │
-│   │     (+)     │                        │     (-)     │                  │
-│   └──────┬──────┘                        └──────┬──────┘                  │
-│          │                                       │                         │
-│          └────────────────┬──────────────────────┘                        │
-│                           ▼                                               │
-│                  ┌─────────────────┐                                      │
-│                  │   Audit Trail   │                                      │
-│                  │  ─────────────  │                                      │
-│                  │  • IN / OUT / ADJ│                                     │
-│                  │  • Timestamp     │                                     │
-│                  │  • User          │                                     │
-│                  │  • Quantity      │                                     │
-│                  └─────────────────┘                                      │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         INVENTORY FLOW                                    │
+│                                                                           │
+│  Goods In                              Goods Out                           │
+│  ┌──────────────┐                      ┌──────────────┐                   │
+│  │   Create     │                      │   Create     │                   │
+│  │   Request    │                      │   Request    │                   │
+│  └──────┬───────┘                      └──────┬───────┘                   │
+│         │                                      │                           │
+│  ┌──────▼───────┐                      ┌──────▼───────┐                   │
+│  │   Approve    │                      │   Approve    │                   │
+│  └──────┬───────┘                      └──────┬───────┘                   │
+│         │                                      │                           │
+│  ┌──────▼───────┐                      ┌──────▼───────┐                   │
+│  │  Inventory   │                      │  Inventory   │                   │
+│  │     (+)      │                      │     (-)      │                   │
+│  └──────┬───────┘                      └──────┬───────┘                   │
+│         │                                      │                           │
+│         └──────────────┬───────────────────────┘                           │
+│                        ▼                                                   │
+│               ┌────────────────────┐                                       │
+│               │    Audit Trail     │                                       │
+│               │   ──────────────── │                                       │
+│               │   IN / OUT / ADJ   │                                       │
+│               │   Timestamp        │                                       │
+│               │   User             │                                       │
+│               │   Quantity         │                                       │
+│               └────────────────────┘                                       │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Fitur Inventory:**
@@ -357,36 +358,36 @@ Sistem manajemen dokumen dinamis yang dapat dikonfigurasi sepenuhnya melalui UI 
 ### 6. Data Center Infrastructure
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                     LOCATION HIERARCHY                                     │
-│                                                                          │
-│   ┌─────────────────┐                                                    │
-│   │     Branch      │  e.g., "Jababeka"                                  │
-│   │    Code: JBK    │                                                    │
-│   └────────┬────────┘                                                    │
-│            │                                                              │
-│   ┌────────▼────────┐                                                    │
-│   │    Building     │  e.g., "Gedung A"                                  │
-│   └────────┬────────┘                                                    │
-│            │                                                              │
-│   ┌────────▼────────┐                                                    │
-│   │      Floor      │  e.g., "Lantai 2"                                  │
-│   └────────┬────────┘                                                    │
-│            │                                                              │
-│   ┌────────▼────────┐                                                    │
-│   │       Room      │  e.g., "Server Room 1"                             │
-│   └────────┬────────┘                                                    │
-│            │                                                              │
-│   ┌────────▼────────────────────────────────────────────────────────┐    │
-│   │                      Rack Mapping                               │    │
-│   │                                                                  │    │
-│   │   Row A   │  01  │  02  │  03  │  04  │  05  │                 │    │
-│   │   Row B   │  06  │  07  │  08  │  09  │  10  │                 │    │
-│   │   Row C   │  11  │  12  │  13  │  14  │  15  │                 │    │
-│   │                                                                  │    │
-│   │   Status: ✅ Available  ❌ Occupied                              │    │
-│   └──────────────────────────────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                      LOCATION HIERARCHY                                   │
+│                                                                           │
+│  ┌───────────────┐                                                        │
+│  │    Branch     │  e.g., "Jababeka"                                      │
+│  │   Code: JBK   │                                                        │
+│  └───────┬───────┘                                                        │
+│          │                                                                 │
+│  ┌───────▼───────┐                                                        │
+│  │   Building    │  e.g., "Gedung A"                                      │
+│  └───────┬───────┘                                                        │
+│          │                                                                 │
+│  ┌───────▼───────┐                                                        │
+│  │     Floor     │  e.g., "Lantai 2"                                      │
+│  └───────┬───────┘                                                        │
+│          │                                                                 │
+│  ┌───────▼───────┐                                                        │
+│  │      Room     │  e.g., "Server Room 1"                                 │
+│  └───────┬───────┘                                                        │
+│          │                                                                 │
+│  ┌───────▼──────────────────────────────────────────────────────────┐     │
+│  │                        Rack Mapping                              │     │
+│  │                                                                   │     │
+│  │  Row A  │  01  │  02  │  03  │  04  │  05  │                     │     │
+│  │  Row B  │  06  │  07  │  08  │  09  │  10  │                     │     │
+│  │  Row C  │  11  │  12  │  13  │  14  │  15  │                     │     │
+│  │                                                                   │     │
+│  │  Status: ✅ Available    ❌ Occupied                              │     │
+│  └───────────────────────────────────────────────────────────────────┘     │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Fitur Infrastructure:**
@@ -402,225 +403,212 @@ Sistem manajemen dokumen dinamis yang dapat dikonfigurasi sepenuhnya melalui UI 
 ### 7. Customer Portal
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────────────────────┐
 │                   CUSTOMER PORTAL DASHBOARD                                │
-│                                                                          │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Welcome, Customer Name!                           [Branch ▼]    │   │
-│   ├──────────────────────────────────────────────────────────────────┤   │
-│   │                                                                  │   │
-│   │   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │   │
-│   │   │  Active  │  │  Pending │  │  Monthly │  │  Support │       │   │
-│   │   │ Services │  │  Invoice │  │  Cost    │  │  Tickets │       │   │
-│   │   │    5     │  │    2     │  │  Rp12M   │  │    1     │       │   │
-│   │   └──────────┘  └──────────┘  └──────────┘  └──────────┘       │   │
-│   │                                                                  │   │
-│   │   ┌──────────────────────────────────────────────────────────┐   │   │
-│   │   │  Quick Access                                             │   │   │
-│   │   │   ┌──────────┐  ┌──────────┐  ┌──────────┐              │   │   │
-│   │   │   │  Order   │  │ My Racks │  │ Billing  │              │   │   │
-│   │   │   │  New     │  │          │  │          │              │   │   │
-│   │   │   └──────────┘  └──────────┘  └──────────┘              │   │   │
-│   │   │   ┌──────────┐  ┌──────────┐  ┌──────────┐              │   │   │
-│   │   │   │  Goods   │  │Inventory │  │  Support │              │   │   │
-│   │   │   │  In/Out  │  │  View    │  │  Tickets │              │   │   │
-│   │   │   └──────────┘  └──────────┘  └──────────┘              │   │   │
-│   │   └──────────────────────────────────────────────────────────┘   │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
+│                                                                           │
+│  ┌───────────────────────────────────────────────────────────────────┐    │
+│  │  Welcome, Customer Name!                            [Branch ▼]    │    │
+│  ├───────────────────────────────────────────────────────────────────┤    │
+│  │                                                                   │    │
+│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐        │    │
+│  │  │  Active   │ │  Pending  │ │  Monthly  │ │  Support  │        │    │
+│  │  │ Services  │ │  Invoice  │ │  Cost     │ │  Tickets  │        │    │
+│  │  │     5     │ │     2     │ │  Rp12M    │ │     1     │        │    │
+│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘        │    │
+│  │                                                                   │    │
+│  │  ┌───────────────────────────────────────────────────────────┐    │    │
+│  │  │  Quick Access                                              │    │    │
+│  │  │  ┌───────────┐ ┌───────────┐ ┌───────────┐               │    │    │
+│  │  │  │  Order    │ │ My Racks  │ │ Billing   │               │    │    │
+│  │  │  │  New      │ │           │ │           │               │    │    │
+│  │  │  └───────────┘ └───────────┘ └───────────┘               │    │    │
+│  │  │  ┌───────────┐ ┌───────────┐ ┌───────────┐               │    │    │
+│  │  │  │  Goods    │ │Inventory  │ │  Support  │               │    │    │
+│  │  │  │  In/Out   │ │  View     │ │  Tickets  │               │    │    │
+│  │  │  └───────────┘ └───────────┘ └───────────┘               │    │    │
+│  │  └───────────────────────────────────────────────────────────┘    │    │
+│  └───────────────────────────────────────────────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Halaman Customer:**
 
-| Halaman | Keterangan |
-|---------|-----------|
-| **Dashboard** | Ringkasan layanan aktif, tagihan pending, biaya bulanan |
-| **Order** | Katalog produk, order langsung atau request |
-| **My Racks** | Daftar rack yang dimiliki customer |
-| **Billing** | Daftar invoice, detail tagihan, download PDF |
-| **Goods In/Out** | Tracking barang masuk/keluar |
-| **Inventory** | Daftar inventaris customer |
-| **Support** | Tiket dukungan dengan message threading |
-| **Account** | Pengaturan akun (profil, password) |
+| Halaman        | Keterangan                                        |
+|----------------|---------------------------------------------------|
+| **Dashboard**  | Ringkasan layanan aktif, tagihan pending, biaya bulanan |
+| **Order**      | Katalog produk, order langsung atau request        |
+| **My Racks**   | Daftar rack yang dimiliki customer                 |
+| **Billing**    | Daftar invoice, detail tagihan, download PDF       |
+| **Goods In/Out** | Tracking barang masuk/keluar                     |
+| **Inventory**  | Daftar inventaris customer                         |
+| **Support**    | Tiket dukungan dengan message threading            |
+| **Account**    | Pengaturan akun (profil, password)                 |
 
 ---
 
 ### 8. User & Access Management
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                     ACCESS CONTROL MODEL                                   │
-│                                                                          │
-│   ┌─────────────┐           ┌─────────────┐                              │
-│   │    User     │──────────▶│   Company   │                              │
-│   └──────┬──────┘           └─────────────┘                              │
-│          │                                                                │
-│          │ assigned to                                                    │
-│          ▼                                                                │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Role                                                            │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │   • Admin                                                         │   │
-│   │   • Customer                                                      │   │
-│   │   • Sales                                                         │   │
-│   │   • Sales Manager                                                 │   │
-│   │   • Finance                                                       │   │
-│   │   • Technician                                                    │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-│          │                                                                │
-│          ▼                                                                │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Permission                                                      │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │   • ADMIN_PANEL_ACCESS                                           │   │
-│   │   • BRANCH_MANAGEMENT                                            │   │
-│   │   • COMPANY_MANAGEMENT                                           │   │
-│   │   • CUSTOMER_MANAGEMENT                                          │   │
-│   │   • DOCUMENTS_MANAGEMENT                                         │   │
-│   │   • DOCTYPE_MANAGEMENT                                           │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Document-Level Permissions                                       │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │   • canCreate / canDelete                                         │   │
-│   │   • canRead / canAssign                                           │   │
-│   │   • canWrite — per Role per DocType                               │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Branch Scoping                                                   │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │   User ──assigned──▶ Branch(s)                                    │   │
-│   │   Active branch stored in cookie                                  │   │
-│   │   All data filtered by active branch                              │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                       ACCESS CONTROL MODEL                                │
+│                                                                           │
+│  ┌──────────────┐              ┌──────────────┐                           │
+│  │     User     │─────────────▶│   Company    │                           │
+│  └──────┬───────┘              └──────────────┘                           │
+│         │ assigned to                                                      │
+│         ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Role                                                               │  │
+│  │  ────────────────────────────────────────────────────────────────── │  │
+│  │  Admin │ Customer │ Sales │ Sales Manager │ Finance │ Technician    │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│         │                                                                 │
+│         ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Permission                                                         │  │
+│  │  ────────────────────────────────────────────────────────────────── │  │
+│  │  ADMIN_PANEL_ACCESS │ BRANCH_MANAGEMENT │ COMPANY_MANAGEMENT        │  │
+│  │  CUSTOMER_MANAGEMENT │ DOCUMENTS_MANAGEMENT │ DOCTYPE_MANAGEMENT    │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Document-Level Permissions                                         │  │
+│  │  ────────────────────────────────────────────────────────────────── │  │
+│  │  canCreate │ canDelete │ canRead │ canAssign │ canWrite             │  │
+│  │  (per Role, per DocType)                                            │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Branch Scoping                                                     │  │
+│  │  ────────────────────────────────────────────────────────────────── │  │
+│  │  User ──assigned──▶ Branch(s)                                       │  │
+│  │  Active branch stored in cookie                                     │  │
+│  │  All data filtered by active branch                                 │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Role Default:**
 
-| Role | Akses |
-|------|-------|
-| **Admin** | Full access ke Admin Panel |
-| **Customer** | Akses ke Customer Portal saja |
-| **Sales** | Buat quotation, proses order |
-| **Sales Manager** | Approve quotation & sales order |
-| **Finance** | Kelola billing & invoice |
-| **Technician** | Handle work order & support ticket |
+| Role            | Akses                                    |
+|-----------------|------------------------------------------|
+| **Admin**       | Full access ke Admin Panel               |
+| **Customer**    | Akses ke Customer Portal saja            |
+| **Sales**       | Buat quotation, proses order             |
+| **Sales Manager** | Approve quotation & sales order        |
+| **Finance**     | Kelola billing & invoice                 |
+| **Technician**  | Handle work order & support ticket       |
 
 ---
 
 ### 9. Document Preview & Templates
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                   DOCUMENT PREVIEW SYSTEM                                  │
-│                                                                          │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Template (HTML + Mustache syntax)                                │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │                                                                   │   │
-│   │   <div class="quotation">                                        │   │
-│   │     <h1>{{company_name}}</h1>                                     │   │
-│   │     <p>Date: {{doc_date}}</p>                                     │   │
-│   │     <table>                                                       │   │
-│   │       {{#rows}}                                                   │   │
-│   │       <tr>                                                        │   │
-│   │         <td>{{product_name}}</td>                                 │   │
-│   │         <td>{{quantity}}</td>                                      │   │
-│   │         <td>{{price}}</td>                                         │   │
-│   │       </tr>                                                       │   │
-│   │       {{/rows}}                                                   │   │
-│   │     </table>                                                      │   │
-│   │     <p>Total: {{grand_total}}</p>                                 │   │
-│   │   </div>                                                          │   │
-│   └──────────────────────────────────┬───────────────────────────────┘   │
-│                                      │                                   │
-│                                      ▼                                   │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Rendered Preview                                                 │   │
-│   │   ──────────────────────────────────────────────────────────     │   │
-│   │                                                                   │   │
-│   │   ┌─────────────────────────────────────────────────────────┐    │   │
-│   │   │              METTA DATA CENTER                           │    │   │
-│   │   │              ─────────────────                           │    │   │
-│   │   │   QUOTATION                                              │    │   │
-│   │   │                                                          │    │   │
-│   │   │   Date: 2026-07-15                                       │    │   │
-│   │   │                                                          │    │   │
-│   │   │   ┌──────────────┬──────────┬──────────────────┐        │    │   │
-│   │   │   │   Product    │   Qty    │   Price          │        │    │   │
-│   │   │   ├──────────────┼──────────┼──────────────────┤        │    │   │
-│   │   │   │   Rack 42U   │    1     │   Rp7.000.000    │        │    │   │
-│   │   │   │   Bandwidth  │   100M   │   Rp5.000.000    │        │    │   │
-│   │   │   ├──────────────┼──────────┼──────────────────┤        │    │   │
-│   │   │   │   Total      │          │   Rp12.000.000   │        │    │   │
-│   │   │   └──────────────┴──────────┴──────────────────┘        │    │   │
-│   │   └─────────────────────────────────────────────────────────┘    │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-│   Output: PDF (via Puppeteer) / Email / Screen Preview                    │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                     DOCUMENT PREVIEW SYSTEM                               │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Template (HTML + Mustache syntax)                                   │  │
+│  │                                                                      │  │
+│  │  <div class="quotation">                                            │  │
+│  │    <h1>{{company_name}}</h1>                                         │  │
+│  │    <p>Date: {{doc_date}}</p>                                         │  │
+│  │    <table>                                                           │  │
+│  │      {{#rows}}                                                       │  │
+│  │      <tr>                                                            │  │
+│  │        <td>{{product_name}}</td>                                     │  │
+│  │        <td>{{quantity}}</td>                                          │  │
+│  │        <td>{{price}}</td>                                             │  │
+│  │      </tr>                                                           │  │
+│  │      {{/rows}}                                                       │  │
+│  │    </table>                                                          │  │
+│  │    <p>Total: {{grand_total}}</p>                                     │  │
+│  │  </div>                                                              │  │
+│  └───────────────────────────────────────┬─────────────────────────────┘  │
+│                                          │                                │
+│                                          ▼                                │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Rendered Preview                                                    │  │
+│  │                                                                      │  │
+│  │  ┌────────────────────────────────────────────────────────────┐     │  │
+│  │  │               METTA DATA CENTER                             │     │  │
+│  │  │               ─────────────────                             │     │  │
+│  │  │  QUOTATION                                                 │     │  │
+│  │  │                                                             │     │  │
+│  │  │  Date: 2026-07-15                                           │     │  │
+│  │  │                                                             │     │  │
+│  │  │  ┌──────────────┬──────────┬─────────────────┐             │     │  │
+│  │  │  │  Product     │   Qty    │  Price           │             │     │  │
+│  │  │  ├──────────────┼──────────┼─────────────────┤             │     │  │
+│  │  │  │  Rack 42U    │    1     │  Rp7.000.000     │             │     │  │
+│  │  │  │  Bandwidth   │   100M   │  Rp5.000.000     │             │     │  │
+│  │  │  ├──────────────┼──────────┼─────────────────┤             │     │  │
+│  │  │  │  Total       │          │  Rp12.000.000    │             │     │  │
+│  │  │  └──────────────┴──────────┴─────────────────┘             │     │  │
+│  │  └────────────────────────────────────────────────────────────┘     │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  Output: PDF (via Puppeteer) / Email / Screen Preview                      │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ### 10. Email & Notification System
 
-| Tipe Email | Trigger | Konten |
-|-----------|---------|--------|
-| **Password Reset** | User klik "Forgot Password" | Link reset password (token, expiry) |
-| **Admin Reset** | Admin reset password customer | New password via email |
-| **Document Notification** | Doc state change | Detail perubahan dokumen |
-| **Invoice Delivery** | Invoice generated | PDF attachment |
+| Tipe Email            | Trigger                      | Konten                              |
+|-----------------------|------------------------------|-------------------------------------|
+| **Password Reset**    | User klik "Forgot Password"  | Link reset password (token, expiry) |
+| **Admin Reset**       | Admin reset password customer| New password via email              |
+| **Document Notification** | Doc state change         | Detail perubahan dokumen            |
+| **Invoice Delivery**  | Invoice generated            | PDF attachment                      |
 
 ---
 
 ## Database Schema
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                      ENTITY RELATIONSHIP DIAGRAM                          │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│   ┌─────────┐      ┌─────────┐      ┌─────────────┐                     │
-│   │   User  │─────▶│   Role  │─────▶│  Permission │                     │
-│   └────┬────┘      └────┬────┘      └─────────────┘                     │
-│        │ belongs_to      │ has_many                                      │
-│        ▼                 ▼                                                │
-│   ┌─────────┐      ┌────────────────┐                                   │
-│   │ Company │      │ RolePermission │                                   │
-│   └────┬────┘      └────────────────┘                                   │
-│        │ 1:N                                                             │
+┌───────────────────────────────────────────────────────────────────────────┐
+│                    ENTITY RELATIONSHIP DIAGRAM                            │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌─────────┐        ┌─────────┐        ┌───────────────┐                  │
+│  │  User   │───────▶│  Role   │───────▶│  Permission   │                  │
+│  └────┬────┘        └────┬────┘        └───────────────┘                  │
+│       │ belongs_to        │ has_many                                       │
+│       ▼                   ▼                                                │
+│  ┌─────────┐        ┌────────────────┐                                    │
+│  │ Company │        │ RolePermission │                                    │
+│  └────┬────┘        └────────────────┘                                    │
+│       │ 1:N                                                                │
+│       ▼                                                                    │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐                      │
+│  │ Branch  │─▶│Building │─▶│  Floor  │─▶│  Room   │                      │
+│  └────┬────┘  └─────────┘  └─────────┘  └─────────┘                      │
+│       │                                                                    │
+│       ▼                                                                    │
+│  ┌───────────────┐      ┌──────────────┐                                  │
+│  │ ProductGroup  │      │  Inventory    │                                  │
+│  └───────┬───────┘      └──────────────┘                                  │
+│          │ 1:N                                                             │
+│          ▼                                                                 │
+│  ┌───────────────┐  ┌───────────────────┐  ┌───────────────┐              │
+│  │    Product    │─▶│ ProductSpecField  │  │ ProductPrice  │              │
+│  └───────────────┘  └───────────────────┘  └───────────────┘              │
+│                                                                           │
+│  ┌────────────┐        ┌───────────┐        ┌─────────────────┐          │
+│  │  DocType   │───────▶│ DocField  │        │  DocWorkflow    │          │
+│  └─────┬──────┘        └───────────┘        └─────────────────┘          │
+│        │ 1:N                                                              │
 │        ▼                                                                  │
-│   ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐       │
-│   │  Branch │─────▶│Building │─────▶│  Floor  │─────▶│  Room   │       │
-│   └────┬────┘      └─────────┘      └─────────┘      └─────────┘       │
-│        │                                                                  │
-│        ▼                                                                  │
-│   ┌──────────────┐      ┌─────────────┐                                 │
-│   │ ProductGroup │      │  Inventory   │                                 │
-│   └──────┬───────┘      └─────────────┘                                 │
-│          │ 1:N                                                           │
-│          ▼                                                                │
-│   ┌──────────────┐  ┌───────────────────┐  ┌──────────────┐             │
-│   │   Product    │─▶│ ProductSpecField  │  │ ProductPrice │             │
-│   └──────────────┘  └───────────────────┘  └──────────────┘             │
-│                                                                          │
-│   ┌──────────┐      ┌─────────┐      ┌─────────────┐                   │
-│   │ DocType  │─────▶│ DocField│      │ DocWorkflow │                   │
-│   └────┬─────┘      └─────────┘      └─────────────┘                   │
-│        │ 1:N                                                             │
-│        ▼                                                                  │
-│   ┌──────────────┐  ┌─────────────┐  ┌──────────────┐                   │
-│   │  DocRecord   │─▶│   DocRow    │  │ DocPermission│                   │
-│   └──────────────┘  └─────────────┘  └──────────────┘                   │
-│                                                                          │
-│   ┌────────────────────┐  ┌──────────────────┐                           │
-│   │ InventoryMovement  │  │ DocNamingCounter │                           │
-│   └────────────────────┘  └──────────────────┘                           │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ┌───────────────┐  ┌─────────────┐  ┌─────────────────┐                 │
+│  │  DocRecord    │─▶│   DocRow    │  │  DocPermission  │                 │
+│  └───────────────┘  └─────────────┘  └─────────────────┘                 │
+│                                                                           │
+│  ┌─────────────────────┐  ┌────────────────────┐                         │
+│  │ InventoryMovement   │  │ DocNamingCounter   │                         │
+│  └─────────────────────┘  └────────────────────┘                         │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -710,11 +698,11 @@ npm run dev
 
 ### Akun Default
 
-| Email | Password | Role |
-|-------|----------|------|
-| `admin@example.com` | `admin123` | Admin |
+| Email                | Password        | Role    |
+|----------------------|-----------------|---------|
+| `admin@example.com`  | `admin123`      | Admin   |
 | `superadmin@example.com` | `superadmin123` | Admin |
-| `customer@example.com` | `customer123` | Customer |
+| `customer@example.com` | `customer123`  | Customer |
 
 ---
 
