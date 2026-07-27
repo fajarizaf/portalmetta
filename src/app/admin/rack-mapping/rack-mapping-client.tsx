@@ -95,29 +95,29 @@ export default function RackMappingClient({
     <div className="space-y-6">
       {/* Stats Summary */}
       {(selectedRoomId || selectedCompanyId) && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-slate-50">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <span className="text-sm text-muted-foreground uppercase font-semibold tracking-wider">Total Racks</span>
-              <span className="text-2xl font-bold">{stats.total}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-slate-50 border-slate-200">
+            <CardContent className="p-5 flex flex-col items-center justify-center">
+              <span className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Total Racks</span>
+              <span className="text-[28px] font-bold tracking-tight text-slate-900">{stats.total}</span>
             </CardContent>
           </Card>
           <Card className="bg-emerald-50 border-emerald-100">
-            <CardContent className="p-4 flex flex-col items-center justify-center text-emerald-700">
-              <span className="text-sm uppercase font-semibold tracking-wider opacity-80">Available</span>
-              <span className="text-2xl font-bold">{stats.available}</span>
+            <CardContent className="p-5 flex flex-col items-center justify-center text-emerald-700">
+              <span className="text-xs uppercase font-semibold tracking-wider mb-1 opacity-80">Available</span>
+              <span className="text-[28px] font-bold tracking-tight">{stats.available}</span>
             </CardContent>
           </Card>
           <Card className="bg-rose-50 border-rose-100">
-            <CardContent className="p-4 flex flex-col items-center justify-center text-rose-700">
-              <span className="text-sm uppercase font-semibold tracking-wider opacity-80">In Use</span>
-              <span className="text-2xl font-bold">{stats.inUse}</span>
+            <CardContent className="p-5 flex flex-col items-center justify-center text-rose-700">
+              <span className="text-xs uppercase font-semibold tracking-wider mb-1 opacity-80">In Use</span>
+              <span className="text-[28px] font-bold tracking-tight">{stats.inUse}</span>
             </CardContent>
           </Card>
           <Card className="bg-blue-50 border-blue-100">
-            <CardContent className="p-4 flex flex-col items-center justify-center text-blue-700">
-              <span className="text-sm uppercase font-semibold tracking-wider opacity-80">Reserved / Maint.</span>
-              <span className="text-2xl font-bold">{stats.other}</span>
+            <CardContent className="p-5 flex flex-col items-center justify-center text-blue-700">
+              <span className="text-xs uppercase font-semibold tracking-wider mb-1 opacity-80">Reserved / Maint.</span>
+              <span className="text-[28px] font-bold tracking-tight">{stats.other}</span>
             </CardContent>
           </Card>
         </div>

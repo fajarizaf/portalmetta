@@ -179,49 +179,50 @@ export default async function CompaniesPage({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {companies.map((c) => (
-            <Card key={c.id} className="overflow-hidden hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
+            <Card key={c.id} className="group overflow-hidden border border-slate-200/80 bg-white hover:shadow-xl hover:shadow-slate-900/5 hover:border-slate-300 transition-all duration-300">
               <CardContent className="p-0">
-                <div className="p-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden border shrink-0">
+                <div className="p-6 space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="h-14 w-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                       {c.logoUrl ? (
-                        <img src={c.logoUrl} alt={c.name} className="h-full w-full object-contain" />
+                        <img src={c.logoUrl} alt={c.name} className="h-full w-full object-contain p-1" />
                       ) : (
-                        <Building className="h-8 w-8 text-muted-foreground" />
+                        <Building className="h-7 w-7 text-slate-400" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-lg truncate leading-none mb-1">{c.name}</h3>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" />
+                    <div className="flex-1 min-w-0 pt-1">
+                      <h3 className="font-semibold text-[15px] text-slate-900 truncate leading-snug">{c.name}</h3>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5">
+                        <Mail className="h-3 w-3 shrink-0" />
                         <span className="truncate">{c.companyEmail || "-"}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 py-2 border-y text-center">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Users</p>
-                      <p className="text-xl font-bold">{c._count.customers}</p>
+                  <div className="flex items-center gap-4 py-3 border-y border-slate-100">
+                    <div className="flex-1 text-center">
+                      <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-1">Users</p>
+                      <p className="text-xl font-bold tracking-tight text-slate-900">{c._count.customers}</p>
                     </div>
-                    <div className="border-l">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Branches</p>
-                      <p className="text-xl font-bold text-primary">{c._count.branches}</p>
+                    <div className="w-px h-8 bg-slate-100" />
+                    <div className="flex-1 text-center">
+                      <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-1">Branches</p>
+                      <p className="text-xl font-bold tracking-tight text-primary">{c._count.branches}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" className="flex-1" asChild>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 h-9 border-slate-200 hover:border-slate-300 hover:bg-slate-50 font-medium" asChild>
                       <Link href={`/admin/companies/${c.id}`}>
-                        <ExternalLink className="h-4 w-4 mr-2" />
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                         Detail
                       </Link>
                     </Button>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
@@ -229,13 +230,13 @@ export default async function CompaniesPage({
                         <DialogHeader>
                           <DialogTitle>Hapus Company</DialogTitle>
                         </DialogHeader>
-                        <div className="py-4">
-                          Apakah Anda yakin ingin menghapus perusahaan <strong>{c.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                        <div className="py-4 text-sm text-slate-600">
+                          Apakah Anda yakin ingin menghapus perusahaan <strong className="text-slate-900">{c.name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </div>
                         <DialogFooter>
                           <form action={deleteCompany}>
                             <input type="hidden" name="id" value={c.id} />
-                            <Button variant="destructive" type="submit">Hapus Permanen</Button>
+                            <Button variant="destructive" type="submit" className="bg-red-600 hover:bg-red-700">Hapus Permanen</Button>
                           </form>
                         </DialogFooter>
                       </DialogContent>

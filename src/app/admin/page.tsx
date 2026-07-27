@@ -1,4 +1,3 @@
-
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -140,32 +139,40 @@ export default async function AdminHome() {
       title: "Total Customers",
       value: customersCount,
       icon: Users,
-      gradient: "from-blue-500 to-blue-600",
-      ring: "ring-blue-500/10",
+      accent: "bg-blue-500",
+      text: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-100",
       link: "/admin/customers",
     },
     {
       title: "Active Services",
       value: activeSubs.length,
       icon: Package,
-      gradient: "from-emerald-500 to-emerald-600",
-      ring: "ring-emerald-500/10",
+      accent: "bg-emerald-500",
+      text: "text-emerald-600",
+      bg: "bg-emerald-50",
+      border: "border-emerald-100",
       link: "/admin/docs/subscription_management",
     },
     {
       title: "Monthly Revenue",
       value: new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(totalMRC),
       icon: TrendingUp,
-      gradient: "from-amber-500 to-orange-500",
-      ring: "ring-amber-500/10",
+      accent: "bg-amber-500",
+      text: "text-amber-600",
+      bg: "bg-amber-50",
+      border: "border-amber-100",
       link: "/admin/docs/subscription_management",
     },
     {
       title: "Pending Tasks",
       value: pendingCount,
       icon: Clock,
-      gradient: "from-rose-500 to-pink-500",
-      ring: "ring-rose-500/10",
+      accent: "bg-rose-500",
+      text: "text-rose-600",
+      bg: "bg-rose-50",
+      border: "border-rose-100",
       link: "/admin/docs",
     },
   ];
@@ -173,11 +180,16 @@ export default async function AdminHome() {
   return (
     <div className="space-y-8">
       {/* Welcome */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Welcome back, {session?.user?.name}. Here&apos;s your system overview.
-        </p>
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Welcome back, {session?.user?.name}. Here&apos;s your system overview.
+          </p>
+        </div>
+        <span className="text-xs text-slate-400 font-medium">
+          {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+        </span>
       </div>
 
       {/* Stats Grid */}
@@ -186,18 +198,18 @@ export default async function AdminHome() {
           <Link
             key={i}
             href={stat.link}
-            className="group relative bg-white rounded-xl border border-slate-200/60 p-5 hover:shadow-lg hover:shadow-slate-900/5 hover:border-slate-300/60 transition-all duration-300"
+            className="group relative bg-white rounded-2xl border border-slate-200/80 p-5 hover:shadow-xl hover:shadow-slate-900/5 hover:border-slate-300 transition-all duration-300"
           >
             <div className="flex items-start justify-between">
-              <div>
+              <div className="space-y-2">
                 <p className="text-[13px] font-medium text-slate-500">{stat.title}</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{stat.value}</p>
+                <p className="text-[28px] font-bold text-slate-900 tracking-tight leading-none">{stat.value}</p>
               </div>
-              <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg", stat.gradient, stat.ring)}>
-                <stat.icon className="w-5 h-5 text-white" />
+              <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center", stat.bg, stat.text)}>
+                <stat.icon className="w-5 h-5" strokeWidth={1.5} />
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-slate-600 transition-colors">
+            <div className="mt-4 flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-slate-600 transition-colors">
               View details
               <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </div>
@@ -208,11 +220,11 @@ export default async function AdminHome() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-7">
         {/* Recent Activity */}
-        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Activity className="w-4 h-4 text-slate-600" />
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-slate-600" strokeWidth={1.5} />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Recent Activity</h2>
@@ -234,10 +246,10 @@ export default async function AdminHome() {
                 <Link
                   key={act.id}
                   href={`/admin/docs/${act.docType.key}/${act.id}`}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/50 transition-colors group"
+                  className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50/80 transition-colors group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white transition-all duration-200">
-                    <FileText className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white transition-all duration-200">
+                    <FileText className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">
@@ -249,23 +261,26 @@ export default async function AdminHome() {
                   </div>
                   <div className="text-right shrink-0">
                     <span className={cn(
-                      "inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium",
-                      ["Completed", "Approved", "Active", "Paid"].includes(act.status ?? "") ? "bg-emerald-50 text-emerald-700" :
-                      ["Rejected", "Cancelled"].includes(act.status ?? "") ? "bg-red-50 text-red-700" :
-                      "bg-slate-100 text-slate-600"
+                      "inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium",
+                      ["Completed", "Approved", "Active", "Paid"].includes(act.status ?? "") ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                      ["Rejected", "Cancelled"].includes(act.status ?? "") ? "bg-red-50 text-red-700 border border-red-100" :
+                      "bg-slate-100 text-slate-600 border border-slate-200"
                     )}>
                       {act.status}
                     </span>
-                    <p className="text-[10px] text-slate-400 mt-1">
+                    <p className="text-[10px] text-slate-400 mt-1.5">
                       {new Date(act.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </p>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="p-8 text-center">
-                <Activity className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">No recent activity</p>
+              <div className="p-10 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                  <Activity className="w-6 h-6 text-slate-400" strokeWidth={1.5} />
+                </div>
+                <p className="text-sm font-medium text-slate-900">No recent activity</p>
+                <p className="text-xs text-slate-500 mt-1">Activities will appear here</p>
               </div>
             )}
           </div>
@@ -273,11 +288,11 @@ export default async function AdminHome() {
 
         {/* Pending Tasks */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-amber-600" />
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-amber-600" strokeWidth={1.5} />
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Needs Attention</h2>
@@ -285,7 +300,7 @@ export default async function AdminHome() {
                 </div>
               </div>
               {pendingCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[11px] font-semibold">
+                <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100">
                   {pendingCount}
                 </span>
               )}
@@ -297,64 +312,64 @@ export default async function AdminHome() {
                   <Link
                     key={doc.id}
                     href={`/admin/docs/${doc.docType.key}/${doc.id}`}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/50 transition-colors group"
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/80 transition-colors group"
                   >
                     <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">{doc.code || "No Code"}</p>
                       <p className="text-[11px] text-slate-500 mt-0.5">{doc.docType.name}</p>
                     </div>
-                    <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-medium shrink-0">
+                    <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-medium border border-amber-100 shrink-0">
                       {doc.status}
                     </span>
                   </Link>
                 ))
               ) : (
                 <div className="p-8 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-2">
-                    <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-slate-900">All caught up</p>
-                  <p className="text-xs text-slate-500 mt-0.5">No pending tasks</p>
+                  <p className="text-sm font-semibold text-slate-900">All caught up</p>
+                  <p className="text-xs text-slate-500 mt-1">No pending tasks</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-semibold text-slate-900">Quick Links</h2>
             </div>
             <div className="p-2">
               <Link
                 href="/admin/customers"
-                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all"
+                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all"
               >
-                <Users className="w-4 h-4 text-slate-400" />
+                <Users className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
                 Manage Customers
               </Link>
               <Link
                 href="/admin/docs/subscription_management"
-                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all"
+                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all"
               >
-                <Package className="w-4 h-4 text-slate-400" />
+                <Package className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
                 Subscriptions
               </Link>
               <Link
                 href="/admin/rack-mapping"
-                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all"
+                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all"
               >
-                <FileText className="w-4 h-4 text-slate-400" />
+                <FileText className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
                 Rack Mapping
               </Link>
               <Link
                 href="/admin/settings"
-                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all"
+                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all"
               >
-                <CreditCard className="w-4 h-4 text-slate-400" />
+                <CreditCard className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
                 Settings
               </Link>
             </div>

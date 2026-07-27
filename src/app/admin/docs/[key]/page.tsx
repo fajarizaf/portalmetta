@@ -554,22 +554,22 @@ export default async function DocsByTypePage({ params, searchParams }: { params?
               if (!isActive) params.append("status", s.name)
               const href = `/admin/docs/${docType.key}${params.toString() ? `?${params.toString()}` : ""}`
 
-              return (
-                <Link key={s.name} href={href}>
-                  <Card className={cn(
-                    "py-3 transition-all hover:bg-muted/50 cursor-pointer",
-                    isActive && "border-primary bg-primary/5 ring-1 ring-primary"
-                  )}>
-                    <CardContent className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <IconComp className={`h-5 w-5 ${colorClass}`} />
-                        <div className="text-sm font-medium">{s.name}</div>
-                      </div>
-                      <div className="text-2xl font-semibold">{s.count}</div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
+               return (
+                 <Link key={s.name} href={href}>
+                   <Card className={cn(
+                     "py-4 transition-all hover:shadow-lg hover:shadow-slate-900/5 hover:border-slate-300 cursor-pointer border border-slate-200/80",
+                     isActive && "border-primary bg-primary/5 ring-1 ring-primary shadow-md"
+                   )}>
+                     <CardContent className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <IconComp className={`h-5 w-5 ${colorClass}`} />
+                         <div className="text-sm font-semibold text-slate-700">{s.name}</div>
+                       </div>
+                       <div className="text-[28px] font-bold tracking-tight text-slate-900">{s.count}</div>
+                     </CardContent>
+                   </Card>
+                 </Link>
+               )
             })}
           </div>
           

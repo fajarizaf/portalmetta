@@ -319,12 +319,12 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
 
               <div className="grid grid-cols-2 gap-8 border-l pl-8 hidden md:grid">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Active Services</p>
-                  <p className="text-2xl font-bold">{subscriptions.filter(s => s.status === "Active").length}</p>
+                  <p className="text-xs text-slate-500 font-medium mb-1">Active Services</p>
+                  <p className="text-[28px] font-bold tracking-tight leading-none">{subscriptions.filter(s => s.status === "Active").length}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Total MRC</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-xs text-slate-500 font-medium mb-1">Total MRC</p>
+                  <p className="text-[28px] font-bold text-primary tracking-tight leading-none">
                     {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
                       subscriptions.reduce((acc, s) => acc + Number((s.data as any)?.total_mrc ?? 0), 0)
                     )}

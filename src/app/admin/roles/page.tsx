@@ -5,12 +5,14 @@ import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { ShieldPlus } from "lucide-react";
 
 async function createRole(formData: FormData) {
   "use server";
@@ -116,107 +118,121 @@ export default async function RolesPage() {
   ]);
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Role Management</h1>
-      {selectedBranchId ? (
-        <p className="text-sm text-muted-foreground">Branch aktif: {branches.find((b) => b.id === selectedBranchId)?.name ?? "(tidak ditemukan)"}</p>
-      ) : (
-        <p className="text-sm text-muted-foreground">Tidak ada branch yang tersedia. Buat branch terlebih dahulu.</p>
-      )}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>Tambah Role</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
-          <DialogHeader>
-            <DialogTitle>Tambah Role</DialogTitle>
-          </DialogHeader>
-          <form action={createRole} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama</Label>
-              <Input id="name" name="name" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Permissions</Label>
-                <Badge variant="outline">0 dipilih</Badge>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Role Management</h1>
+          {selectedBranchId ? (
+            <p className="text-sm text-slate-500">Branch aktif: {branches.find((b) => b.id === selectedBranchId)?.name ?? "(tidak ditemukan)"}</p>
+          ) : (
+            <p className="text-sm text-slate-500">Tidak ada branch yang tersedia. Buat branch terlebih dahulu.</p>
+          )}
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="h-9 bg-slate-900 hover:bg-slate-800">
+              <ShieldPlus className="h-4 w-4 mr-2" />
+              Tambah Role
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold">Tambah Role</DialogTitle>
+            </DialogHeader>
+            <form action={createRole} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-sm font-medium text-slate-700">Nama</Label>
+                <Input id="name" name="name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                {perms.map((p) => (
-                  <label key={p.id} className="flex items-center gap-2">
-                    <Checkbox name="permId" value={p.id} />
-                    <span>{p.key}</span>
-                  </label>
-                ))}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-slate-700">Permissions</Label>
+                  <Badge variant="outline" className="font-normal border-slate-200 text-slate-600">0 dipilih</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-slate-200 rounded-xl p-3">
+                  {perms.map((p) => (
+                    <label key={p.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                      <Checkbox name="permId" value={p.id} className="border-slate-300" />
+                      <span className="text-sm text-slate-700">{p.key}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Simpan</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">Nama</th>
-              <th className="p-2">Users</th>
-              <th className="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {roles.map((r) => (
-              <tr key={r.id} className="border-b">
-                <td className="p-2">{r.name}</td>
-                <td className="p-2">{r.users.length}</td>
-                <td className="p-2 space-x-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">Edit</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
-                      <DialogHeader>
-                        <DialogTitle>Edit Role</DialogTitle>
-                      </DialogHeader>
-                      <form action={updateRole} className="space-y-4">
-                        <input type="hidden" name="id" value={r.id} />
-                        <div className="space-y-2">
-                          <Label htmlFor={`role_name_${r.id}`}>Nama</Label>
-                          <Input id={`role_name_${r.id}`} name="name" defaultValue={r.name} />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label>Permissions</Label>
-                            <Badge variant="outline">{r.permissions.length} dipilih</Badge>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                            {(() => {
-                              const selected = new Set(r.permissions.map((rp) => rp.permissionId));
-                              return perms.map((p) => (
-                                <label key={p.id} className="flex items-center gap-2">
-                                  <Checkbox name="permId" value={p.id} defaultChecked={selected.has(p.id)} />
-                                  <span>{p.key}</span>
-                                </label>
-                              ));
-                            })()}
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="submit">Simpan</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                  <form action={deleteRole} className="inline-flex">
-                    <input type="hidden" name="id" value={r.id} />
-                    <Button variant="destructive">Hapus</Button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <DialogFooter>
+                <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Simpan</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <Card className="border border-slate-200/80 bg-white">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Nama</th>
+                  <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Users</th>
+                  <th className="text-right py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {roles.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3 px-5 font-medium text-slate-900">{r.name}</td>
+                    <td className="py-3 px-5 text-slate-600">{r.users.length}</td>
+                    <td className="py-3 px-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 border-slate-200 hover:border-slate-300 hover:bg-slate-50">Edit</Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
+                            <DialogHeader>
+                              <DialogTitle className="text-base font-semibold">Edit Role</DialogTitle>
+                            </DialogHeader>
+                            <form action={updateRole} className="space-y-4">
+                              <input type="hidden" name="id" value={r.id} />
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`role_name_${r.id}`} className="text-sm font-medium text-slate-700">Nama</Label>
+                                <Input id={`role_name_${r.id}`} name="name" defaultValue={r.name} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-sm font-medium text-slate-700">Permissions</Label>
+                                  <Badge variant="outline" className="font-normal border-slate-200 text-slate-600">{r.permissions.length} dipilih</Badge>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-slate-200 rounded-xl p-3">
+                                  {(() => {
+                                    const selected = new Set(r.permissions.map((rp) => rp.permissionId));
+                                    return perms.map((p) => (
+                                      <label key={p.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                                        <Checkbox name="permId" value={p.id} defaultChecked={selected.has(p.id)} className="border-slate-300" />
+                                        <span className="text-sm text-slate-700">{p.key}</span>
+                                      </label>
+                                    ));
+                                  })()}
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Simpan</Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                        <form action={deleteRole} className="inline-flex">
+                          <input type="hidden" name="id" value={r.id} />
+                          <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">Hapus</Button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

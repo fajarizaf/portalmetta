@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building, Phone, Mail, MapPin, Users, FileText, LayoutGrid, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Building, Phone, Mail, MapPin, Users, FileText, LayoutGrid, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { LogoUpload } from "@/components/logo-upload";
@@ -106,8 +105,6 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
 
   if (!company) return notFound();
 
-  // Fetch documents related to this company
-  // We check for documents where data->customer_id or data->customer matches company.id
   const relatedDocs = await prisma.docRecord.findMany({
     where: {
       OR: [
@@ -122,73 +119,80 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" asChild className="h-9 w-9 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
             <Link href="/admin/companies">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Company Details</h1>
-            <p className="text-muted-foreground">Manage company profile and view related resources.</p>
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Company Details</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Manage company profile and view related resources.</p>
           </div>
         </div>
-        <div className="flex gap-2">
-            <form action={deleteCompany}>
-                <input type="hidden" name="id" value={company.id} />
-                <Button variant="destructive" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Hapus Company
-                </Button>
-            </form>
-        </div>
+        <form action={deleteCompany}>
+          <input type="hidden" name="id" value={company.id} />
+          <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Hapus Company
+          </Button>
+        </form>
       </div>
 
-      {/* Top Summary Card */}
-      <Card>
+      {/* Profile Header Card */}
+      <Card className="border-slate-200/80 bg-white">
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center overflow-hidden border shrink-0">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+            <div className="h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
               {company.logoUrl ? (
-                <img src={company.logoUrl} alt={company.name} className="h-full w-full object-contain" />
+                <img src={company.logoUrl} alt={company.name} className="h-full w-full object-contain p-1.5" />
               ) : (
-                <Building className="h-12 w-12 text-muted-foreground" />
+                <Building className="h-9 w-9 text-slate-400" />
               )}
             </div>
-            <div className="flex-1 text-center md:text-left space-y-2">
-              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center md:justify-start">
-                <h2 className="text-2xl font-bold">{company.name}</h2>
+            
+            <div className="flex-1 text-center lg:text-left space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 justify-center lg:justify-start">
+                <h2 className="text-xl font-semibold text-slate-900 tracking-tight">{company.name}</h2>
                 <div className="flex gap-2 justify-center">
-                  {company.isDataCenter && <Badge>Data Center</Badge>}
-                  {company.parentId && <Badge variant="outline">Sub-Company</Badge>}
+                  {company.isDataCenter && <Badge variant="secondary" className="font-normal">Data Center</Badge>}
+                  {company.parentId && <Badge variant="outline" className="font-normal">Sub-Company</Badge>}
                 </div>
               </div>
               
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span>{company.companyEmail ?? "-"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>{company.companyPhoneNumber ?? "-"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{company.address ?? "-"}</span>
-                </div>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-5 text-sm text-slate-500">
+                {company.companyEmail && (
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{company.companyEmail}</span>
+                  </div>
+                )}
+                {company.companyPhoneNumber && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{company.companyPhoneNumber}</span>
+                  </div>
+                )}
+                {company.address && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{company.address}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 border-l pl-8 hidden md:grid">
+            <div className="flex items-center gap-6 border-l border-slate-100 pl-6 hidden xl:flex">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Users</p>
-                <p className="text-2xl font-bold">{company.customers.length}</p>
+                <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-1">Users</p>
+                <p className="text-2xl font-bold tracking-tight text-slate-900">{company.customers.length}</p>
               </div>
+              <div className="w-px h-10 bg-slate-100" />
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Branches</p>
-                <p className="text-2xl font-bold text-primary">{company.branches.length}</p>
+                <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-1">Branches</p>
+                <p className="text-2xl font-bold tracking-tight text-primary">{company.branches.length}</p>
               </div>
             </div>
           </div>
@@ -196,51 +200,51 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
       </Card>
 
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
-          <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">General Info</TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Users / Customers</TabsTrigger>
-          <TabsTrigger value="branches" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Branches</TabsTrigger>
-          <TabsTrigger value="documents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Documents</TabsTrigger>
+        <TabsList className="inline-flex h-9 items-center gap-1 bg-slate-100/80 p-1 rounded-lg">
+          <TabsTrigger value="info" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all">General Info</TabsTrigger>
+          <TabsTrigger value="users" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all">Users / Customers</TabsTrigger>
+          <TabsTrigger value="branches" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all">Branches</TabsTrigger>
+          <TabsTrigger value="documents" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all">Documents</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info">
-          <Card>
-            <CardHeader>
-              <CardTitle>Edit Company Information</CardTitle>
+        <TabsContent value="info" className="space-y-6">
+          <Card className="border-slate-200/80 bg-white">
+            <CardHeader className="pb-5 border-b border-slate-100">
+              <CardTitle className="text-base font-semibold text-slate-900">Edit Company Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <form action={updateCompany} className="space-y-8">
+            <CardContent className="p-6">
+              <form action={updateCompany} className="space-y-6">
                 <input type="hidden" name="id" value={company.id} />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Company Name</Label>
-                      <Input id="name" name="name" defaultValue={company.name} required />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name" className="text-sm font-medium text-slate-700">Company Name</Label>
+                      <Input id="name" name="name" defaultValue={company.name} required className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
-                      <Input id="address" name="address" defaultValue={company.address ?? ""} />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="address" className="text-sm font-medium text-slate-700">Address</Label>
+                      <Input id="address" name="address" defaultValue={company.address ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company_email">Company Email</Label>
-                      <Input id="company_email" name="company_email" type="email" defaultValue={company.companyEmail ?? ""} />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="company_email" className="text-sm font-medium text-slate-700">Company Email</Label>
+                      <Input id="company_email" name="company_email" type="email" defaultValue={company.companyEmail ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company_phone_number">Phone Number</Label>
-                      <Input id="company_phone_number" name="company_phone_number" defaultValue={company.companyPhoneNumber ?? ""} />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="company_phone_number" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                      <Input id="company_phone_number" name="company_phone_number" defaultValue={company.companyPhoneNumber ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fax">Fax</Label>
-                      <Input id="fax" name="fax" defaultValue={company.fax ?? ""} />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="fax" className="text-sm font-medium text-slate-700">Fax</Label>
+                      <Input id="fax" name="fax" defaultValue={company.fax ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="pic_id">Primary PIC</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="pic_id" className="text-sm font-medium text-slate-700">Primary PIC</Label>
                       <Select name="pic_id" defaultValue={company.picId ?? "unassigned"}>
-                        <SelectTrigger id="pic_id">
+                        <SelectTrigger id="pic_id" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20">
                           <SelectValue placeholder="Select PIC" />
                         </SelectTrigger>
                         <SelectContent>
@@ -253,17 +257,17 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="logo">Company Logo</Label>
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label htmlFor="logo" className="text-sm font-medium text-slate-700">Company Logo</Label>
                     <LogoUpload id="logo" name="logo" defaultImageUrl={company.logoUrl ?? undefined} />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t">
-                  <Button variant="outline" asChild>
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+                  <Button variant="outline" asChild className="border-slate-200 hover:border-slate-300 hover:bg-slate-50">
                     <Link href="/admin/companies">Cancel</Link>
                   </Button>
-                  <Button type="submit">Save Changes</Button>
+                  <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Save Changes</Button>
                 </div>
               </form>
             </CardContent>
@@ -271,35 +275,37 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         <TabsContent value="users">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Company Users</CardTitle>
-              <Button size="sm" asChild>
-                <Link href={`/admin/customers?q=${encodeURIComponent(company.name)}`}>Manage Users</Link>
-              </Button>
+          <Card className="border-slate-200/80 bg-white">
+            <CardHeader className="pb-5 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-slate-900">Company Users</CardTitle>
+                <Button size="sm" asChild className="h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+                  <Link href={`/admin/customers?q=${encodeURIComponent(company.name)}`}>Manage Users</Link>
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
-                    <tr className="text-left">
-                      <th className="p-3">Name</th>
-                      <th className="p-3">Email</th>
-                      <th className="p-3">Role</th>
-                      <th className="p-3">Aksi</th>
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                      <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Name</th>
+                      <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Email</th>
+                      <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Role</th>
+                      <th className="text-right py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-50">
                     {company.customers.length > 0 ? (
                       company.customers.map((u) => (
-                        <tr key={u.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                          <td className="p-3 font-medium">{u.name || "-"}</td>
-                          <td className="p-3 text-muted-foreground">{u.email}</td>
-                          <td className="p-3">
-                            <Badge variant="secondary" className="font-normal">{u.role.name}</Badge>
+                        <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 px-5 font-medium text-slate-900">{u.name || "-"}</td>
+                          <td className="py-3 px-5 text-slate-500">{u.email}</td>
+                          <td className="py-3 px-5">
+                            <Badge variant="secondary" className="font-normal bg-slate-100 text-slate-700 hover:bg-slate-200">{u.role.name}</Badge>
                           </td>
-                          <td className="p-3">
-                            <Button variant="ghost" size="sm" asChild>
+                          <td className="py-3 px-5 text-right">
+                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs hover:bg-slate-100">
                                 <Link href={`/admin/customers/${u.id}/edit`}>Detail</Link>
                             </Button>
                           </td>
@@ -307,7 +313,12 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="p-8 text-center text-muted-foreground italic">No users found for this company.</td>
+                        <td colSpan={4} className="p-10 text-center text-slate-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <Users className="h-8 w-8 text-slate-300" />
+                            <span className="text-sm">No users found for this company.</span>
+                          </div>
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -318,35 +329,38 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         <TabsContent value="branches">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Company Branches</CardTitle>
-              <Button size="sm" asChild>
-                <Link href="/admin/branches">Manage Branches</Link>
-              </Button>
+          <Card className="border-slate-200/80 bg-white">
+            <CardHeader className="pb-5 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-slate-900">Company Branches</CardTitle>
+                <Button size="sm" asChild className="h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+                  <Link href="/admin/branches">Manage Branches</Link>
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {company.branches.length > 0 ? (
                   company.branches.map((b) => (
-                    <div key={b.id} className="p-4 rounded-lg border bg-card hover:shadow-md transition-all">
+                    <div key={b.id} className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 transition-all duration-200">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+                        <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
                           <LayoutGrid className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="font-bold">{b.name}</div>
-                          <div className="text-xs text-muted-foreground">Code: {b.code}</div>
+                          <div className="font-semibold text-sm text-slate-900">{b.name}</div>
+                          <div className="text-xs text-slate-500">Code: {b.code}</div>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Button variant="outline" size="sm" className="w-full h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-50" asChild>
                         <Link href={`/admin/branches`}>View Branch</Link>
                       </Button>
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full p-8 text-center text-muted-foreground border border-dashed rounded-lg">
-                    No branches found for this company.
+                  <div className="col-span-full py-12 text-center text-slate-500 border border-dashed rounded-xl bg-slate-50/50">
+                    <LayoutGrid className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <span className="text-sm">No branches found for this company.</span>
                   </div>
                 )}
               </div>
@@ -355,36 +369,39 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <CardTitle>Related Documents</CardTitle>
+          <Card className="border-slate-200/80 bg-white">
+            <CardHeader className="pb-5 border-b border-slate-100">
+              <CardTitle className="text-base font-semibold text-slate-900">Related Documents</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-50">
                 {relatedDocs.length > 0 ? (
                   relatedDocs.map((doc) => (
                     <Link 
                       key={doc.id} 
                       href={`/admin/docs/${doc.docType.key}/${doc.id}`}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors"
+                      className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors group"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
+                          <FileText className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <div className="font-medium text-sm">{doc.docType.name} - {doc.code ?? doc.id}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="font-medium text-sm text-slate-900">{doc.docType.name} - {doc.code ?? doc.id}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">
                             {new Date(doc.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                           </div>
                         </div>
                       </div>
-                      <Badge variant="outline">{doc.status}</Badge>
+                      <Badge variant="outline" className="font-normal border-slate-200 text-slate-600">{doc.status}</Badge>
                     </Link>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground italic">
-                    No related documents found.
+                  <div className="p-10 text-center text-slate-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <FileText className="h-8 w-8 text-slate-300" />
+                      <span className="text-sm">No related documents found.</span>
+                    </div>
                   </div>
                 )}
               </div>

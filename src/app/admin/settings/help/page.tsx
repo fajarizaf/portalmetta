@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import type { Prisma } from "@/generated/prisma/client"
 import Link from "next/link"
 import crypto from "node:crypto"
+import { Plus, ExternalLink } from "lucide-react"
 
 function slugify(input: string): string {
   return String(input || "")
@@ -90,57 +91,67 @@ export default async function AdminHelpSettingsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Help Page</h1>
-        <p className="text-sm text-muted-foreground">Kelola konten halaman /help untuk customer.</p>
+        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Help Page</h1>
+        <p className="text-sm text-slate-500">Kelola konten halaman /help untuk customer.</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2 border-b">
-          <CardTitle className="text-base">Tambah Topik</CardTitle>
+      <Card className="border border-slate-200/80 bg-white">
+        <CardHeader className="pb-5 border-b border-slate-100">
+          <CardTitle className="text-base font-semibold text-slate-900">Tambah Topik</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-6">
           <form action={createHelpItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Judul</Label>
-              <Input id="title" name="title" placeholder="Contoh: Cara Membayar Invoice" required />
+            <div className="space-y-1.5">
+              <Label htmlFor="title" className="text-sm font-medium text-slate-700">Judul</Label>
+              <Input id="title" name="title" placeholder="Contoh: Cara Membayar Invoice" required className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug (opsional)</Label>
-              <Input id="slug" name="slug" placeholder="contoh: cara-membayar-invoice" />
+            <div className="space-y-1.5">
+              <Label htmlFor="slug" className="text-sm font-medium text-slate-700">Slug (opsional)</Label>
+              <Input id="slug" name="slug" placeholder="contoh: cara-membayar-invoice" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
             </div>
             <div className="md:col-span-2">
-              <Button type="submit">Buat Topik</Button>
+              <Button type="submit" className="bg-slate-900 hover:bg-slate-800">
+                <Plus className="h-4 w-4 mr-2" />
+                Buat Topik
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2 border-b">
-          <CardTitle className="text-base">Daftar Topik</CardTitle>
+      <Card className="border border-slate-200/80 bg-white">
+        <CardHeader className="pb-5 border-b border-slate-100">
+          <CardTitle className="text-base font-semibold text-slate-900">Daftar Topik</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-0">
           {items.length > 0 ? (
-            <div className="space-y-2">
+            <div className="divide-y divide-slate-50">
               {items.map((it) => (
-                <div key={it.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <div key={it.id} className="flex items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/50 transition-colors">
                   <div className="min-w-0">
-                    <div className="font-semibold text-sm truncate">{it.title}</div>
-                    <div className="text-xs text-muted-foreground truncate">/help/{it.slug}</div>
+                    <div className="font-semibold text-sm text-slate-900 truncate">{it.title}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">/help/{it.slug}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/help/${encodeURIComponent(it.slug)}`} target="_blank">Preview</Link>
+                    <Button asChild size="sm" variant="outline" className="h-8 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+                      <Link href={`/help/${encodeURIComponent(it.slug)}`} target="_blank">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        Preview
+                      </Link>
                     </Button>
-                    <Button asChild size="sm">
-                      <Link href={`/admin/settings/help/${encodeURIComponent(it.id)}`}>Edit</Link>
+                    <Button asChild size="sm" className="h-8 bg-slate-900 hover:bg-slate-800">
+                      <Link href={`/admin/settings/help/${encodeURIComponent(it.id)}`}>
+                        Edit
+                      </Link>
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">Belum ada topik bantuan.</div>
+            <div className="p-10 text-center text-slate-500">
+              <p className="text-sm">Belum ada topik bantuan.</p>
+            </div>
           )}
         </CardContent>
       </Card>

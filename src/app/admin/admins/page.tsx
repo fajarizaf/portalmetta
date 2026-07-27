@@ -4,9 +4,8 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import bcrypt from "bcryptjs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { cookies } from "next/headers";
@@ -15,6 +14,8 @@ import { LogoUpload } from "@/components/logo-upload";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { SearchableSelect } from "@/components/ui/select";
+import bcrypt from "bcryptjs";
+import { UserPlus } from "lucide-react";
 
 async function createAdmin(formData: FormData) {
   "use server";
@@ -101,7 +102,7 @@ async function updateAdmin(formData: FormData) {
   const address = String(formData.get("address") || "").trim();
   const phoneNumber = String(formData.get("phone_number") || "").trim();
   const password = String(formData.get("password") || "").trim();
-  const branchIds = formData.getAll("branchId").map(String).filter(Boolean);
+  const branchIds = formData.getAll("branchId").map(String);
   const roleId = String(formData.get("roleId") || "").trim();
   const avatar = formData.get("avatar") as File | null;
   const finalEmail = email || emailAddress;
@@ -174,174 +175,182 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
   });
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Admin Management</h1>
-      <form method="get" className="flex gap-2 items-end">
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
-          <SearchableSelect name="role" defaultValue={roleNameFilter} options={[{ label: "All", value: "ALL" }, ...roles.map((r) => ({ label: r.name, value: r.name }))]} />
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Admin Management</h1>
+          <p className="text-sm text-slate-500">Kelola akun admin dan akses branch.</p>
         </div>
-        <Button type="submit">Filter</Button>
-      </form>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>Tambah Admin</Button>
-        </DialogTrigger>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="h-9 bg-slate-900 hover:bg-slate-800">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Tambah Admin
+            </Button>
+          </DialogTrigger>
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
             <DialogHeader>
-              <DialogTitle>Tambah Admin</DialogTitle>
+              <DialogTitle className="text-base font-semibold">Tambah Admin</DialogTitle>
             </DialogHeader>
-          <form action={createAdmin} className="space-y-4">
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Personal Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
-                  <Input id="first_name" name="first_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
-                  <Input id="last_name" name="last_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email_address">Email Address</Label>
-                  <Input id="email_address" name="email_address" type="email" />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="avatar">Avatar</Label>
-              <LogoUpload id="avatar" name="avatar" />
-            </div>
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Contact Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" name="address" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone_number">Phone Number</Label>
-                  <Input id="phone_number" name="phone_number" type="tel" />
+            <form action={createAdmin} className="space-y-5">
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Personal Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="first_name" className="text-sm font-medium text-slate-700">First Name</Label>
+                    <Input id="first_name" name="first_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="last_name" className="text-sm font-medium text-slate-700">Last Name</Label>
+                    <Input id="last_name" name="last_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email_address" className="text-sm font-medium text-slate-700">Email Address</Label>
+                    <Input id="email_address" name="email_address" type="email" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
                 </div>
               </div>
-            </div>
-            <CompanyBranchFields
-              companies={[]}
-              branches={branches}
-              isSuper={false}
-              defaultCompanyId={me?.companyId ?? ""}
-              defaultSelectedBranchId={selectedBranchId}
-              selectId="companyId"
-              showCompanySelect={false}
-            />
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="roleId">Role</Label>
-              <SearchableSelect name="roleId" options={roles.map((r) => ({ label: r.name, value: r.id }))} />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Simpan</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">Email</th>
-              <th className="p-2">Nama</th>
-              <th className="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.map((a) => (
-              <tr key={a.id} className="border-b">
-                <td className="p-2">{a.email}</td>
-                <td className="p-2">{a.name}</td>
-                <td className="p-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">Edit</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
-                      <DialogHeader>
-                        <DialogTitle>Edit Admin</DialogTitle>
-                      </DialogHeader>
-                      <form action={updateAdmin} className="space-y-4">
-                        <input type="hidden" name="id" value={a.id} />
-                        <div className="space-y-3">
-                          <div className="text-sm font-medium">Personal Information</div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor={`admin_first_name_${a.id}`}>First Name</Label>
-                              <Input id={`admin_first_name_${a.id}`} name="first_name" defaultValue={(a.name ?? "").split(" ")[0] ?? ""} />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`admin_last_name_${a.id}`}>Last Name</Label>
-                              <Input id={`admin_last_name_${a.id}`} name="last_name" defaultValue={(a.name ?? "").split(" ").slice(1).join(" ")} />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`admin_email_address_${a.id}`}>Email Address</Label>
-                              <Input id={`admin_email_address_${a.id}`} name="email_address" type="email" defaultValue={a.email} />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`admin_avatar_${a.id}`}>Avatar</Label>
-                          <LogoUpload id={`admin_avatar_${a.id}`} name="avatar" />
-                        </div>
-                        <div className="space-y-3">
-                          <div className="text-sm font-medium">Contact Information</div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor={`admin_address_${a.id}`}>Address</Label>
-                              <Input id={`admin_address_${a.id}`} name="address" defaultValue={a.address ?? ""} />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`admin_phone_number_${a.id}`}>Phone Number</Label>
-                              <Input id={`admin_phone_number_${a.id}`} name="phone_number" type="tel" defaultValue={a.phoneNumber ?? ""} />
-                            </div>
-                          </div>
-                        </div>
-                        <CompanyBranchFields
-                          companies={[]}
-                          branches={branches}
-                          isSuper={false}
-                          defaultCompanyId={me?.companyId ?? ""}
-                          selectedBranchIds={new Set(a.assignedBranches.map((ab) => ab.branchId))}
-                          selectId={`admin_company_${a.id}`}
-                          showCompanySelect={false}
-                        />
-                        <div className="space-y-2">
-                          <Label htmlFor={`admin_password_${a.id}`}>Password baru</Label>
-                          <Input id={`admin_password_${a.id}`} name="password" type="password" placeholder="(opsional)" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`admin_role_${a.id}`}>Role</Label>
-                          <SearchableSelect name="roleId" defaultValue={a.roleId ?? ""} options={roles.map((r) => ({ label: r.name, value: r.id }))} />
-                        </div>
-                        
-                        <DialogFooter>
-                          <Button type="submit">Simpan</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                  <form action={deleteAdmin} className="inline-flex">
-                    <input type="hidden" name="id" value={a.id} />
-                    <Button variant="destructive">Hapus</Button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <div className="space-y-1.5">
+                <Label htmlFor="avatar" className="text-sm font-medium text-slate-700">Avatar</Label>
+                <LogoUpload id="avatar" name="avatar" />
+              </div>
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Contact Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address" className="text-sm font-medium text-slate-700">Address</Label>
+                    <Input id="address" name="address" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone_number" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                    <Input id="phone_number" name="phone_number" type="tel" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                </div>
+              </div>
+              <CompanyBranchFields
+                companies={[]}
+                branches={branches}
+                isSuper={false}
+                defaultCompanyId={me?.companyId ?? ""}
+                defaultSelectedBranchId={selectedBranchId}
+                selectId="companyId"
+                showCompanySelect={false}
+              />
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
+                <Input id="password" name="password" type="password" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label htmlFor="roleId" className="text-sm font-medium text-slate-700">Role</Label>
+                <SearchableSelect name="roleId" options={roles.map((r) => ({ label: r.name, value: r.id }))} />
+              </div>
+              <DialogFooter>
+                <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Simpan</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <Card className="border border-slate-200/80 bg-white">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Email</th>
+                  <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Name</th>
+                  <th className="text-right py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {admins.map((a) => (
+                  <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3 px-5 font-medium text-slate-900">{a.email}</td>
+                    <td className="py-3 px-5 text-slate-600">{a.name}</td>
+                    <td className="py-3 px-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 border-slate-200 hover:border-slate-300 hover:bg-slate-50">Edit</Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto scrollbar-none">
+                            <DialogHeader>
+                              <DialogTitle className="text-base font-semibold">Edit Admin</DialogTitle>
+                            </DialogHeader>
+                            <form action={updateAdmin} className="space-y-4">
+                              <input type="hidden" name="id" value={a.id} />
+                              <div className="space-y-3">
+                                <div className="text-sm font-medium text-slate-700">Personal Information</div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`admin_first_name_${a.id}`} className="text-sm font-medium text-slate-700">First Name</Label>
+                                    <Input id={`admin_first_name_${a.id}`} name="first_name" defaultValue={(a.name ?? "").split(" ")[0] ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`admin_last_name_${a.id}`} className="text-sm font-medium text-slate-700">Last Name</Label>
+                                    <Input id={`admin_last_name_${a.id}`} name="last_name" defaultValue={(a.name ?? "").split(" ").slice(1).join(" ")} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`admin_email_address_${a.id}`} className="text-sm font-medium text-slate-700">Email Address</Label>
+                                    <Input id={`admin_email_address_${a.id}`} name="email_address" type="email" defaultValue={a.email} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`admin_avatar_${a.id}`} className="text-sm font-medium text-slate-700">Avatar</Label>
+                                <LogoUpload id={`admin_avatar_${a.id}`} name="avatar" />
+                              </div>
+                              <div className="space-y-3">
+                                <div className="text-sm font-medium text-slate-700">Contact Information</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`admin_address_${a.id}`} className="text-sm font-medium text-slate-700">Address</Label>
+                                    <Input id={`admin_address_${a.id}`} name="address" defaultValue={a.address ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`admin_phone_number_${a.id}`} className="text-sm font-medium text-slate-700">Phone Number</Label>
+                                    <Input id={`admin_phone_number_${a.id}`} name="phone_number" type="tel" defaultValue={a.phoneNumber ?? ""} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                                  </div>
+                                </div>
+                              </div>
+                              <CompanyBranchFields
+                                companies={[]}
+                                branches={branches}
+                                isSuper={false}
+                                defaultCompanyId={me?.companyId ?? ""}
+                                selectedBranchIds={new Set(a.assignedBranches.map((ab) => ab.branchId))}
+                                selectId={`admin_company_${a.id}`}
+                                showCompanySelect={false}
+                              />
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`admin_password_${a.id}`} className="text-sm font-medium text-slate-700">Password baru</Label>
+                                <Input id={`admin_password_${a.id}`} name="password" type="password" placeholder="(opsional)" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`admin_role_${a.id}`} className="text-sm font-medium text-slate-700">Role</Label>
+                                <SearchableSelect name="roleId" defaultValue={a.roleId ?? ""} options={roles.map((r) => ({ label: r.name, value: r.id }))} />
+                              </div>
+                              
+                              <DialogFooter>
+                                <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Simpan</Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                        <form action={deleteAdmin} className="inline-flex">
+                          <input type="hidden" name="id" value={a.id} />
+                          <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">Hapus</Button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
