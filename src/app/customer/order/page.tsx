@@ -141,31 +141,45 @@ export default async function CustomerOrderPage() {
 
       {/* Main Content - Order Groups */}
       <div className="lg:col-span-6 space-y-6">
-        <Card className="border-none shadow-sm">
-            <CardHeader className="pb-2 border-b">
-               <CardTitle className="text-base font-semibold text-primary uppercase tracking-wide">Product Order</CardTitle>
-               <p className="text-sm text-muted-foreground">Choose the service category you want to order.</p>
+        <Card className="border-0 shadow-sm bg-white">
+            <CardHeader className="pb-5">
+               <CardTitle className="text-lg font-semibold text-slate-900 tracking-tight">Product Order</CardTitle>
+               <p className="text-sm text-slate-500 mt-1">Choose the service category you want to order.</p>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="px-6 pb-6">
                 {selectedBranchId ? (
-                    <p className="text-sm text-muted-foreground mb-4">Active branch: <span className="font-medium text-slate-900">{branches.find((b) => b.id === selectedBranchId)?.name ?? "(not found)"}</span></p>
+                    <div className="flex items-center gap-2 mb-5">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        <p className="text-sm text-slate-500">Active branch: <span className="font-semibold text-slate-900">{branches.find((b) => b.id === selectedBranchId)?.name ?? "(not found)"}</span></p>
+                    </div>
                 ) : (
-                    <p className="text-sm text-muted-foreground mb-4">No branches available.</p>
+                    <div className="flex items-center gap-2 mb-5">
+                        <div className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        <p className="text-sm text-slate-500">No branches available.</p>
+                    </div>
                 )}
 
                 {groups.length === 0 ? (
-                    <div className="text-center py-8">
-                        <p className="text-sm text-muted-foreground">No categories for this branch.</p>
+                    <div className="text-center py-12">
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
+                            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        </div>
+                        <p className="text-sm text-slate-500">No categories for this branch.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {groups.map((g) => (
-                        <Link key={g.id} href={`/customer/order/${g.id}`} className="group relative border rounded-xl p-5 hover:border-primary hover:bg-slate-50 transition-all">
-                            <div className="text-base font-semibold text-slate-900 group-hover:text-primary mb-1">{g.name}</div>
-                            {g.description ? (
-                            <div className="text-sm text-muted-foreground line-clamp-2">{g.description}</div>
-                            ) : null}
-                            <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-slate-200 group-hover:ring-primary/50 pointer-events-none" />
+                        <Link key={g.id} href={`/customer/order/${g.id}`} className="group relative flex items-center gap-4 border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 bg-white">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 group-hover:bg-primary/5 transition-colors">
+                                <svg className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors truncate">{g.name}</div>
+                                {g.description ? (
+                                <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">{g.description}</div>
+                                ) : null}
+                            </div>
+                            <svg className="h-4 w-4 text-slate-300 group-hover:text-primary ml-auto shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </Link>
                         ))}
                     </div>
@@ -177,50 +191,48 @@ export default async function CustomerOrderPage() {
       {/* Right Sidebar */}
       <div className="lg:col-span-3 space-y-6">
          {/* Billing & Support Summary Card */}
-         <Card className="border-none shadow-sm">
-            <CardHeader className="pb-2">
+         <Card className="border-0 shadow-sm bg-white">
+            <CardHeader className="pb-4">
                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-500 uppercase">Billing & Support</span>
-                  <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1 border-primary text-primary hover:bg-primary hover:text-white">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Billing & Support</span>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs gap-1.5 text-primary hover:text-primary hover:bg-primary/5">
                     <Link href="/customer/billing">
-                      <FileText className="w-3 h-3" />
+                      <FileText className="w-3.5 h-3.5" />
                       View All
                     </Link>
                   </Button>
                </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-5">
                {/* Unpaid Invoice Section */}
-               <div className="mb-4">
-                  <div className="text-xs text-slate-500 mb-1">Total Unpaid Bill</div>
-                  <div className="text-2xl font-bold text-slate-900 mb-2">{formatIDR(unpaidInvoiceSummary.total)}</div>
-                  <div className="text-xs text-slate-400">{unpaidInvoiceSummary.count > 0 ? `${unpaidInvoiceSummary.count} invoice belum dibayar.` : "No pending bills to pay."}</div>
+               <div>
+                  <div className="text-xs text-slate-500 mb-1.5 font-medium">Total Unpaid Bill</div>
+                  <div className="text-2xl font-bold text-slate-900 tracking-tight">{formatIDR(unpaidInvoiceSummary.total)}</div>
+                  <div className="text-xs text-slate-400 mt-1">{unpaidInvoiceSummary.count > 0 ? `${unpaidInvoiceSummary.count} invoice belum dibayar.` : "No pending bills to pay."}</div>
                </div>
                
                {/* Support Ticket Section */}
-               <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center justify-between mb-2">
-                     <div className="text-xs text-slate-500">Open Tickets</div>
-                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${openTicketsCount > 0 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-700"}`}>{ticketHealth}</span>
+               <div className="pt-4 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                     <div className="text-xs text-slate-500 font-medium">Open Tickets</div>
+                     <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${openTicketsCount > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{ticketHealth}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                     <Link href="/customer/support" className="flex-1 bg-slate-50 rounded-lg p-3 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer border border-slate-100">
-                        <div className="flex items-center gap-2">
-                           <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                           <span className="text-sm font-medium text-slate-600">{openTicketsCount} Tickets</span>
-                        </div>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 rounded-full">
-                           <Plus className="w-3 h-3 text-slate-400" />
-                        </Button>
-                     </Link>
-                  </div>
+                  <Link href="/customer/support" className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-100 group">
+                     <div className="flex items-center gap-2.5">
+                        <div className="h-2 w-2 rounded-full bg-slate-300 group-hover:bg-primary transition-colors"></div>
+                        <span className="text-sm font-medium text-slate-700">{openTicketsCount} Tickets</span>
+                     </div>
+                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full hover:bg-white">
+                        <Plus className="w-3.5 h-3.5 text-slate-400" />
+                     </Button>
+                  </Link>
                </div>
 
-               <div className="mt-4 pt-4 border-t text-xs text-slate-500">
-                  <p className="font-semibold mb-1">Need Urgent Help?</p>
-                  <Link href="/help" className="flex items-center gap-2 text-primary cursor-pointer hover:underline">
-                    <Zap className="w-3 h-3" />
-                    <span>Contact Technical Support 24/7</span>
+               <div className="pt-4 border-t border-slate-100">
+                  <p className="text-xs text-slate-500 font-medium mb-2">Need Urgent Help?</p>
+                  <Link href="/help" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span className="font-medium">Contact Technical Support 24/7</span>
                   </Link>
                </div>
             </CardContent>

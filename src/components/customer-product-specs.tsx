@@ -43,13 +43,14 @@ function CheckboxRow({
   const subtotal = (qty || 0) * price
 
   return (
-    <tr className={`border-b ${checked ? "bg-muted/20" : ""}`}>
-      <td className="py-2 pr-4 align-top">
-        <div className="flex items-start gap-2 pt-2">
+    <tr className={`border-b border-slate-100 last:border-0 transition-colors ${checked ? "bg-primary/[0.03]" : "hover:bg-slate-50/50"}`}>
+      <td className="py-3 pr-4 align-top">
+        <div className="flex items-start gap-3 pt-0.5">
            <Checkbox 
              checked={checked}
              onCheckedChange={(c) => setChecked(!!c)}
              id={`${namePrefix}spec_${fieldKey}__${option.value}`}
+             className={`transition-colors ${checked ? "border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary" : "border-slate-300"}`}
            />
            <input 
              type="hidden" 
@@ -57,22 +58,22 @@ function CheckboxRow({
              value={checked ? "on" : ""} 
              form={formId}
            />
-           <Label htmlFor={`${namePrefix}spec_${fieldKey}__${option.value}`} className="cursor-pointer font-normal text-sm leading-none pt-0.5">
+           <Label htmlFor={`${namePrefix}spec_${fieldKey}__${option.value}`} className="cursor-pointer font-normal text-sm leading-snug text-slate-700">
              {option.label}
              {price > 0 && (
-               <span className="block text-xs text-muted-foreground mt-1">
+               <span className="block text-xs text-slate-500 mt-1">
                  @ {formatIDR(price)}
                </span>
              )}
            </Label>
         </div>
       </td>
-      <td className="py-2 pr-4 align-top">
+      <td className="py-3 pr-4 align-top">
         {typeof option.qty === "number" && (
           <Input 
             name={`${namePrefix}spec_${fieldKey}__${option.value}__qty`} 
             type="number" 
-            className="h-8 w-24" 
+            className="h-8 w-24 border-slate-200 focus:border-primary focus:ring-primary/20" 
             placeholder="Qty"
             value={qty || ""}
             onChange={(e) => setQty(Number(e.target.value))}
@@ -81,8 +82,8 @@ function CheckboxRow({
           />
         )}
       </td>
-      <td className="py-2 text-sm text-right align-top pt-3">
-        {checked && subtotal > 0 ? formatIDR(subtotal) : "-"}
+      <td className="py-3 text-sm text-right align-top pt-3.5">
+        {checked && subtotal > 0 ? <span className="font-medium text-slate-900">{formatIDR(subtotal)}</span> : <span className="text-slate-400">-</span>}
       </td>
     </tr>
   )
@@ -110,25 +111,25 @@ export function CustomerProductSpecs({
         
         if (s.type === "TEXT") {
           return (
-            <div key={s.id} className="space-y-1">
-              <Label>{s.label}{s.required ? " *" : ""}</Label>
-              <Input name={`${namePrefix}spec_${s.key}`} form={formId} />
+            <div key={s.id} className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">{s.label}{s.required ? " *" : ""}</Label>
+              <Input name={`${namePrefix}spec_${s.key}`} form={formId} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
             </div>
           )
         }
         if (s.type === "TEXTAREA") {
           return (
-            <div key={s.id} className="space-y-1">
-              <Label>{s.label}{s.required ? " *" : ""}</Label>
-              <textarea name={`${namePrefix}spec_${s.key}`} form={formId} className="border-input text-sm rounded-md border bg-transparent px-3 py-2 shadow-xs outline-none focus-visible:ring-[3px] focus-visible:border-ring w-full min-h-20" />
+            <div key={s.id} className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">{s.label}{s.required ? " *" : ""}</Label>
+              <textarea name={`${namePrefix}spec_${s.key}`} form={formId} className="border-slate-200 text-sm rounded-lg border bg-slate-50/50 px-3 py-2.5 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary w-full min-h-20 transition-all" />
             </div>
           )
         }
         if (s.type === "NUMBER") {
           return (
-            <div key={s.id} className="space-y-1">
-              <Label>{s.label}{s.required ? " *" : ""}</Label>
-              <Input name={`${namePrefix}spec_${s.key}`} type="number" form={formId} />
+            <div key={s.id} className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">{s.label}{s.required ? " *" : ""}</Label>
+              <Input name={`${namePrefix}spec_${s.key}`} type="number" form={formId} className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
             </div>
           )
         }
@@ -189,13 +190,13 @@ export function CustomerProductSpecs({
           }
 
           return (
-            <div key={s.id} className="space-y-1">
-              <Label>{s.label}{s.required ? " *" : ""}</Label>
+            <div key={s.id} className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">{s.label}{s.required ? " *" : ""}</Label>
               <select 
                 name={`${namePrefix}spec_${s.key}`} 
                 form={formId} 
                 onChange={handleChange}
-                className="border-input text-sm rounded-md border bg-transparent px-3 py-2 shadow-xs outline-none focus-visible:ring-[3px] focus-visible:border-ring w-full"
+                className="border-slate-200 text-sm rounded-lg border bg-slate-50/50 px-3 py-2.5 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary w-full transition-all"
               >
                 <option value="">-</option>
                 {options.map((o, i) => (
@@ -208,15 +209,15 @@ export function CustomerProductSpecs({
         if (s.type === "CHECKBOX") {
           const opts = Array.isArray(cfg.options) ? cfg.options : []
           return (
-            <div key={s.id} className="space-y-1">
-              <Label>{s.label}{s.required ? " *" : ""}</Label>
-              <div className="overflow-x-auto border rounded-md p-2">
+            <div key={s.id} className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">{s.label}{s.required ? " *" : ""}</Label>
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 font-medium text-muted-foreground w-[50%]">Item</th>
-                      <th className="text-left py-2 w-24 font-medium text-muted-foreground">Qty</th>
-                      <th className="text-right py-2 font-medium text-muted-foreground">Total</th>
+                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                      <th className="text-left py-2.5 px-3 font-medium text-slate-500 text-xs w-[50%]">Item</th>
+                      <th className="text-left py-2.5 px-3 font-medium text-slate-500 text-xs w-24">Qty</th>
+                      <th className="text-right py-2.5 px-3 font-medium text-slate-500 text-xs">Total</th>
                     </tr>
                   </thead>
                   <tbody>
