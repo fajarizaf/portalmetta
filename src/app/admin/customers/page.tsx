@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import bcrypt from "bcryptjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,6 +12,8 @@ import { SearchableSelect } from "@/components/ui/select";
 import { CustomerSearch } from "./search";
 import Link from "next/link";
 import { sendPasswordResetEmail } from "@/lib/mail";
+import bcrypt from "bcryptjs";
+import { UserPlus, User, Mail, Building2, Pencil, KeyRound, Trash2 } from "lucide-react";
 
 async function createCustomer(formData: FormData) {
   "use server";
@@ -69,7 +70,6 @@ async function createCustomer(formData: FormData) {
     },
   });
   
-  // Send email notification to new customer
   try {
     await sendPasswordResetEmail(finalEmail, finalName, password);
   } catch (error) {
@@ -113,7 +113,6 @@ async function resetPassword(formData: FormData) {
   const u = await prisma.user.findUnique({ where: { id } });
   if (!u) return;
 
-  // Generate random password
   const newPassword = Math.random().toString(36).slice(-8);
   const hash = await bcrypt.hash(newPassword, 10);
   
@@ -122,7 +121,6 @@ async function resetPassword(formData: FormData) {
     data: { passwordHash: hash }
   });
 
-  // Send email
   try {
     await sendPasswordResetEmail(u.email, u.name || u.email, newPassword);
   } catch (error) {
@@ -190,7 +188,6 @@ async function updateCustomer(formData: FormData) {
   if (password) {
     const hash = await bcrypt.hash(password, 10);
     data.passwordHash = hash;
-    // Send email notification to customer
     try {
       await sendPasswordResetEmail(finalEmail, finalName, password);
     } catch (error) {
@@ -254,165 +251,207 @@ export default async function CustomersPage(props: {
   ];
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Customer Management</h1>
-      <div className="flex justify-between items-center gap-4">
-        <CustomerSearch />
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Tambah Customer</Button>
-          </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tambah Customer</DialogTitle>
-          </DialogHeader>
-          <form action={createCustomer} className="space-y-6">
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Personal Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
-                  <Input id="first_name" name="first_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
-                  <Input id="last_name" name="last_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email_address">Email Address</Label>
-                  <Input id="email_address" name="email_address" type="email" />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" name="address" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <SearchableSelect name="country" options={countries.map((c) => ({ label: c, value: c }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone_number">Phone Number</Label>
-                  <Input id="phone_number" name="phone_number" type="tel" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="job_title">Job Title</Label>
-                  <Input id="job_title" name="job_title" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Technical Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="technical_contact_name">Technical Contact Name</Label>
-                  <Input id="technical_contact_name" name="technical_contact_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="technical_phone_number">Technical Phone Number</Label>
-                  <Input id="technical_phone_number" name="technical_phone_number" type="tel" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="technical_email">Technical Email</Label>
-                  <Input id="technical_email" name="technical_email" type="email" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Customer Management</h1>
+          <p className="text-sm text-slate-500 mt-1">Kelola data customer dan akses platform.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <CustomerSearch />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="h-9 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Tambah Customer
+              </Button>
+            </DialogTrigger>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold">Tambah Customer</DialogTitle>
+            </DialogHeader>
+            <form action={createCustomer} className="space-y-6">
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Personal Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="first_name" className="text-sm font-medium text-slate-700">First Name</Label>
+                    <Input id="first_name" name="first_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="last_name" className="text-sm font-medium text-slate-700">Last Name</Label>
+                    <Input id="last_name" name="last_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email_address" className="text-sm font-medium text-slate-700">Email Address</Label>
+                    <Input id="email_address" name="email_address" type="email" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="address" className="text-sm font-medium text-slate-700">Address</Label>
+                    <Input id="address" name="address" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="country" className="text-sm font-medium text-slate-700">Country</Label>
+                    <SearchableSelect name="country" options={countries.map((c) => ({ label: c, value: c }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone_number" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                    <Input id="phone_number" name="phone_number" type="tel" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="job_title" className="text-sm font-medium text-slate-700">Job Title</Label>
+                    <Input id="job_title" name="job_title" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Billing Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="billing_contact_name">Billing Contact Name</Label>
-                  <Input id="billing_contact_name" name="billing_contact_name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="billing_phone_number">Billing Phone Number</Label>
-                  <Input id="billing_phone_number" name="billing_phone_number" type="tel" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="billing_email">Billing Email</Label>
-                  <Input id="billing_email" name="billing_email" type="email" />
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Technical Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="technical_contact_name" className="text-sm font-medium text-slate-700">Technical Contact Name</Label>
+                    <Input id="technical_contact_name" name="technical_contact_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="technical_phone_number" className="text-sm font-medium text-slate-700">Technical Phone Number</Label>
+                    <Input id="technical_phone_number" name="technical_phone_number" type="tel" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="technical_email" className="text-sm font-medium text-slate-700">Technical Email</Label>
+                    <Input id="technical_email" name="technical_email" type="email" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Company Information</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="companyId">Company</Label>
-                  <SearchableSelect name="companyId" options={companies.map((c) => ({ label: c.name, value: c.id }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="partner_type">Partner Type</Label>
-                  <SearchableSelect name="partner_type" options={[{ label: "Reseller", value: "RESELLER" }, { label: "End User", value: "END_USER" }]} />
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Billing Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billing_contact_name" className="text-sm font-medium text-slate-700">Billing Contact Name</Label>
+                    <Input id="billing_contact_name" name="billing_contact_name" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billing_phone_number" className="text-sm font-medium text-slate-700">Billing Phone Number</Label>
+                    <Input id="billing_phone_number" name="billing_phone_number" type="tel" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billing_email" className="text-sm font-medium text-slate-700">Billing Email</Label>
+                    <Input id="billing_email" name="billing_email" type="email" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Simpan</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-        </Dialog>
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-slate-700">Company Information</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="companyId" className="text-sm font-medium text-slate-700">Company</Label>
+                    <SearchableSelect name="companyId" options={companies.map((c) => ({ label: c.name, value: c.id }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="partner_type" className="text-sm font-medium text-slate-700">Partner Type</Label>
+                    <SearchableSelect name="partner_type" options={[{ label: "Reseller", value: "RESELLER" }, { label: "End User", value: "END_USER" }]} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
+                <Input id="password" name="password" type="password" className="h-9 border-slate-200 focus:border-primary focus:ring-primary/20" />
+              </div>
+              <DialogFooter>
+                <Button type="submit" className="bg-slate-900 hover:bg-slate-800">Simpan</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+          </Dialog>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">Nama</th>
-              <th className="p-2">Job Title</th>
-              <th className="p-2">Email</th>
-              <th className="p-2">Company</th>
-              <th className="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((c) => (
-              <tr key={c.id} className="border-b">
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                      {(c.name ?? "").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                    </div>
-                    <span>{c.name}</span>
-                  </div>
-                </td>
-                <td className="p-2">{c.jobTitle}</td>
-                <td className="p-2">{c.email}</td>
-                <td className="p-2">{c.company?.name ?? "-"}</td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link 
-                        href={`/admin/customers/${c.id}/edit`} 
-                        prefetch={false}
-                        title={`Edit ${c.name} (${c.id})`}
-                      >
-                        Edit
-                      </Link>
-                    </Button>
-                    <form action={resetPassword} className="inline-flex">
-                      <input type="hidden" name="id" value={c.id} />
-                      <Button variant="secondary" size="sm" type="submit" title="Reset password dan kirim via email">
-                        Reset PW
-                      </Button>
-                    </form>
-                    <form action={deleteCustomer} className="inline-flex">
-                      <input type="hidden" name="id" value={c.id} />
-                      <Button variant="destructive" size="sm">Hapus</Button>
-                    </form>
-                  </div>
-                </td>
+
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Customer</th>
+                <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Job Title</th>
+                <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Email</th>
+                <th className="text-left py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Company</th>
+                <th className="text-right py-3 px-5 font-medium text-slate-500 text-xs uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {customers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-16">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                        <User className="h-6 w-6 text-slate-400" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-900">Tidak ada customer ditemukan</p>
+                      <p className="text-xs text-slate-500 mt-1">Coba ubah kata kunci pencarian atau tambah customer baru.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                customers.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="py-3 px-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 shrink-0">
+                          {(c.name ?? "").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900 truncate">{c.name || "Unnamed"}</div>
+                          {c.partnerType && (
+                            <span className="inline-flex items-center mt-0.5">
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${c.partnerType === "RESELLER" ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
+                                {c.partnerType === "RESELLER" ? "Reseller" : "End User"}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-5 text-slate-600">{c.jobTitle || "-"}</td>
+                    <td className="py-3 px-5">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{c.email}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-5">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{c.company?.name ?? "-"}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100" asChild>
+                          <Link href={`/admin/customers/${c.id}/edit`} prefetch={false} title={`Edit ${c.name}`}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <form action={resetPassword} className="inline-flex">
+                          <input type="hidden" name="id" value={c.id} />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100" type="submit" title="Reset password">
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </Button>
+                        </form>
+                        <form action={deleteCustomer} className="inline-flex">
+                          <input type="hidden" name="id" value={c.id} />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" type="submit" title="Hapus">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
