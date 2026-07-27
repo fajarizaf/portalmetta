@@ -16,8 +16,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   company?: { logoUrl?: string | null; name?: string | null } | null
@@ -47,6 +48,7 @@ export function AppSidebar({
   docTypes,
   ...props
 }: AppSidebarProps) {
+  const pathname = usePathname()
   const list = React.useMemo(() => branches ?? [], [branches])
   const groups: { title: string; items: { title: string; href: string; icon?: LucideIcon; iconName?: string | null }[] }[] = [
     {
@@ -79,36 +81,48 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="border-b border-slate-100 pb-3">
         {company?.logoUrl ? (
-          <div className="flex items-center justify-start">
-            <Image src={company.logoUrl} alt={company?.name || "Company"} width={240} height={96} className="h-12 w-auto rounded-md object-contain" />
+          <div className="flex items-center px-2 py-1">
+            <Image src={company.logoUrl} alt={company?.name || "Company"} width={240} height={96} className="h-10 w-auto rounded-md object-contain" />
           </div>
         ) : null}
         <TeamSwitcher branches={list} selectedBranchId={selectedBranchId} action={setBranchFilter} />
       </SidebarHeader>
-      <SidebarContent className="gap-0">
+      <SidebarContent className="gap-1 px-2 py-2">
         {groups.map((group) => (
           <Collapsible key={group.title} title={group.title} defaultOpen className="group/collapsible">
-            <SidebarGroup>
-              <SidebarGroupLabel asChild className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm">
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel asChild className="group/label text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-2 h-auto hover:bg-transparent hover:text-slate-400">
                 <CollapsibleTrigger>
-                  {group.title} <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                  {group.title}
+                  <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90 w-3 h-3" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items.map((it) => (
-                      <SidebarMenuItem key={it.title}>
-                        <SidebarMenuButton asChild>
-                          <Link href={it.href}>
-                            {it.icon ? <it.icon /> : (it.iconName ? <IconDisplay name={it.iconName} /> : null)}
-                            <span>{it.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                  <SidebarMenu className="gap-0.5">
+                    {group.items.map((it) => {
+                      const isActive = pathname === it.href || (it.href !== "/admin" && pathname.startsWith(it.href))
+                      return (
+                        <SidebarMenuItem key={it.title}>
+                          <SidebarMenuButton
+                            asChild
+                            className={cn(
+                              "h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-200",
+                              isActive
+                                ? "bg-slate-900 text-white shadow-sm"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            )}
+                          >
+                            <Link href={it.href}>
+                              {it.icon ? <it.icon className={cn("w-4 h-4", isActive && "text-white")} /> : (it.iconName ? <IconDisplay name={it.iconName} /> : null)}
+                              <span>{it.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </CollapsibleContent>
@@ -116,7 +130,6 @@ export function AppSidebar({
           </Collapsible>
         ))}
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   )
 }

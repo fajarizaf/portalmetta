@@ -39,28 +39,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isSuper = perm.has("COMPANY_MANAGEMENT");
   const cookieStore = await cookies();
   const assignedBranches = await prisma.branch.findMany({ where: { admins: { some: { userId: me?.id ?? "" } } }, orderBy: { name: "asc" } });
-  
-  // Strict check: Only show super branches if user has COMPANY_MANAGEMENT (Super Admin/Admin)
-  // For others (like Sales, Security), ONLY show assignedBranches.
-  // Note: Some roles like Operational Manager might have COMPANY_MANAGEMENT but should only see assigned branches?
-  // Let's refine: "isSuper" logic seems to rely on COMPANY_MANAGEMENT. 
-  // If user is Admin (role: Admin), they usually have COMPANY_MANAGEMENT.
-  // If user is Sales, they might have COMPANY_MANAGEMENT too? Let's check.
-  // Based on previous logs: Sales has ADMIN_PANEL_ACCESS, COMPANY_MANAGEMENT, CUSTOMER_MANAGEMENT.
-  // So Sales is considered "isSuper" by this logic, which means they see all branches in company.
-  // BUT the requirement is: "admin di asign ke branch mana saja berarti akan nampil list branch nya".
-  // This implies we should prioritize assigned branches if they exist, OR only show assigned branches if not truly a "Super Admin" who needs to see everything.
-  
-  // If the requirement is strict "only assigned branches", then we should ignore superBranches unless assignedBranches is empty OR we want to explicitely allow Company Managers to see all.
-  // However, "Sales" role having "COMPANY_MANAGEMENT" seems to be why they see all branches.
-  // If we want to restrict Sales to only assigned branches, we need to know if they are *supposed* to manage the whole company or just their branches.
-  
-  // Assuming the user wants strict assignment-based visibility for "Admin" (which might refer to branch admins):
-  // Let's change logic: Always use assignedBranches. Only fall back to company-wide branches if assignedBranches is empty AND user is Super Admin.
-  // OR: If assignedBranches > 0, ONLY show those.
-  
+
   const useStrictAssigned = assignedBranches.length > 0 && !isSuper;
-  
+
   const superBranches = isSuper
     ? await prisma.branch.findMany({
         where: {
@@ -72,16 +53,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         orderBy: { name: "asc" },
       })
     : [];
-    
+
   const baseBranches = useStrictAssigned
       ? assignedBranches
       : (superBranches.length > 0 ? superBranches : await prisma.branch.findMany({ where: { companyId: me?.companyId ?? undefined }, orderBy: { name: "asc" } }));
-      
+
   const branchesMap = new Map<string, { id: string; name: string }>();
   for (const b of baseBranches) branchesMap.set(b.id, { id: b.id, name: b.name });
-  // Ensure assigned are always there (redundant if baseBranches is assigned, but safe)
   for (const b of assignedBranches) branchesMap.set(b.id, { id: b.id, name: b.name });
-  
+
   const branches = Array.from(branchesMap.values());
   const cookieBranchId = cookieStore.get("branchId")?.value;
   const isImpersonating = Boolean(cookieStore.get("impersonateUserId")?.value);
@@ -90,7 +70,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const selectedBranchId = allowedBranchIds.has(String(candidateBranchId)) ? candidateBranchId : branches[0]?.id;
   const company = me?.companyId ? await prisma.company.findUnique({ where: { id: me.companyId }, select: { logoUrl: true, name: true } }) : null;
   const docTypesAll = await prisma.docType.findMany({ select: { id: true, key: true, name: true, branchId: true, config: true, icon: true, permissions: { where: { roleId: me?.role?.id } } } })
-  
+
   const childDocTypeKeys = new Set<string>()
   for (const dt of docTypesAll) {
     const cfg = (dt.config ?? {}) as unknown as { childDocTypeKey?: string; childDocTypes?: Record<string, string> }
@@ -104,36 +84,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const navDocTypes = docTypesAll
     .filter((dt) => {
-      // Branch filter
       if (dt.branchId && dt.branchId !== selectedBranchId) return false
-      
-      // Child filter logic
-      // By default we hide child doctypes to avoid clutter (e.g. sales_order_item)
-      // However, some child doctypes are actually standalone documents linked to a parent (e.g. sales_order linked to request)
-      // We should only hide "Item" or "Detail" tables, usually identified by ending with "_item" or "_detail" or "_row"
-      // Or we can rely on childDocTypeKeys but make an exception if the DocType seems to be a main document.
-      // Current implementation of childDocTypeKeys collects ALL child doctypes.
-      // Let's refine: if it's in childDocTypeKeys AND key ends with "_item", hide it.
-      // Otherwise, show it (e.g. sales_order).
       if (childDocTypeKeys.has(dt.key)) {
         if (dt.key.endsWith("_item") || dt.key.endsWith("_row") || dt.key.endsWith("_detail") || dt.key === "rack_patch_panel" || dt.key === "rack_hardware" || dt.key === "cross_connect") {
           return false
         }
       }
-      
-      // Permission filter
       if (dt.key === "support_ticket") return false
-      
       const p = dt.permissions[0]
       const hasGlobalAccess = perm.has("DOCUMENTS_MANAGEMENT") || perm.has("ADMIN_PANEL_ACCESS")
-      
       return (p && p.canRead) || hasGlobalAccess
     })
     .sort((a, b) => a.name.localeCompare(b.name))
-
-  console.log("[AdminLayout] Total DocTypes:", docTypesAll.length)
-  console.log("[AdminLayout] Child Keys:", Array.from(childDocTypeKeys))
-  console.log("[AdminLayout] Nav DocTypes:", navDocTypes.map(d => d.key))
 
   const notifyEnabledIds = docTypesAll.filter((dt) => {
     const cfg = (dt.config ?? {}) as unknown as { notifyConfig?: { adminEnabled?: boolean } }
@@ -166,64 +128,92 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       />
       <SidebarInset>
         <NavigationLoadingOverlay />
-        <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger />
-            <AdminBreadcrumbs />
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-            {isImpersonating ? (
-              <form action={clearImpersonation}>
-                <Button variant="outline">Kembali ke Super Admin</Button>
-              </form>
-            ) : null}
-            <Button asChild variant="ghost" className="relative gap-2" title="Rack Management">
-              <Link href="/admin/rack-mapping">
-                <LayoutGrid className="size-5" />
-                <span className="text-sm font-medium">Rack Management</span>
+
+        {/* Premium Header */}
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+          <div className="flex h-14 items-center gap-3 px-4">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-colors -ml-1" />
+              <div className="w-px h-5 bg-slate-200" />
+              <AdminBreadcrumbs />
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5">
+              {isImpersonating ? (
+                <form action={clearImpersonation}>
+                  <Button variant="outline" size="sm" className="h-8 text-xs font-medium border-slate-200 text-slate-600 hover:bg-slate-50">
+                    Kembali ke Super Admin
+                  </Button>
+                </form>
+              ) : null}
+
+              <Link
+                href="/admin/rack-mapping"
+                className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 rounded-lg transition-all"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">Rack</span>
               </Link>
-            </Button>
-            <Button asChild variant="ghost" className="relative gap-2" title="Support Ticket">
-              <Link href="/admin/docs/support_ticket">
-                <LifeBuoy className="size-5" />
-                <span className="text-sm font-medium">Support Ticket</span>
+
+              <Link
+                href="/admin/docs/support_ticket"
+                className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 rounded-lg transition-all"
+              >
+                <LifeBuoy className="w-4 h-4" />
+                <span className="hidden sm:inline">Support</span>
               </Link>
-            </Button>
-            <details className="relative">
-              <summary className="cursor-pointer relative flex items-center" aria-label={`Notifikasi (${notifItems.length})`}>
-                <Bell className="size-5" />
-                {notifItems.length > 0 ? (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] min-w-5 h-5 px-1 font-medium">
-                    {notifItems.length}
-                  </span>
-                ) : null}
-              </summary>
-              <div className="absolute right-0 mt-2 w-80 border bg-background rounded shadow">
-                <div className="max-h-80 overflow-auto">
-                  {notifItems.length === 0 ? (
-                    <div className="p-3 text-xs text-muted-foreground">Tidak ada notifikasi</div>
-                  ) : (
-                    notifItems.map((n, i) => {
-                      const dt = notifyDocTypes.get(n.docTypeId)
-                      const dtLabel = dt?.name ?? "Dokumen"
-                      const path = dt?.key ? `/admin/docs/${dt.key}/${n.recordId}` : "#"
-                      return (
-                        <a key={i} href={path} className="block p-3 hover:bg-muted text-sm">
-                          <div className="font-medium">{dtLabel}</div>
-                          <div className="text-xs text-muted-foreground">{n.text}</div>
-                        </a>
-                      )
-                    })
-                  )}
+
+              <div className="w-px h-5 bg-slate-200 mx-1" />
+
+              {/* Notification Bell */}
+              <div className="relative group">
+                <button className="relative flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                  <Bell className="w-4 h-4" />
+                  {notifItems.length > 0 ? (
+                    <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 font-semibold ring-2 ring-white">
+                      {notifItems.length > 99 ? "99+" : notifItems.length}
+                    </span>
+                  ) : null}
+                </button>
+
+                {/* Dropdown */}
+                <div className="invisible group-hover:invisible opacity-0 group-hover:opacity-100 absolute right-0 mt-1 w-80 bg-white rounded-xl border border-slate-200/60 shadow-xl shadow-slate-900/5 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-xs font-semibold text-slate-900">Notifications</p>
+                  </div>
+                  <div className="max-h-80 overflow-auto">
+                    {notifItems.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500">No new notifications</p>
+                      </div>
+                    ) : (
+                      notifItems.map((n, i) => {
+                        const dt = notifyDocTypes.get(n.docTypeId)
+                        const dtLabel = dt?.name ?? "Document"
+                        const path = dt?.key ? `/admin/docs/${dt.key}/${n.recordId}` : "#"
+                        return (
+                          <a key={i} href={path} className="block px-4 py-3 hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-0">
+                            <p className="text-xs font-medium text-slate-900">{dtLabel}</p>
+                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.text}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{new Date(n.at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</p>
+                          </a>
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
-            </details>
-            <UserMenu name={me?.name || email} email={email} roleName={me?.role?.name || ""} imageUrl={session?.user?.image ?? undefined} />
+
+              <div className="w-px h-5 bg-slate-200 mx-0.5" />
+
+              <UserMenu name={me?.name || email} email={email} roleName={me?.role?.name || ""} imageUrl={session?.user?.image ?? undefined} />
+            </div>
           </div>
         </header>
-        <main className="p-4">
+
+        <main className="p-6 bg-[#f8fafc] min-h-[calc(100vh-3.5rem)] flex-1">
           <ToastHost />
-          
           {children}
         </main>
       </SidebarInset>

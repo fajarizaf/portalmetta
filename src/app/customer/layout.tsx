@@ -10,10 +10,9 @@ import { BranchSelector } from "@/components/branch-selector"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { Input } from "@/components/ui/input"
-import { Search, LifeBuoy, LayoutGrid, Share2 } from "lucide-react"
+import { Search, LifeBuoy, LayoutGrid } from "lucide-react"
 import { CustomerNav } from "@/components/customer/customer-nav"
 import { NotificationPopover } from "@/components/customer/notification-popover"
-import { Button } from "@/components/ui/button"
 
 async function setCustomerBranch(formData: FormData) {
   "use server"
@@ -56,70 +55,75 @@ export default async function CustomerLayout({ children }: { children: React.Rea
     const a = lastStatus.length > 0 ? lastStatus[lastStatus.length - 1] : null
     return a ? [{ at: a.at, text: a.text, recordId: r.id, docTypeKey: dtMap.get(r.docTypeId) ?? "" }] : []
   })
-  
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f8fafc]">
       <NavigationLoadingOverlay />
-      
-      {/* Top Header: Logo and User Profile */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-4">
-             {company ? (
-              <Link href="/customer" className="flex items-center">
+
+      {/* Top Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo + Branch */}
+          <div className="flex items-center gap-5">
+            {company && (
+              <Link href="/customer" className="flex items-center shrink-0 transition-opacity hover:opacity-80">
                 {company.logoUrl ? (
-                  <Image src={company.logoUrl} alt={company?.name || "Company"} width={140} height={40} className="h-10 w-auto object-contain" />
+                  <Image src={company.logoUrl} alt={company?.name || "Company"} width={140} height={40} className="h-9 w-auto object-contain" />
                 ) : (
-                  <span className="text-xl font-bold text-primary">{company.name || "Company"}</span>
+                  <span className="text-lg font-bold tracking-tight text-slate-900">{company.name || "Company"}</span>
                 )}
               </Link>
-            ) : null}
-            
-            {/* Branch Selector - kept here for functionality */}
-            {branches.length > 0 ? (
-              <div className="w-48">
-                 <BranchSelector branches={branches} selectedBranchId={selectedBranchId ?? undefined} action={setCustomerBranch} />
+            )}
+
+            {branches.length > 0 && (
+              <div className="w-52 border-l border-slate-200 pl-5">
+                <BranchSelector branches={branches} selectedBranchId={selectedBranchId ?? undefined} action={setCustomerBranch} />
               </div>
-            ) : null}
+            )}
           </div>
 
-          {/* User & Notifications */}
-          <div className="flex items-center gap-4">
-             <Button asChild variant="ghost" className="relative gap-2" title="Rack Management">
-              <Link href="/customer/my-racks">
-                <LayoutGrid className="size-5" />
-                <span className="text-sm font-medium">Rack Management</span>
-              </Link>
-            </Button>
-             <Button asChild variant="ghost" className="relative gap-2" title="Support Ticket">
-              <Link href="/customer/support">
-                <LifeBuoy className="size-5" />
-                <span className="text-sm font-medium">Support Ticket</span>
-              </Link>
-            </Button>
-             <UserMenu name={name} email={email} roleName={me?.role?.name ?? ""} imageUrl={session?.user?.image ?? undefined} />
-             
-             <NotificationPopover items={notifItems} />
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/customer/my-racks"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-lg transition-all"
+            >
+              <LayoutGrid className="size-4" />
+              <span className="hidden sm:inline">Rack</span>
+            </Link>
+            <Link
+              href="/customer/support"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-lg transition-all"
+            >
+              <LifeBuoy className="size-4" />
+              <span className="hidden sm:inline">Support</span>
+            </Link>
+
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+
+            <UserMenu name={name} email={email} roleName={me?.role?.name ?? ""} imageUrl={session?.user?.image ?? undefined} />
+            <NotificationPopover items={notifItems} />
           </div>
         </div>
       </header>
 
-      {/* Secondary Navigation: Menu and Search */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-              <CustomerNav />
-           </div>
+      {/* Secondary Navigation */}
+      <div className="sticky top-16 z-40 bg-white/70 backdrop-blur-lg border-b border-slate-200/50">
+        <div className="max-w-[1400px] mx-auto px-6 h-12 flex items-center justify-between">
+          <CustomerNav />
 
-           <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search..." className="pl-9 bg-slate-50 border-slate-200" />
-           </div>
+          <div className="relative w-56 hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Input
+              placeholder="Search..."
+              className="pl-9 h-9 bg-slate-50/80 border-slate-200/80 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-slate-300 transition-all placeholder:text-slate-400"
+            />
+          </div>
         </div>
       </div>
 
-      <main className="container mx-auto p-4 py-8">
+      {/* Main Content */}
+      <main className="max-w-[1400px] mx-auto px-6 py-8">
         <ToastHost />
         {children}
       </main>
