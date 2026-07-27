@@ -29,6 +29,7 @@ import { sendDocumentEmail, generatePDFFromHTML } from "@/lib/mail"
 import { buildDefaultHtml, renderFromTemplate } from "@/lib/doc-renderer"
 import { getDocPreviewData } from "@/lib/doc-data"
 import { getSubscriptionBillingPreview } from "@/lib/invoice-generator"
+import { ImagePreview } from "@/components/image-preview"
 import { SubscriptionBillingActions } from "@/components/admin/subscription-billing-actions"
 import * as React from "react"
 
@@ -1425,15 +1426,27 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                         </div>
                       )
                     }
-                    if (typeStr === "DATE") {
-                      return (
-                        <div key={f.id} className="space-y-2">
-                          <Label>{f.label}{f.required ? " *" : ""}</Label>
-                          <Input name={f.key} type="date" defaultValue={val} disabled={isFieldReadOnly} required={f.required} />
-                        </div>
-                      )
-                    }
-                    // Fallback for any other type
+                     if (typeStr === "DATE") {
+                       return (
+                         <div key={f.id} className="space-y-2">
+                           <Label>{f.label}{f.required ? " *" : ""}</Label>
+                           <Input name={f.key} type="date" defaultValue={val} disabled={isFieldReadOnly} required={f.required} />
+                         </div>
+                       )
+                     }
+                     if (typeStr === "ATTACHMENT") {
+                       return (
+                         <div key={f.id} className="space-y-2">
+                           <Label>{f.label}{f.required ? " *" : ""}</Label>
+                           {vRaw ? (
+                             <ImagePreview src={String(vRaw)} alt={f.label} />
+                           ) : (
+                             <Input name={f.key} defaultValue={val} disabled={isFieldReadOnly} required={f.required} />
+                           )}
+                         </div>
+                       )
+                     }
+                     // Fallback for any other type
                     return (
                       <div key={f.id} className="space-y-2">
                         <Label>{f.label}{f.required ? " *" : ""}</Label>
@@ -1724,26 +1737,28 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                         <div className="flex items-center justify-between p-3">
                           <CollapsibleTrigger asChild>
                             <div className="flex items-center gap-4 text-sm cursor-pointer w-full select-none">
-                              {(() => {
-                                const keys = childListFieldsByFieldKey[f.key] ?? []
-                                if (keys.length === 0) return <span className="font-semibold">Item {row.idx + 1}</span>
-                                return keys.map((k, i) => {
-                                  const cf = child.fields.find(x => x.key === k)
-                                  if (!cf) return null
-                                  const raw = d[k]
-                                  let display = String(raw ?? "")
-                                  if (cf.type === "DROPDOWN") {
-                                    const opts = (childOptionsByFieldKey[f.key] ?? {})[k] ?? []
-                                    display = opts.find(o => o.value === String(raw))?.label ?? display
-                                  }
-                                  return (
-                                    <span key={k} className={i === 0 ? "font-semibold text-primary" : "flex items-center gap-1.5"}>
-                                      {i > 0 && <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">{cf.label}</span>}
-                                      <span className="font-medium">{display}</span>
-                                    </span>
-                                  )
-                                })
-                              })()}
+                               {(() => {
+                                 const keys = childListFieldsByFieldKey[f.key] ?? []
+                                 if (keys.length === 0) return <span className="font-semibold">Item {row.idx + 1}</span>
+                                 return keys.map((k, i) => {
+                                   const cf = child.fields.find(x => x.key === k)
+                                   if (!cf) return null
+                                   const raw = d[k]
+                                   let display: React.ReactNode = String(raw ?? "")
+                                   if (cf.type === "DROPDOWN") {
+                                     const opts = (childOptionsByFieldKey[f.key] ?? {})[k] ?? []
+                                     display = opts.find(o => o.value === String(raw))?.label ?? display
+                                   } else if (cf.type === ("ATTACHMENT" as FieldType) && raw) {
+                                      display = <ImagePreview src={raw as string} alt={cf.label} />
+                                    }
+                                   return (
+                                     <span key={k} className={i === 0 ? "font-semibold text-primary" : "flex items-center gap-1.5"}>
+                                       {i > 0 && <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">{cf.label}</span>}
+                                       <span className="font-medium">{display}</span>
+                                     </span>
+                                   )
+                                 })
+                               })()}
                             </div>
                           </CollapsibleTrigger>
                           <div className="flex items-center gap-1">
@@ -1825,10 +1840,12 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                           <div className="p-4 border-t bg-muted/20 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             {child.fields.map((cf) => {
                               const val = d[cf.key]
-                              let display = String(val ?? "")
+                              let display: React.ReactNode = String(val ?? "")
                               if (cf.type === "DROPDOWN") {
                                 const opts = (childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? []
                                 display = opts.find(o => o.value === String(val))?.label ?? display
+                              } else if (cf.type === ("ATTACHMENT" as FieldType) && val) {
+                                display = <ImagePreview src={val as string} alt={cf.label} />
                               }
                               return (
                                 <div key={cf.id} className="space-y-1">

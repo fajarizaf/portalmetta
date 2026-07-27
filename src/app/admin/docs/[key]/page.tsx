@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { Card, CardContent } from "@/components/ui/card"
 import { IconDisplay } from "@/components/icon-display"
+import { ImagePreview } from "@/components/image-preview"
 
 import { Filter as FilterIcon, FileText, Send, XCircle, Eye, CheckCircle2, BadgeCheck, PlayCircle, Globe } from "lucide-react"
 import type { FieldType } from "@/generated/prisma/enums"
@@ -715,22 +716,24 @@ export default async function DocsByTypePage({ params, searchParams }: { params?
                           if (!f) return null
                           const d = (r.data ?? {}) as Record<string, unknown>
                           const raw = d[k]
-                          let val = "-"
-                          if (raw !== undefined && raw !== null) {
-                            if (f.type === ("DROPDOWN" as FieldType)) {
-                              const cfg = (f.config ?? {}) as unknown as { options?: Array<{ label: string; value: string }> }
-                              const opts = dynamicOptions[f.key] ?? (Array.isArray(cfg.options) ? cfg.options : [])
-                              const found = opts.find((o) => o.value === String(raw))
-                              val = found ? found.label : String(raw)
-                            } else if (f.type === ("CHECKBOX" as FieldType)) {
-                              val = (raw as boolean) ? "Ya" : "Tidak"
-                            } else {
-                              val = String(raw)
-                            }
-                          }
-                          return (
-                            <span key={k} className="inline-block mr-2">{f.label}: {val}</span>
-                          )
+                           let val: React.ReactNode = "-"
+                           if (raw !== undefined && raw !== null) {
+                             if (f.type === ("DROPDOWN" as FieldType)) {
+                               const cfg = (f.config ?? {}) as unknown as { options?: Array<{ label: string; value: string }> }
+                               const opts = dynamicOptions[f.key] ?? (Array.isArray(cfg.options) ? cfg.options : [])
+                               const found = opts.find((o) => o.value === String(raw))
+                               val = found ? found.label : String(raw)
+                             } else if (f.type === ("CHECKBOX" as FieldType)) {
+                               val = (raw as boolean) ? "Ya" : "Tidak"
+                             } else if (f.type === ("ATTACHMENT" as FieldType) && raw) {
+                               val = <ImagePreview src={raw as string} alt={f.label} />
+                             } else {
+                               val = String(raw)
+                             }
+                           }
+                           return (
+                             <span key={k} className="inline-block mr-2">{f.label}: {val}</span>
+                           )
                         })}
                       </div>
                     ) : null}
