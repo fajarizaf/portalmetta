@@ -34,27 +34,33 @@ export default async function AdminVisitsPage() {
   const weekLater = new Date(today)
   weekLater.setDate(weekLater.getDate() + 7)
 
+  // Build today date string in LOCAL timezone (YYYY-MM-DD format) to match
+  // the format of data["visit_date"] stored in the database
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  const weekLaterStr = `${weekLater.getFullYear()}-${String(weekLater.getMonth() + 1).padStart(2, "0")}-${String(weekLater.getDate()).padStart(2, "0")}`
+
   const records = await prisma.docRecord.findMany({
     where: { docTypeId: dt.id },
     orderBy: { updatedAt: "desc" },
-    take: 200,
+    take: 500,
   })
 
-  // Filter records whose visit_date is within range
+  // Filter records whose visit_date is within range (string comparison)
   const filtered = records.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     const visitDate = typeof data["visit_date"] === "string" ? data["visit_date"] : null
     if (!visitDate) return false
-    const vd = new Date(visitDate)
-    return vd >= today && vd <= weekLater
+    // Direct string comparison works for YYYY-MM-DD format
+    return visitDate >= todayStr && visitDate <= weekLaterStr
   })
 
-  // Stats
-  const todayStr = today.toISOString().split("T")[0]
+  // Stats: today's visits
   const todayVisits = filtered.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     return data["visit_date"] === todayStr
   })
+  // Active = checked in (regardless of check_out, they may still be on premise)
+  // OR checked out today (just finished visit)
   const activeVisits = todayVisits.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     return data["qr_status"] === "checked_in"

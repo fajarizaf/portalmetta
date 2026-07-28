@@ -314,7 +314,7 @@ async function createRecord(formData: FormData) {
         const abs = path.join(dir, fileName)
         const buf = Buffer.from(await file.arrayBuffer())
         await fs.writeFile(abs, buf)
-        nextData[k] = `/uploads/doc-attachments/${docType.key}/${created.id}/${fileName}`
+        nextData[k] = `/api/uploads/doc-attachments/${docType.key}/${created.id}/${fileName}`
       }
       await prisma.docRecord.update({ where: { id: created.id }, data: { data: nextData as Prisma.InputJsonValue } })
     }
@@ -484,7 +484,7 @@ async function createRecord(formData: FormData) {
             const abs = path.join(dir, fileName)
             const buf = Buffer.from(await v.arrayBuffer())
             await fs.writeFile(abs, buf)
-            rowPayload[k] = `/uploads/doc-attachments/${child.key}/${created.id}/${fileName}`
+            rowPayload[k] = `/api/uploads/doc-attachments/${child.key}/${created.id}/${fileName}`
             hasData = true
           }
         }

@@ -261,7 +261,7 @@ async function updateRecord(formData: FormData) {
                     const abs = path.join(dir, fileName)
                     const buf = Buffer.from(await file.arrayBuffer())
                     await fs.writeFile(abs, buf)
-                    finalPayload[k] = `/uploads/doc-attachments/${childDt.key}/${id}/${fileName}`
+                    finalPayload[k] = `/api/uploads/doc-attachments/${childDt.key}/${id}/${fileName}`
                   } else {
                     finalPayload[k] = null
                   }

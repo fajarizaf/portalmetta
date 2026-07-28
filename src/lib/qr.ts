@@ -57,6 +57,14 @@ export interface QRValidationResult {
     code: string | null
     status: string | null
     data: Record<string, unknown>
+    visitors?: Array<{
+      visitor_name: string
+      nik: string
+      phone_number?: string
+      email?: string
+      ktp_file?: string
+      notes?: string
+    }>
     qrStatus: string | null
     checkInTime: Date | null
     checkOutTime: Date | null
@@ -95,13 +103,37 @@ export async function validateQRToken(token: string): Promise<QRValidationResult
     return { valid: false, error: `Visitor request belum di-approve (status: ${statusLabel})` }
   }
 
+  // Fetch visitor rows from DocRow (the `visitors` TABLE field stores data here)
+  const visitorRows = await prisma.docRow.findMany({
+    where: { recordId: record.id },
+    orderBy: { idx: "asc" },
+  })
+  const visitors = visitorRows.map((row) => {
+    const d = (row.data ?? {}) as Record<string, unknown>
+    return {
+      visitor_name: String(d["visitor_name"] || "-"),
+      nik: String(d["nik"] || "-"),
+      phone_number: typeof d["phone_number"] === "string" ? d["phone_number"] : undefined,
+      email: typeof d["email"] === "string" ? d["email"] : undefined,
+      ktp_file: typeof d["ktp_file"] === "string" ? d["ktp_file"] : undefined,
+      notes: typeof d["notes"] === "string" ? d["notes"] : undefined,
+    }
+  })
+
+  // Merge visitors into data so the scanner page can access them via data.visitors
+  const enrichedData: Record<string, unknown> = {
+    ...data,
+    visitors,
+  }
+
   return {
     valid: true,
     record: {
       id: record.id,
       code: record.code,
       status: record.status,
-      data,
+      data: enrichedData,
+      visitors, // Also expose at top level for convenience
       qrStatus: typeof data["qr_status"] === "string" ? data["qr_status"] : null,
       checkInTime: data["check_in_time"] ? new Date(data["check_in_time"] as string) : null,
       checkOutTime: data["check_out_time"] ? new Date(data["check_out_time"] as string) : null,

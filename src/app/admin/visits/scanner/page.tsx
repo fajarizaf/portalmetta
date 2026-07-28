@@ -16,6 +16,14 @@ interface ScanResult {
     code: string | null
     status: string | null
     data: Record<string, unknown>
+    visitors?: Array<{
+      visitor_name: string
+      nik: string
+      phone_number?: string
+      email?: string
+      ktp_file?: string
+      notes?: string
+    }>
     qrStatus: string | null
     checkInTime: Date | null
     checkOutTime: Date | null
@@ -299,7 +307,9 @@ export default function ScannerPage() {
   }
 
   const rec = scanResult?.record
-  const visitorInfo = rec ? getVisitorInfo(rec.data) : null
+  // Prefer top-level visitors field, fallback to data.visitors
+  const visitorsList = rec?.visitors ?? (rec ? (rec.data["visitors"] as Array<Record<string, unknown>> | undefined) : null) ?? []
+  const visitorInfo = rec ? getVisitorInfo({ ...rec.data, visitors: visitorsList }) : null
 
   return (
     <div className="space-y-6">
@@ -456,16 +466,87 @@ export default function ScannerPage() {
                 {visitorInfo?.ktpFile && (
                   <div className="border rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-2">KTP Upload</p>
-                    <a
-                      href={visitorInfo.ktpFile}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary underline"
-                    >
-                      View KTP File
-                    </a>
+                    <div className="flex items-start gap-3">
+                      {/* Inline image preview */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={visitorInfo.ktpFile}
+                          alt="KTP"
+                          className="w-32 h-20 object-cover rounded border bg-muted"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            const target = e.currentTarget
+                            target.style.display = "none"
+                            const parent = target.parentElement
+                            if (parent && !parent.querySelector(".ktp-fallback")) {
+                              const fallback = document.createElement("div")
+                              fallback.className = "ktp-fallback w-32 h-20 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground"
+                              fallback.textContent = "No preview"
+                              parent.appendChild(fallback)
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={visitorInfo.ktpFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline break-all"
+                        >
+                          📎 Open in new tab
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-1 break-all">{visitorInfo.ktpFile}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
+
+                {/* Visitor List */}
+                {(() => {
+                  const visitors = Array.isArray(rec.data["visitors"]) ? (rec.data["visitors"] as Array<Record<string, unknown>>) : []
+                  if (visitors.length === 0) return null
+                  return (
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-muted-foreground font-medium">Daftar Visitor ({visitors.length})</p>
+                      </div>
+                      <div className="space-y-2">
+                        {visitors.map((v, i) => (
+                          <div key={i} className="border-l-2 border-primary pl-3 py-1">
+                            <p className="font-medium text-sm">{i + 1}. {String(v["visitor_name"] || "-")}</p>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-1">
+                              <span>NIK: {String(v["nik"] || "-")}</span>
+                              <span>HP: {String(v["phone_number"] || "-")}</span>
+                              {Boolean(v["email"]) && <span>Email: {String(v["email"])}</span>}
+                              {Boolean(v["notes"]) && <span className="col-span-2">Notes: {String(v["notes"])}</span>}
+                            </div>
+                            {typeof v["ktp_file"] === "string" && v["ktp_file"] && (
+                              <div className="mt-1 flex items-center gap-2">
+                                <img
+                                  src={String(v["ktp_file"])}
+                                  alt={`KTP ${String(v["visitor_name"] || "")}`}
+                                  className="w-16 h-10 object-cover rounded border bg-muted flex-shrink-0"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none"
+                                  }}
+                                />
+                                <a
+                                  href={String(v["ktp_file"])}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary underline truncate"
+                                >
+                                  📎 KTP
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-2">

@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import QuotationItemSpecs from "@/components/quotation-item-specs"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { runDocEventHook } from "@/lib/doc-hooks"
-import { Package, FileText, Check, Info, Send, LifeBuoy, ArrowLeft, Plus, Edit, Mail } from "lucide-react";
+import { Package, FileText, Check, Info, Send, LifeBuoy, ArrowLeft, Plus, Edit, Mail, ChevronRight, Eye, XCircle, CheckCircle2, BadgeCheck, PlayCircle, Globe } from "lucide-react";
 import { IconDisplay } from "@/components/icon-display"
 import { FormValidationProvider } from "@/components/form-validation-context"
 import { ValidatedButton } from "@/components/validated-button"
@@ -98,6 +98,30 @@ function statusBadgeVariant(name: string): "default" | "secondary" | "destructiv
   if (s.includes("draft")) return "outline"
   if (s.includes("review") || s.includes("approve") || s.includes("verified") || s.includes("active") || s.includes("publish")) return "default"
   return "outline"
+}
+
+type StatusStyle = {
+  bg: string
+  text: string
+  border: string
+  icon: typeof FileText
+}
+
+function getStatusStyle(name: string): StatusStyle {
+  const s = String(name || "").toLowerCase()
+  if (s.includes("cancel") || s.includes("reject")) {
+    return { bg: "bg-red-50", text: "text-red-700", border: "border-red-200/60", icon: XCircle }
+  }
+  if (s.includes("draft")) {
+    return { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200/60", icon: FileText }
+  }
+  if (s.includes("submit") || s.includes("review") || s.includes("pending")) {
+    return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200/60", icon: Send }
+  }
+  if (s.includes("approve") || s.includes("active") || s.includes("verified") || s.includes("publish") || s.includes("complete")) {
+    return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200/60", icon: CheckCircle2 }
+  }
+  return { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200/60", icon: FileText }
 }
 
 function evalAtomic(expr: string, dataObj: Record<string, unknown>): boolean {
@@ -1239,76 +1263,135 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
   return (
     <FormValidationProvider formId="edit-record-form">
     <DocCalculator fields={formulaFields} />
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{docType.name} {record.code ?? record.id}</h1>
-              <Badge variant={statusBadgeVariant(currentStatus)}>{currentStatus}</Badge>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Created on {record.createdAt.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </div>
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+    <div className="max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2 space-y-8">
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <Link href={`/admin/docs/${docType.key}`} className="hover:text-slate-900 transition-colors">
+              {docType.name}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-mono text-xs">{record.code ?? record.id.slice(0, 8)}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Button asChild variant="outline"><Link href={`/admin/docs/${docType.key}/${id}/preview`} target="_blank">Preview</Link></Button>
-            <Button asChild variant="outline"><Link href={`/admin/docs/${docType.key}`}>Daftar</Link></Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button type="button" variant="outline"><Mail className="size-4 mr-1" />Kirim Email</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Kirim Dokumen via Email</DialogTitle>
-                </DialogHeader>
-                <form action={sendDocEmail} className="space-y-4">
-                  <input type="hidden" name="docTypeKey" value={docType.key} />
-                  <input type="hidden" name="id" value={id} />
-                  <div className="space-y-2">
-                    <Label htmlFor="to_email">Email Tujuan *</Label>
-                    <Input id="to_email" name="to_email" type="email" placeholder="contoh@email.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Catatan (Opsional)</Label>
-                    <textarea id="notes" name="notes" className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Tambahkan catatan untuk email ini..." />
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit">Kirim</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-            {isEditable ? (
-              <ValidatedButton type="submit" form="edit-record-form">
-                Save Changes
-              </ValidatedButton>
-            ) : null}
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                {docType.icon ? (
+                  <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
+                ) : (
+                  <FileText className="h-7 w-7 text-slate-700" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{docType.name}</h1>
+                  {(() => {
+                    const style = getStatusStyle(currentStatus)
+                    const StatusIcon = style.icon
+                    return (
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border",
+                        style.bg, style.text, style.border
+                      )}>
+                        <StatusIcon className="h-3 w-3" />
+                        {currentStatus}
+                      </span>
+                    )
+                  })()}
+                </div>
+                <div className="flex items-center gap-3 text-sm text-slate-500">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{record.code ?? record.id.slice(0, 8)}</span>
+                  <span>·</span>
+                  <span>Created {record.createdAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 h-9">
+                <Link href={`/admin/docs/${docType.key}`}>
+                  <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                  Back
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-9 border-slate-200">
+                <Link href={`/admin/docs/${docType.key}/${id}/preview`} target="_blank">
+                  <Eye className="h-3.5 w-3.5 mr-1.5" />
+                  Preview
+                </Link>
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="h-9 border-slate-200">
+                    <Mail className="h-3.5 w-3.5 mr-1.5" />
+                    Email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Kirim Dokumen via Email</DialogTitle>
+                  </DialogHeader>
+                  <form action={sendDocEmail} className="space-y-4">
+                    <input type="hidden" name="docTypeKey" value={docType.key} />
+                    <input type="hidden" name="id" value={id} />
+                    <div className="space-y-2">
+                      <Label htmlFor="to_email">Email Tujuan *</Label>
+                      <Input id="to_email" name="to_email" type="email" placeholder="contoh@email.com" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Catatan (Opsional)</Label>
+                      <textarea id="notes" name="notes" className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Tambahkan catatan untuk email ini..." />
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Kirim</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              {isEditable ? (
+                <ValidatedButton type="submit" form="edit-record-form" className="h-9 bg-slate-900 hover:bg-slate-800">
+                  Save Changes
+                </ValidatedButton>
+              ) : null}
+            </div>
           </div>
         </div>
 
         <div className="space-y-2">
           {canWriteEffective && nextTransitions.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {nextTransitions.map((t, i) => (
-                <WorkflowSubmitter 
-                  key={`${t.from}-${t.to}-${i}`} 
-                  targetStatus={t.to}
-                  formId="edit-record-form"
-                  variant={statusBadgeVariant(t.to)}
-                >
-                  Move to {t.to}
-                </WorkflowSubmitter>
-              ))}
+            <div className="bg-white rounded-xl border border-slate-200/80 p-3 flex items-center gap-3 flex-wrap shadow-sm">
+              <span className="text-xs font-medium text-slate-500">Workflow:</span>
+              <div className="flex flex-wrap gap-2">
+                {nextTransitions.map((t, i) => (
+                  <WorkflowSubmitter
+                    key={`${t.from}-${t.to}-${i}`}
+                    targetStatus={t.to}
+                    formId="edit-record-form"
+                    variant={statusBadgeVariant(t.to)}
+                  >
+                    Move to {t.to}
+                  </WorkflowSubmitter>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
 
-        <form action={updateRecord} id="edit-record-form" className="space-y-8">
+        <form action={updateRecord} id="edit-record-form" className="space-y-6">
             <input type="hidden" name="docTypeKey" value={docType.key} />
             <input type="hidden" name="id" value={id} />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               {nonTableFields.map((f) => {
                 if (f.key === "branch_id") return <input key={f.id} type="hidden" name="branch_id" value={selectedBranchId || ""} />
                 if (key === "cross_connect" && f.key === "status") return null
@@ -1322,9 +1405,9 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                 const isHeader = f.key.startsWith("__header_")
                 if (isHeader) {
                   return (
-                    <div key={f.id} className="col-span-full pt-8 pb-3 border-b-2 border-primary mt-6 first:mt-0 mb-4 bg-muted/30 px-4 rounded-t-lg">
-                      <h3 className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                        <div className="w-1.5 h-4 bg-primary rounded-full" />
+                    <div key={f.id} className="col-span-full pt-2 pb-2 first:pt-0">
+                      <h3 className="text-sm font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+                        <span className="h-4 w-0.5 bg-slate-900 rounded-full" />
                         {f.label}
                       </h3>
                     </div>
@@ -1487,11 +1570,12 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                     )
                   })}
                 </div>
+            </div>
         </form>
 
         {key === "subscription_management" && Object.keys(linkedGroups).length > 0 && (
-          <div className="p-4 border rounded-lg bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-4 border-b pb-2">Related Documents</h3>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Related Documents</h3>
             <div className="space-y-4">
               {Object.entries(linkedGroups).map(([groupName, items]) => (
                 <div key={groupName} className="space-y-2">
@@ -1900,8 +1984,8 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
 
       <div className="space-y-6">
         {key !== "subscription_management" && Object.keys(linkedGroups).length > 0 && (
-          <div className="p-4 border rounded-lg bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-4 border-b pb-2">Related Documents</h3>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Related Documents</h3>
             <div className="space-y-4">
               {Object.entries(linkedGroups).map(([groupName, items]) => (
                 <div key={groupName} className="space-y-2">
@@ -1930,8 +2014,8 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
         )}
 
         {assignmentEnabled && (
-          <div className="p-4 border rounded-lg bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-4 border-b pb-2">Assignment</h3>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Assignment</h3>
             <AssignmentSelector 
               users={assignmentUsers} 
               currentUserId={record.assignedToId || ""} 
@@ -1948,21 +2032,21 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             billingPreview ? (
               <SubscriptionBillingActions subscriptionId={id} preview={billingPreview} />
             ) : (
-              <div className="p-4 border rounded-lg bg-card shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
                 <h3 className="text-sm font-semibold mb-2">Billing Preview</h3>
                 <p className="text-xs text-muted-foreground">Billing preview belum tersedia untuk subscription ini.</p>
               </div>
             )
           ) : (
-            <div className="p-4 border rounded-lg bg-card shadow-sm">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
               <h3 className="text-sm font-semibold mb-2">Billing Preview</h3>
               <p className="text-xs text-muted-foreground">Hanya role Finances yang dapat melihat billing preview dan melakukan generate invoice.</p>
             </div>
           )
         ) : null}
 
-        <div className="p-4 border rounded-lg bg-card shadow-sm">
-          <h3 className="text-sm font-semibold mb-4 border-b pb-2">Activity Timeline</h3>
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Activity Timeline</h3>
           <div className="space-y-4">
             {activity.map((a, i) => (
               <div key={i} className="flex gap-3 text-xs">
@@ -1978,6 +2062,8 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           </div>
         </div>
       </div>
+    </div>
+    </div>
     </div>
     </FormValidationProvider>
   )
