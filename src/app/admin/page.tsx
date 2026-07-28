@@ -65,7 +65,7 @@ export default async function AdminHome() {
 
   const customersCount = await prisma.user.count({
     where: {
-      role: { name: "CUSTOMER" },
+      role: { name: "Customer" },
       ...(selectedBranchId ? { company: { branches: { some: { id: selectedBranchId } } } } : {})
     }
   });

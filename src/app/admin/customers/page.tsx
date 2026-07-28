@@ -46,7 +46,7 @@ async function createCustomer(formData: FormData) {
   if (companyId && allowedCompanyIds.size > 0 && !allowedCompanyIds.has(companyId)) {
     redirect("/admin/customers?toast=Tidak%20diizinkan&toastType=error");
   }
-  const role = await prisma.role.findFirst({ where: { name: "CUSTOMER" } });
+  const role = await prisma.role.findFirst({ where: { name: "Customer" } });
   if (!role) return;
   const hash = await bcrypt.hash(password, 10);
   await prisma.user.create({
@@ -235,7 +235,7 @@ export default async function CustomersPage(props: {
 
   const customers = await prisma.user.findMany({
     where: {
-      role: { name: "CUSTOMER" },
+      role: { name: "Customer" },
       ...(allowedCompanyIds.size > 0 ? { companyId: { in: Array.from(allowedCompanyIds) } } : {}),
       ...searchFilter,
     },
