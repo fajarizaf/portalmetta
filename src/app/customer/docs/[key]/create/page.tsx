@@ -757,6 +757,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
         <input type="hidden" name="docTypeKey" value={key} />
         <input type="hidden" name="parentId" value={parentId} />
         <input type="hidden" name="parentDocType" value={parentDocTypeKey} />
+        <input type="hidden" name="status" value="Draft" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {docType.fields.map((f) => {

@@ -210,8 +210,14 @@ export async function sendVisitorPassEmail(params: {
   purpose: string;
   qrDataUrl: string;
   visitors: Array<{ visitor_name: string; nik: string; phone_number?: string; email?: string }>;
+  recipientType?: "customer" | "visitor";
+  targetVisitorName?: string;
+  location?: string;
 }) {
   const { toEmail, customerName, recordCode, visitDate, purpose, qrDataUrl, visitors } = params;
+  const recipientType = params.recipientType || "customer";
+  const targetVisitorName = params.targetVisitorName;
+  const location = params.location || "MettaDC";
 
   const visitorRows = visitors.map((v, i) => `
     <tr>
@@ -222,15 +228,28 @@ export async function sendVisitorPassEmail(params: {
     </tr>
   `).join("");
 
+  // Customize greeting based on recipient
+  const greeting = recipientType === "visitor" && targetVisitorName
+    ? `Halo <strong>${targetVisitorName}</strong>,`
+    : `Halo <strong>${customerName}</strong>,`;
+
+  const introText = recipientType === "visitor"
+    ? `Anda diundang untuk berkunjung ke <strong>${location}</strong>. Berikut adalah QR Code Visitor Pass yang dapat Anda tunjukkan saat tiba di lokasi:`
+    : `Visitor request Anda telah <strong style="color: #28a745;">di-approve</strong>. Berikut adalah QR Code Visitor Pass yang dapat Anda tampilkan saat datang ke lokasi:`;
+
+  const subject = recipientType === "visitor" && targetVisitorName
+    ? `Visitor Pass untuk ${targetVisitorName} - ${recordCode || "Visitor Request"}`
+    : `Visitor Pass Disetujui - ${recordCode || "Visitor Request"}`;
+
   const html = `
     <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
       <div style="text-align: center; margin-bottom: 25px;">
         <h2 style="color: #007bff; margin-bottom: 5px;">Visitor Pass - Approved</h2>
-        <p style="margin: 0; color: #666; font-size: 14px;">MettaDC Visitor Management</p>
+        <p style="margin: 0; color: #666; font-size: 14px;">${location} Visitor Management</p>
       </div>
 
-      <p>Halo <strong>${customerName}</strong>,</p>
-      <p>Visitor request Anda telah <strong style="color: #28a745;">di-approve</strong>. Berikut adalah QR Code Visitor Pass yang dapat Anda tampilkan saat datang ke lokasi:</p>
+      <p>${greeting}</p>
+      <p>${introText}</p>
 
       <div style="text-align: center; margin: 30px 0; padding: 25px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #dee2e6;">
         <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057; font-size: 14px;">QR Visitor Pass</p>
@@ -252,9 +271,15 @@ export async function sendVisitorPassEmail(params: {
           <td style="padding: 8px 10px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9;">Keperluan</td>
           <td style="padding: 8px 10px; border: 1px solid #ddd;">${purpose}</td>
         </tr>
+        ${recipientType === "visitor" ? `
+        <tr>
+          <td style="padding: 8px 10px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9;">Lokasi</td>
+          <td style="padding: 8px 10px; border: 1px solid #ddd;">${location}</td>
+        </tr>
+        ` : ""}
       </table>
 
-      ${visitors.length > 0 ? `
+      ${recipientType === "customer" && visitors.length > 0 ? `
       <h3 style="border-bottom: 2px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px;">Daftar Visitor</h3>
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
@@ -282,16 +307,16 @@ export async function sendVisitorPassEmail(params: {
 
       <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
       <p style="font-size: 0.8em; color: #777; text-align: center;">
-        Email ini dikirim secara otomatis oleh sistem MettaDC.<br/>
-        Kunjungan dapat dikelola melalui portal MettaDC.
+        Email ini dikirim secara otomatis oleh sistem ${location}.<br/>
+        Kunjungan dapat dikelola melalui portal ${location}.
       </p>
     </div>
   `;
 
   return transporter.sendMail({
-    from: '"MettaDC Visitor Pass" <no-reply@mettadc.id>',
+    from: `"${location} Visitor Pass" <no-reply@mettadc.id>`,
     to: toEmail,
-    subject: `Visitor Pass Disetujui - ${recordCode || "Visitor Request"}`,
+    subject,
     html,
   });
 }

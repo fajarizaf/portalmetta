@@ -59,6 +59,19 @@ export default function ScannerPage() {
     setCameraError(null)
     setScanResult(null)
 
+    // Check if browser supports getUserMedia (required for camera access)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      const isHttps = window.location.protocol === "https:"
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      if (!isHttps && !isLocalhost) {
+        setCameraError("Kamera memerlukan koneksi HTTPS. Silakan akses melalui HTTPS atau localhost.")
+      } else {
+        setCameraError("Browser tidak mendukung akses kamera. Gunakan Chrome/Firefox/Safari versi terbaru.")
+      }
+      setScanning(false)
+      return
+    }
+
     try {
       const scanner = new Html5Qrcode("qr-reader")
       scannerRef.current = scanner
@@ -112,7 +125,32 @@ export default function ScannerPage() {
       )
       setScanning(true)
     } catch (err: any) {
-      setCameraError(err?.message || "Gagal mengakses kamera")
+      // Provide more specific error messages based on error type
+      const errorName = err?.name || ""
+      const errorMessage = err?.message || ""
+      let friendlyMessage = "Gagal mengakses kamera"
+
+      if (errorName === "NotAllowedError" || errorMessage.includes("Permission denied") || errorMessage.includes("denied")) {
+        friendlyMessage = "Akses kamera ditolak. Silakan berikan izin kamera di pengaturan browser, lalu coba lagi."
+      } else if (errorName === "NotFoundError" || errorMessage.includes("not found") || errorMessage.includes("No camera")) {
+        friendlyMessage = "Kamera tidak ditemukan di perangkat ini."
+      } else if (errorName === "NotReadableError" || errorMessage.includes("in use") || errorMessage.includes("busy")) {
+        friendlyMessage = "Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi lain lalu coba lagi."
+      } else if (errorName === "OverconstrainedError") {
+        friendlyMessage = "Kamera tidak mendukung konfigurasi yang diminta. Coba perangkat lain."
+      } else if (errorName === "NotSupportedError" || errorName === "SecurityError" || errorMessage.includes("HTTPS") || errorMessage.includes("secure")) {
+        const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
+        const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        if (!isHttps && !isLocalhost) {
+          friendlyMessage = "Kamera memerlukan HTTPS. Akses melalui https:// atau localhost."
+        } else {
+          friendlyMessage = "Browser tidak mendukung akses kamera. Gunakan Chrome/Firefox/Safari versi terbaru."
+        }
+      } else if (errorMessage) {
+        friendlyMessage = `Gagal mengakses kamera: ${errorMessage}`
+      }
+
+      setCameraError(friendlyMessage)
       setScanning(false)
     }
   }, [])

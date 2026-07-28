@@ -424,43 +424,90 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
 
           const customerEmail = creator?.email
           const customerName = creator?.name || "Customer"
+          const location = "MettaDC"
 
-          if (customerEmail) {
-            const qrPayload = JSON.stringify({
-              docType: "visitor_request",
-              id: rec.id,
-              token: qrToken,
-              customerId: creator?.companyId || "",
-              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            })
+          // Get branch info if available
+          let branchName = location
+          if (rec.branchId) {
+            const branch = await prisma.branch.findUnique({ where: { id: rec.branchId }, select: { name: true } })
+            if (branch) branchName = `MettaDC ${branch.name}`
+          }
 
-            const qrDataUrl = await QRCodeLib.toDataURL(qrPayload, {
-              width: 300,
-              margin: 2,
-              color: { dark: "#000000", light: "#ffffff" },
-            })
+          const qrPayload = JSON.stringify({
+            docType: "visitor_request",
+            id: rec.id,
+            token: qrToken,
+            customerId: creator?.companyId || "",
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          })
 
-            const visitors = Array.isArray(data["visitors"])
-              ? (data["visitors"] as Array<Record<string, unknown>>).map((v) => ({
-                  visitor_name: String(v["visitor_name"] || "-"),
-                  nik: String(v["nik"] || "-"),
-                  phone_number: typeof v["phone_number"] === "string" ? v["phone_number"] : undefined,
-                  email: typeof v["email"] === "string" ? v["email"] : undefined,
-                }))
-              : []
+          const qrDataUrl = await QRCodeLib.toDataURL(qrPayload, {
+            width: 300,
+            margin: 2,
+            color: { dark: "#000000", light: "#ffffff" },
+          })
 
-            await sendVisitorPassEmail({
-              toEmail: customerEmail,
-              customerName,
-              recordCode: rec.code,
-              visitDate: typeof data["visit_date"] === "string" ? data["visit_date"] : "-",
-              purpose: typeof data["purpose"] === "string" ? data["purpose"] : "-",
-              qrDataUrl,
-              visitors,
-            })
+          const visitors = Array.isArray(data["visitors"])
+            ? (data["visitors"] as Array<Record<string, unknown>>).map((v) => ({
+                visitor_name: String(v["visitor_name"] || "-"),
+                nik: String(v["nik"] || "-"),
+                phone_number: typeof v["phone_number"] === "string" ? v["phone_number"] : undefined,
+                email: typeof v["email"] === "string" ? v["email"] : undefined,
+              }))
+            : []
 
-            console.log(`[runDocEventHook] Visitor pass email sent to ${customerEmail} for ${rec.code}`)
+          const visitDate = typeof data["visit_date"] === "string" ? data["visit_date"] : "-"
+          const purpose = typeof data["purpose"] === "string" ? data["purpose"] : "-"
+
+          // 1) Send email to each visitor that has an email
+          const visitorEmailsSent: string[] = []
+          for (const v of visitors) {
+            if (v.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) {
+              try {
+                await sendVisitorPassEmail({
+                  toEmail: v.email,
+                  customerName: customerName,
+                  recordCode: rec.code,
+                  visitDate,
+                  purpose,
+                  qrDataUrl,
+                  visitors: [v],
+                  recipientType: "visitor",
+                  targetVisitorName: v.visitor_name,
+                  location: branchName,
+                })
+                visitorEmailsSent.push(v.email)
+              } catch (e) {
+                console.error(`[runDocEventHook] Error sending visitor email to ${v.email}:`, e)
+              }
+            }
+          }
+
+          if (visitorEmailsSent.length > 0) {
+            console.log(`[runDocEventHook] Visitor pass email sent to ${visitorEmailsSent.length} visitor(s): ${visitorEmailsSent.join(", ")} for ${rec.code}`)
           } else {
+            console.warn(`[runDocEventHook] No visitor emails with valid addresses for visitor_request ${rec.id}`)
+          }
+
+          // 2) Also send summary email to the customer (requester) with all visitors
+          if (customerEmail && customerEmail !== visitorEmailsSent[0]) {
+            try {
+              await sendVisitorPassEmail({
+                toEmail: customerEmail,
+                customerName,
+                recordCode: rec.code,
+                visitDate,
+                purpose,
+                qrDataUrl,
+                visitors,
+                recipientType: "customer",
+                location: branchName,
+              })
+              console.log(`[runDocEventHook] Visitor pass summary email sent to customer ${customerEmail} for ${rec.code}`)
+            } catch (e) {
+              console.error(`[runDocEventHook] Error sending customer summary email:`, e)
+            }
+          } else if (!customerEmail) {
             console.warn(`[runDocEventHook] No creator email found for visitor_request ${rec.id}`)
           }
         }
