@@ -25,79 +25,117 @@ interface InventoryItem {
 interface InventoryClientProps {
   inItems: InventoryItem[]
   outItems: InventoryItem[]
+  buildingMap?: Record<string, string>
+  floorMap?: Record<string, string>
+  roomMap?: Record<string, string>
+  customerMap?: Record<string, string>
+  productMap?: Record<string, string>
 }
 
-export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
+export function InventoryClient({
+  inItems,
+  outItems,
+  buildingMap = {},
+  floorMap = {},
+  roomMap = {},
+  customerMap = {},
+  productMap = {},
+}: InventoryClientProps) {
   const [tab, setTab] = useState<"in" | "out" | "balance">("balance")
-  
-  // Group and calculate balance
-  const balanceMap = new Map<string, { 
-    id: string, 
-    itemName: string, 
-    qty: number, 
-    lastUpdate: Date,
-    serialNumbers: Set<string> 
+
+  const balanceMap = new Map<string, {
+    id: string
+    productName: string
+    itemName: string
+    qty: number
+    lastUpdate: Date
+    serialNumbers: Set<string>
+    buildingName: string
+    floorName: string
+    roomName: string
+    ownerCustomerName: string
   }>()
 
-  // Process Goods In
+  const resolveLocation = (d: Record<string, any>) => ({
+    buildingId: d.building_id || "",
+    buildingName: d.building_id ? (buildingMap[d.building_id] || d.building_id) : "",
+    floorId: d.floor_id || "",
+    floorName: d.floor_id ? (floorMap[d.floor_id] || d.floor_id) : "",
+    roomId: d.room_id || "",
+    roomName: d.room_id ? (roomMap[d.room_id] || d.room_id) : "",
+    ownerCustomerId: d.owner_customer_id || "",
+    ownerCustomerName: d.owner_customer_id ? (customerMap[d.owner_customer_id] || d.owner_customer_id) : "",
+  })
+
   inItems.forEach(item => {
     const d = item.data || {}
+    const productId = d.product_id || ""
     const name = d.item_name || "Unknown Item"
     const qty = Number(d.quantity || 0)
     const sn = d.serial_number
-    
-    // Key could be product_id if available, or just name
-    const key = name.trim().toLowerCase()
-    
+    const loc = resolveLocation(d)
+    const key = productId || name.trim().toLowerCase()
+
     if (!balanceMap.has(key)) {
-      balanceMap.set(key, { 
-        id: key, 
-        itemName: name, 
-        qty: 0, 
+      balanceMap.set(key, {
+        id: key,
+        productName: productId ? name : "",
+        itemName: name,
+        qty: 0,
         lastUpdate: new Date(0),
-        serialNumbers: new Set()
+        serialNumbers: new Set(),
+        buildingName: "",
+        floorName: "",
+        roomName: "",
+        ownerCustomerName: "",
       })
     }
-    
+
     const entry = balanceMap.get(key)!
     entry.qty += qty
     if (sn) entry.serialNumbers.add(sn)
-    
+    if (loc.buildingName) entry.buildingName = loc.buildingName
+    if (loc.floorName) entry.floorName = loc.floorName
+    if (loc.roomName) entry.roomName = loc.roomName
+    if (loc.ownerCustomerName) entry.ownerCustomerName = loc.ownerCustomerName
+
     const date = new Date(item.record.createdAt)
     if (date > entry.lastUpdate) entry.lastUpdate = date
   })
 
-  // Process Goods Out
   outItems.forEach(item => {
     const d = item.data || {}
+    const productId = d.product_id || ""
     const name = d.item_name || "Unknown Item"
     const qty = Number(d.quantity || 0)
     const sn = d.serial_number
-    
-    const key = name.trim().toLowerCase()
-    
+    const key = productId || name.trim().toLowerCase()
+
     if (balanceMap.has(key)) {
       const entry = balanceMap.get(key)!
       entry.qty -= qty
       if (sn) entry.serialNumbers.delete(sn)
-      
+
       const date = new Date(item.record.createdAt)
       if (date > entry.lastUpdate) entry.lastUpdate = date
-    }
-    // If we have goods out for item not in goods in, we might show negative or handle it. 
-    // Assuming goods out only happens for existing goods in, but let's be safe.
-    else {
-      balanceMap.set(key, { 
-        id: key, 
-        itemName: name, 
-        qty: -qty, 
+    } else {
+      const loc = resolveLocation(d)
+      balanceMap.set(key, {
+        id: key,
+        productName: productId ? name : "",
+        itemName: name,
+        qty: -qty,
         lastUpdate: new Date(item.record.createdAt),
-        serialNumbers: new Set()
+        serialNumbers: new Set(),
+        buildingName: loc.buildingName,
+        floorName: loc.floorName,
+        roomName: loc.roomName,
+        ownerCustomerName: loc.ownerCustomerName,
       })
     }
   })
 
-  const balanceItems = Array.from(balanceMap.values()).filter(i => i.qty !== 0) // Hide zero qty items if preferred
+  const balanceItems = Array.from(balanceMap.values()).filter(i => i.qty !== 0)
 
   const formatDate = (date: string | Date) => {
     if (!date) return "-"
@@ -114,7 +152,11 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Item Name</TableHead>
+              <TableHead>Product / Item</TableHead>
+              <TableHead>Building</TableHead>
+              <TableHead>Floor</TableHead>
+              <TableHead>Room</TableHead>
+              <TableHead>Customer</TableHead>
               <TableHead>Current Stock</TableHead>
               <TableHead>Serial Numbers</TableHead>
               <TableHead>Last Update</TableHead>
@@ -122,15 +164,19 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
           </TableHeader>
           <TableBody>
             {balanceItems.length === 0 ? (
-               <TableRow>
-                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                   No stock items.
-                 </TableCell>
-               </TableRow>
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  No stock items.
+                </TableCell>
+              </TableRow>
             ) : (
               balanceItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.itemName}</TableCell>
+                  <TableCell className="font-medium">{item.productName || item.itemName}</TableCell>
+                  <TableCell>{item.buildingName || "-"}</TableCell>
+                  <TableCell>{item.floorName || "-"}</TableCell>
+                  <TableCell>{item.roomName || "-"}</TableCell>
+                  <TableCell>{item.ownerCustomerName || "-"}</TableCell>
                   <TableCell>{item.qty}</TableCell>
                   <TableCell className="max-w-[200px] truncate" title={Array.from(item.serialNumbers).join(", ")}>
                     {item.serialNumbers.size > 0 ? Array.from(item.serialNumbers).join(", ") : "-"}
@@ -151,8 +197,12 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Document No.</TableHead>
-            <TableHead>Item Name</TableHead>
+            <TableHead>Product / Item</TableHead>
             <TableHead>Qty</TableHead>
+            <TableHead>Building</TableHead>
+            <TableHead>Floor</TableHead>
+            <TableHead>Room</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead>Serial Number</TableHead>
             <TableHead>Description</TableHead>
           </TableRow>
@@ -160,7 +210,7 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                 No item data.
               </TableCell>
             </TableRow>
@@ -169,7 +219,7 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
               const itemData = item.data || {}
               const parentData = item.record.data || {}
               const dateStr = parentData.request_date || item.record.createdAt
-              
+
               return (
                 <TableRow key={item.id}>
                   <TableCell className="whitespace-nowrap">
@@ -178,8 +228,12 @@ export function InventoryClient({ inItems, outItems }: InventoryClientProps) {
                   <TableCell className="font-medium">
                     {item.record.code || "-"}
                   </TableCell>
-                  <TableCell>{itemData.item_name || "-"}</TableCell>
+                  <TableCell>{itemData.product_id ? (productMap[itemData.product_id] || itemData.product_id) : (itemData.item_name || "-")}</TableCell>
                   <TableCell>{itemData.quantity || 0}</TableCell>
+                  <TableCell>{itemData.building_id ? (buildingMap[itemData.building_id] || itemData.building_id) : "-"}</TableCell>
+                  <TableCell>{itemData.floor_id ? (floorMap[itemData.floor_id] || itemData.floor_id) : "-"}</TableCell>
+                  <TableCell>{itemData.room_id ? (roomMap[itemData.room_id] || itemData.room_id) : "-"}</TableCell>
+                  <TableCell>{itemData.owner_customer_id ? (customerMap[itemData.owner_customer_id] || itemData.owner_customer_id) : "-"}</TableCell>
                   <TableCell>{itemData.serial_number || "-"}</TableCell>
                   <TableCell className="max-w-[200px] truncate" title={itemData.description}>
                     {itemData.description || "-"}

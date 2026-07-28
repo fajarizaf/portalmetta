@@ -40,6 +40,8 @@ export type InventoryMovementMinAggregateOutputType = {
   quantity: number | null
   reference: string | null
   type: string | null
+  roomId: string | null
+  ownerCustomerId: string | null
   createdAt: Date | null
 }
 
@@ -49,6 +51,8 @@ export type InventoryMovementMaxAggregateOutputType = {
   quantity: number | null
   reference: string | null
   type: string | null
+  roomId: string | null
+  ownerCustomerId: string | null
   createdAt: Date | null
 }
 
@@ -58,6 +62,9 @@ export type InventoryMovementCountAggregateOutputType = {
   quantity: number
   reference: number
   type: number
+  roomId: number
+  ownerCustomerId: number
+  metadata: number
   createdAt: number
   _all: number
 }
@@ -77,6 +84,8 @@ export type InventoryMovementMinAggregateInputType = {
   quantity?: true
   reference?: true
   type?: true
+  roomId?: true
+  ownerCustomerId?: true
   createdAt?: true
 }
 
@@ -86,6 +95,8 @@ export type InventoryMovementMaxAggregateInputType = {
   quantity?: true
   reference?: true
   type?: true
+  roomId?: true
+  ownerCustomerId?: true
   createdAt?: true
 }
 
@@ -95,6 +106,9 @@ export type InventoryMovementCountAggregateInputType = {
   quantity?: true
   reference?: true
   type?: true
+  roomId?: true
+  ownerCustomerId?: true
+  metadata?: true
   createdAt?: true
   _all?: true
 }
@@ -187,10 +201,13 @@ export type InventoryMovementGroupByArgs<ExtArgs extends runtime.Types.Extension
 
 export type InventoryMovementGroupByOutputType = {
   id: string
-  inventoryId: string
+  inventoryId: string | null
   quantity: number
   reference: string | null
   type: string
+  roomId: string | null
+  ownerCustomerId: string | null
+  metadata: runtime.JsonValue | null
   createdAt: Date
   _count: InventoryMovementCountAggregateOutputType | null
   _avg: InventoryMovementAvgAggregateOutputType | null
@@ -219,22 +236,32 @@ export type InventoryMovementWhereInput = {
   OR?: Prisma.InventoryMovementWhereInput[]
   NOT?: Prisma.InventoryMovementWhereInput | Prisma.InventoryMovementWhereInput[]
   id?: Prisma.StringFilter<"InventoryMovement"> | string
-  inventoryId?: Prisma.StringFilter<"InventoryMovement"> | string
+  inventoryId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
   quantity?: Prisma.IntFilter<"InventoryMovement"> | number
   reference?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
   type?: Prisma.StringFilter<"InventoryMovement"> | string
+  roomId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  ownerCustomerId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  metadata?: Prisma.JsonNullableFilter<"InventoryMovement">
   createdAt?: Prisma.DateTimeFilter<"InventoryMovement"> | Date | string
-  inventory?: Prisma.XOR<Prisma.InventoryScalarRelationFilter, Prisma.InventoryWhereInput>
+  inventory?: Prisma.XOR<Prisma.InventoryNullableScalarRelationFilter, Prisma.InventoryWhereInput> | null
+  room?: Prisma.XOR<Prisma.RoomNullableScalarRelationFilter, Prisma.RoomWhereInput> | null
+  ownerCustomer?: Prisma.XOR<Prisma.CompanyNullableScalarRelationFilter, Prisma.CompanyWhereInput> | null
 }
 
 export type InventoryMovementOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  inventoryId?: Prisma.SortOrder
+  inventoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  roomId?: Prisma.SortOrderInput | Prisma.SortOrder
+  ownerCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   inventory?: Prisma.InventoryOrderByWithRelationInput
+  room?: Prisma.RoomOrderByWithRelationInput
+  ownerCustomer?: Prisma.CompanyOrderByWithRelationInput
   _relevance?: Prisma.InventoryMovementOrderByRelevanceInput
 }
 
@@ -243,20 +270,28 @@ export type InventoryMovementWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.InventoryMovementWhereInput | Prisma.InventoryMovementWhereInput[]
   OR?: Prisma.InventoryMovementWhereInput[]
   NOT?: Prisma.InventoryMovementWhereInput | Prisma.InventoryMovementWhereInput[]
-  inventoryId?: Prisma.StringFilter<"InventoryMovement"> | string
+  inventoryId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
   quantity?: Prisma.IntFilter<"InventoryMovement"> | number
   reference?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
   type?: Prisma.StringFilter<"InventoryMovement"> | string
+  roomId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  ownerCustomerId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  metadata?: Prisma.JsonNullableFilter<"InventoryMovement">
   createdAt?: Prisma.DateTimeFilter<"InventoryMovement"> | Date | string
-  inventory?: Prisma.XOR<Prisma.InventoryScalarRelationFilter, Prisma.InventoryWhereInput>
+  inventory?: Prisma.XOR<Prisma.InventoryNullableScalarRelationFilter, Prisma.InventoryWhereInput> | null
+  room?: Prisma.XOR<Prisma.RoomNullableScalarRelationFilter, Prisma.RoomWhereInput> | null
+  ownerCustomer?: Prisma.XOR<Prisma.CompanyNullableScalarRelationFilter, Prisma.CompanyWhereInput> | null
 }, "id">
 
 export type InventoryMovementOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  inventoryId?: Prisma.SortOrder
+  inventoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  roomId?: Prisma.SortOrderInput | Prisma.SortOrder
+  ownerCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.InventoryMovementCountOrderByAggregateInput
   _avg?: Prisma.InventoryMovementAvgOrderByAggregateInput
@@ -270,10 +305,13 @@ export type InventoryMovementScalarWhereWithAggregatesInput = {
   OR?: Prisma.InventoryMovementScalarWhereWithAggregatesInput[]
   NOT?: Prisma.InventoryMovementScalarWhereWithAggregatesInput | Prisma.InventoryMovementScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"InventoryMovement"> | string
-  inventoryId?: Prisma.StringWithAggregatesFilter<"InventoryMovement"> | string
+  inventoryId?: Prisma.StringNullableWithAggregatesFilter<"InventoryMovement"> | string | null
   quantity?: Prisma.IntWithAggregatesFilter<"InventoryMovement"> | number
   reference?: Prisma.StringNullableWithAggregatesFilter<"InventoryMovement"> | string | null
   type?: Prisma.StringWithAggregatesFilter<"InventoryMovement"> | string
+  roomId?: Prisma.StringNullableWithAggregatesFilter<"InventoryMovement"> | string | null
+  ownerCustomerId?: Prisma.StringNullableWithAggregatesFilter<"InventoryMovement"> | string | null
+  metadata?: Prisma.JsonNullableWithAggregatesFilter<"InventoryMovement">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InventoryMovement"> | Date | string
 }
 
@@ -282,16 +320,22 @@ export type InventoryMovementCreateInput = {
   quantity: number
   reference?: string | null
   type: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  inventory: Prisma.InventoryCreateNestedOneWithoutMovementsInput
+  inventory?: Prisma.InventoryCreateNestedOneWithoutMovementsInput
+  room?: Prisma.RoomCreateNestedOneWithoutMovementsInput
+  ownerCustomer?: Prisma.CompanyCreateNestedOneWithoutInventoryMovementsInput
 }
 
 export type InventoryMovementUncheckedCreateInput = {
   id?: string
-  inventoryId: string
+  inventoryId?: string | null
   quantity: number
   reference?: string | null
   type: string
+  roomId?: string | null
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -300,25 +344,34 @@ export type InventoryMovementUpdateInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  inventory?: Prisma.InventoryUpdateOneRequiredWithoutMovementsNestedInput
+  inventory?: Prisma.InventoryUpdateOneWithoutMovementsNestedInput
+  room?: Prisma.RoomUpdateOneWithoutMovementsNestedInput
+  ownerCustomer?: Prisma.CompanyUpdateOneWithoutInventoryMovementsNestedInput
 }
 
 export type InventoryMovementUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  inventoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type InventoryMovementCreateManyInput = {
   id?: string
-  inventoryId: string
+  inventoryId?: string | null
   quantity: number
   reference?: string | null
   type: string
+  roomId?: string | null
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -327,15 +380,19 @@ export type InventoryMovementUpdateManyMutationInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type InventoryMovementUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  inventoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -361,6 +418,9 @@ export type InventoryMovementCountOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
   reference?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  roomId?: Prisma.SortOrder
+  ownerCustomerId?: Prisma.SortOrder
+  metadata?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -374,6 +434,8 @@ export type InventoryMovementMaxOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
   reference?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  roomId?: Prisma.SortOrder
+  ownerCustomerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -383,11 +445,97 @@ export type InventoryMovementMinOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
   reference?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  roomId?: Prisma.SortOrder
+  ownerCustomerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type InventoryMovementSumOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
+}
+
+export type InventoryMovementCreateNestedManyWithoutOwnerCustomerInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput> | Prisma.InventoryMovementCreateWithoutOwnerCustomerInput[] | Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput | Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput[]
+  createMany?: Prisma.InventoryMovementCreateManyOwnerCustomerInputEnvelope
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+}
+
+export type InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput> | Prisma.InventoryMovementCreateWithoutOwnerCustomerInput[] | Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput | Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput[]
+  createMany?: Prisma.InventoryMovementCreateManyOwnerCustomerInputEnvelope
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+}
+
+export type InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput> | Prisma.InventoryMovementCreateWithoutOwnerCustomerInput[] | Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput | Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput[]
+  upsert?: Prisma.InventoryMovementUpsertWithWhereUniqueWithoutOwnerCustomerInput | Prisma.InventoryMovementUpsertWithWhereUniqueWithoutOwnerCustomerInput[]
+  createMany?: Prisma.InventoryMovementCreateManyOwnerCustomerInputEnvelope
+  set?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  disconnect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  delete?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  update?: Prisma.InventoryMovementUpdateWithWhereUniqueWithoutOwnerCustomerInput | Prisma.InventoryMovementUpdateWithWhereUniqueWithoutOwnerCustomerInput[]
+  updateMany?: Prisma.InventoryMovementUpdateManyWithWhereWithoutOwnerCustomerInput | Prisma.InventoryMovementUpdateManyWithWhereWithoutOwnerCustomerInput[]
+  deleteMany?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
+}
+
+export type InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput> | Prisma.InventoryMovementCreateWithoutOwnerCustomerInput[] | Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput | Prisma.InventoryMovementCreateOrConnectWithoutOwnerCustomerInput[]
+  upsert?: Prisma.InventoryMovementUpsertWithWhereUniqueWithoutOwnerCustomerInput | Prisma.InventoryMovementUpsertWithWhereUniqueWithoutOwnerCustomerInput[]
+  createMany?: Prisma.InventoryMovementCreateManyOwnerCustomerInputEnvelope
+  set?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  disconnect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  delete?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  update?: Prisma.InventoryMovementUpdateWithWhereUniqueWithoutOwnerCustomerInput | Prisma.InventoryMovementUpdateWithWhereUniqueWithoutOwnerCustomerInput[]
+  updateMany?: Prisma.InventoryMovementUpdateManyWithWhereWithoutOwnerCustomerInput | Prisma.InventoryMovementUpdateManyWithWhereWithoutOwnerCustomerInput[]
+  deleteMany?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
+}
+
+export type InventoryMovementCreateNestedManyWithoutRoomInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput> | Prisma.InventoryMovementCreateWithoutRoomInput[] | Prisma.InventoryMovementUncheckedCreateWithoutRoomInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutRoomInput | Prisma.InventoryMovementCreateOrConnectWithoutRoomInput[]
+  createMany?: Prisma.InventoryMovementCreateManyRoomInputEnvelope
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+}
+
+export type InventoryMovementUncheckedCreateNestedManyWithoutRoomInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput> | Prisma.InventoryMovementCreateWithoutRoomInput[] | Prisma.InventoryMovementUncheckedCreateWithoutRoomInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutRoomInput | Prisma.InventoryMovementCreateOrConnectWithoutRoomInput[]
+  createMany?: Prisma.InventoryMovementCreateManyRoomInputEnvelope
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+}
+
+export type InventoryMovementUpdateManyWithoutRoomNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput> | Prisma.InventoryMovementCreateWithoutRoomInput[] | Prisma.InventoryMovementUncheckedCreateWithoutRoomInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutRoomInput | Prisma.InventoryMovementCreateOrConnectWithoutRoomInput[]
+  upsert?: Prisma.InventoryMovementUpsertWithWhereUniqueWithoutRoomInput | Prisma.InventoryMovementUpsertWithWhereUniqueWithoutRoomInput[]
+  createMany?: Prisma.InventoryMovementCreateManyRoomInputEnvelope
+  set?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  disconnect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  delete?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  update?: Prisma.InventoryMovementUpdateWithWhereUniqueWithoutRoomInput | Prisma.InventoryMovementUpdateWithWhereUniqueWithoutRoomInput[]
+  updateMany?: Prisma.InventoryMovementUpdateManyWithWhereWithoutRoomInput | Prisma.InventoryMovementUpdateManyWithWhereWithoutRoomInput[]
+  deleteMany?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
+}
+
+export type InventoryMovementUncheckedUpdateManyWithoutRoomNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput> | Prisma.InventoryMovementCreateWithoutRoomInput[] | Prisma.InventoryMovementUncheckedCreateWithoutRoomInput[]
+  connectOrCreate?: Prisma.InventoryMovementCreateOrConnectWithoutRoomInput | Prisma.InventoryMovementCreateOrConnectWithoutRoomInput[]
+  upsert?: Prisma.InventoryMovementUpsertWithWhereUniqueWithoutRoomInput | Prisma.InventoryMovementUpsertWithWhereUniqueWithoutRoomInput[]
+  createMany?: Prisma.InventoryMovementCreateManyRoomInputEnvelope
+  set?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  disconnect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  delete?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  connect?: Prisma.InventoryMovementWhereUniqueInput | Prisma.InventoryMovementWhereUniqueInput[]
+  update?: Prisma.InventoryMovementUpdateWithWhereUniqueWithoutRoomInput | Prisma.InventoryMovementUpdateWithWhereUniqueWithoutRoomInput[]
+  updateMany?: Prisma.InventoryMovementUpdateManyWithWhereWithoutRoomInput | Prisma.InventoryMovementUpdateManyWithWhereWithoutRoomInput[]
+  deleteMany?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
 }
 
 export type InventoryMovementCreateNestedManyWithoutInventoryInput = {
@@ -432,12 +580,126 @@ export type InventoryMovementUncheckedUpdateManyWithoutInventoryNestedInput = {
   deleteMany?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
 }
 
+export type InventoryMovementCreateWithoutOwnerCustomerInput = {
+  id?: string
+  quantity: number
+  reference?: string | null
+  type: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  inventory?: Prisma.InventoryCreateNestedOneWithoutMovementsInput
+  room?: Prisma.RoomCreateNestedOneWithoutMovementsInput
+}
+
+export type InventoryMovementUncheckedCreateWithoutOwnerCustomerInput = {
+  id?: string
+  inventoryId?: string | null
+  quantity: number
+  reference?: string | null
+  type: string
+  roomId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type InventoryMovementCreateOrConnectWithoutOwnerCustomerInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  create: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput>
+}
+
+export type InventoryMovementCreateManyOwnerCustomerInputEnvelope = {
+  data: Prisma.InventoryMovementCreateManyOwnerCustomerInput | Prisma.InventoryMovementCreateManyOwnerCustomerInput[]
+  skipDuplicates?: boolean
+}
+
+export type InventoryMovementUpsertWithWhereUniqueWithoutOwnerCustomerInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  update: Prisma.XOR<Prisma.InventoryMovementUpdateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedUpdateWithoutOwnerCustomerInput>
+  create: Prisma.XOR<Prisma.InventoryMovementCreateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedCreateWithoutOwnerCustomerInput>
+}
+
+export type InventoryMovementUpdateWithWhereUniqueWithoutOwnerCustomerInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  data: Prisma.XOR<Prisma.InventoryMovementUpdateWithoutOwnerCustomerInput, Prisma.InventoryMovementUncheckedUpdateWithoutOwnerCustomerInput>
+}
+
+export type InventoryMovementUpdateManyWithWhereWithoutOwnerCustomerInput = {
+  where: Prisma.InventoryMovementScalarWhereInput
+  data: Prisma.XOR<Prisma.InventoryMovementUpdateManyMutationInput, Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerInput>
+}
+
+export type InventoryMovementScalarWhereInput = {
+  AND?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
+  OR?: Prisma.InventoryMovementScalarWhereInput[]
+  NOT?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
+  id?: Prisma.StringFilter<"InventoryMovement"> | string
+  inventoryId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  quantity?: Prisma.IntFilter<"InventoryMovement"> | number
+  reference?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  type?: Prisma.StringFilter<"InventoryMovement"> | string
+  roomId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  ownerCustomerId?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
+  metadata?: Prisma.JsonNullableFilter<"InventoryMovement">
+  createdAt?: Prisma.DateTimeFilter<"InventoryMovement"> | Date | string
+}
+
+export type InventoryMovementCreateWithoutRoomInput = {
+  id?: string
+  quantity: number
+  reference?: string | null
+  type: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  inventory?: Prisma.InventoryCreateNestedOneWithoutMovementsInput
+  ownerCustomer?: Prisma.CompanyCreateNestedOneWithoutInventoryMovementsInput
+}
+
+export type InventoryMovementUncheckedCreateWithoutRoomInput = {
+  id?: string
+  inventoryId?: string | null
+  quantity: number
+  reference?: string | null
+  type: string
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type InventoryMovementCreateOrConnectWithoutRoomInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  create: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput>
+}
+
+export type InventoryMovementCreateManyRoomInputEnvelope = {
+  data: Prisma.InventoryMovementCreateManyRoomInput | Prisma.InventoryMovementCreateManyRoomInput[]
+  skipDuplicates?: boolean
+}
+
+export type InventoryMovementUpsertWithWhereUniqueWithoutRoomInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  update: Prisma.XOR<Prisma.InventoryMovementUpdateWithoutRoomInput, Prisma.InventoryMovementUncheckedUpdateWithoutRoomInput>
+  create: Prisma.XOR<Prisma.InventoryMovementCreateWithoutRoomInput, Prisma.InventoryMovementUncheckedCreateWithoutRoomInput>
+}
+
+export type InventoryMovementUpdateWithWhereUniqueWithoutRoomInput = {
+  where: Prisma.InventoryMovementWhereUniqueInput
+  data: Prisma.XOR<Prisma.InventoryMovementUpdateWithoutRoomInput, Prisma.InventoryMovementUncheckedUpdateWithoutRoomInput>
+}
+
+export type InventoryMovementUpdateManyWithWhereWithoutRoomInput = {
+  where: Prisma.InventoryMovementScalarWhereInput
+  data: Prisma.XOR<Prisma.InventoryMovementUpdateManyMutationInput, Prisma.InventoryMovementUncheckedUpdateManyWithoutRoomInput>
+}
+
 export type InventoryMovementCreateWithoutInventoryInput = {
   id?: string
   quantity: number
   reference?: string | null
   type: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  room?: Prisma.RoomCreateNestedOneWithoutMovementsInput
+  ownerCustomer?: Prisma.CompanyCreateNestedOneWithoutInventoryMovementsInput
 }
 
 export type InventoryMovementUncheckedCreateWithoutInventoryInput = {
@@ -445,6 +707,9 @@ export type InventoryMovementUncheckedCreateWithoutInventoryInput = {
   quantity: number
   reference?: string | null
   type: string
+  roomId?: string | null
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -474,16 +739,92 @@ export type InventoryMovementUpdateManyWithWhereWithoutInventoryInput = {
   data: Prisma.XOR<Prisma.InventoryMovementUpdateManyMutationInput, Prisma.InventoryMovementUncheckedUpdateManyWithoutInventoryInput>
 }
 
-export type InventoryMovementScalarWhereInput = {
-  AND?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
-  OR?: Prisma.InventoryMovementScalarWhereInput[]
-  NOT?: Prisma.InventoryMovementScalarWhereInput | Prisma.InventoryMovementScalarWhereInput[]
-  id?: Prisma.StringFilter<"InventoryMovement"> | string
-  inventoryId?: Prisma.StringFilter<"InventoryMovement"> | string
-  quantity?: Prisma.IntFilter<"InventoryMovement"> | number
-  reference?: Prisma.StringNullableFilter<"InventoryMovement"> | string | null
-  type?: Prisma.StringFilter<"InventoryMovement"> | string
-  createdAt?: Prisma.DateTimeFilter<"InventoryMovement"> | Date | string
+export type InventoryMovementCreateManyOwnerCustomerInput = {
+  id?: string
+  inventoryId?: string | null
+  quantity: number
+  reference?: string | null
+  type: string
+  roomId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type InventoryMovementUpdateWithoutOwnerCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventory?: Prisma.InventoryUpdateOneWithoutMovementsNestedInput
+  room?: Prisma.RoomUpdateOneWithoutMovementsNestedInput
+}
+
+export type InventoryMovementUncheckedUpdateWithoutOwnerCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InventoryMovementCreateManyRoomInput = {
+  id?: string
+  inventoryId?: string | null
+  quantity: number
+  reference?: string | null
+  type: string
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type InventoryMovementUpdateWithoutRoomInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventory?: Prisma.InventoryUpdateOneWithoutMovementsNestedInput
+  ownerCustomer?: Prisma.CompanyUpdateOneWithoutInventoryMovementsNestedInput
+}
+
+export type InventoryMovementUncheckedUpdateWithoutRoomInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InventoryMovementUncheckedUpdateManyWithoutRoomInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type InventoryMovementCreateManyInventoryInput = {
@@ -491,6 +832,9 @@ export type InventoryMovementCreateManyInventoryInput = {
   quantity: number
   reference?: string | null
   type: string
+  roomId?: string | null
+  ownerCustomerId?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -499,7 +843,10 @@ export type InventoryMovementUpdateWithoutInventoryInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  room?: Prisma.RoomUpdateOneWithoutMovementsNestedInput
+  ownerCustomer?: Prisma.CompanyUpdateOneWithoutInventoryMovementsNestedInput
 }
 
 export type InventoryMovementUncheckedUpdateWithoutInventoryInput = {
@@ -507,6 +854,9 @@ export type InventoryMovementUncheckedUpdateWithoutInventoryInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -515,6 +865,9 @@ export type InventoryMovementUncheckedUpdateManyWithoutInventoryInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  roomId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -526,8 +879,13 @@ export type InventoryMovementSelect<ExtArgs extends runtime.Types.Extensions.Int
   quantity?: boolean
   reference?: boolean
   type?: boolean
+  roomId?: boolean
+  ownerCustomerId?: boolean
+  metadata?: boolean
   createdAt?: boolean
-  inventory?: boolean | Prisma.InventoryDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.InventoryMovement$inventoryArgs<ExtArgs>
+  room?: boolean | Prisma.InventoryMovement$roomArgs<ExtArgs>
+  ownerCustomer?: boolean | Prisma.InventoryMovement$ownerCustomerArgs<ExtArgs>
 }, ExtArgs["result"]["inventoryMovement"]>
 
 
@@ -538,25 +896,35 @@ export type InventoryMovementSelectScalar = {
   quantity?: boolean
   reference?: boolean
   type?: boolean
+  roomId?: boolean
+  ownerCustomerId?: boolean
+  metadata?: boolean
   createdAt?: boolean
 }
 
-export type InventoryMovementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inventoryId" | "quantity" | "reference" | "type" | "createdAt", ExtArgs["result"]["inventoryMovement"]>
+export type InventoryMovementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inventoryId" | "quantity" | "reference" | "type" | "roomId" | "ownerCustomerId" | "metadata" | "createdAt", ExtArgs["result"]["inventoryMovement"]>
 export type InventoryMovementInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inventory?: boolean | Prisma.InventoryDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.InventoryMovement$inventoryArgs<ExtArgs>
+  room?: boolean | Prisma.InventoryMovement$roomArgs<ExtArgs>
+  ownerCustomer?: boolean | Prisma.InventoryMovement$ownerCustomerArgs<ExtArgs>
 }
 
 export type $InventoryMovementPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InventoryMovement"
   objects: {
-    inventory: Prisma.$InventoryPayload<ExtArgs>
+    inventory: Prisma.$InventoryPayload<ExtArgs> | null
+    room: Prisma.$RoomPayload<ExtArgs> | null
+    ownerCustomer: Prisma.$CompanyPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    inventoryId: string
+    inventoryId: string | null
     quantity: number
     reference: string | null
     type: string
+    roomId: string | null
+    ownerCustomerId: string | null
+    metadata: runtime.JsonValue | null
     createdAt: Date
   }, ExtArgs["result"]["inventoryMovement"]>
   composites: {}
@@ -898,7 +1266,9 @@ readonly fields: InventoryMovementFieldRefs;
  */
 export interface Prisma__InventoryMovementClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  inventory<T extends Prisma.InventoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryDefaultArgs<ExtArgs>>): Prisma.Prisma__InventoryClient<runtime.Types.Result.GetResult<Prisma.$InventoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  inventory<T extends Prisma.InventoryMovement$inventoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryMovement$inventoryArgs<ExtArgs>>): Prisma.Prisma__InventoryClient<runtime.Types.Result.GetResult<Prisma.$InventoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  room<T extends Prisma.InventoryMovement$roomArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryMovement$roomArgs<ExtArgs>>): Prisma.Prisma__RoomClient<runtime.Types.Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  ownerCustomer<T extends Prisma.InventoryMovement$ownerCustomerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryMovement$ownerCustomerArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -933,6 +1303,9 @@ export interface InventoryMovementFieldRefs {
   readonly quantity: Prisma.FieldRef<"InventoryMovement", 'Int'>
   readonly reference: Prisma.FieldRef<"InventoryMovement", 'String'>
   readonly type: Prisma.FieldRef<"InventoryMovement", 'String'>
+  readonly roomId: Prisma.FieldRef<"InventoryMovement", 'String'>
+  readonly ownerCustomerId: Prisma.FieldRef<"InventoryMovement", 'String'>
+  readonly metadata: Prisma.FieldRef<"InventoryMovement", 'Json'>
   readonly createdAt: Prisma.FieldRef<"InventoryMovement", 'DateTime'>
 }
     
@@ -1274,6 +1647,63 @@ export type InventoryMovementDeleteManyArgs<ExtArgs extends runtime.Types.Extens
    * Limit how many InventoryMovements to delete.
    */
   limit?: number
+}
+
+/**
+ * InventoryMovement.inventory
+ */
+export type InventoryMovement$inventoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Inventory
+   */
+  select?: Prisma.InventorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Inventory
+   */
+  omit?: Prisma.InventoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryInclude<ExtArgs> | null
+  where?: Prisma.InventoryWhereInput
+}
+
+/**
+ * InventoryMovement.room
+ */
+export type InventoryMovement$roomArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Room
+   */
+  select?: Prisma.RoomSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Room
+   */
+  omit?: Prisma.RoomOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RoomInclude<ExtArgs> | null
+  where?: Prisma.RoomWhereInput
+}
+
+/**
+ * InventoryMovement.ownerCustomer
+ */
+export type InventoryMovement$ownerCustomerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Company
+   */
+  select?: Prisma.CompanySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Company
+   */
+  omit?: Prisma.CompanyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CompanyInclude<ExtArgs> | null
+  where?: Prisma.CompanyWhereInput
 }
 
 /**

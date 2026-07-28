@@ -160,7 +160,7 @@ async function createFloor(formData: FormData) {
     const bd = await prisma.building.findUnique({ where: { id: buildingId }, include: { branch: true } });
     if (!bd || bd.branch.companyId !== (meSession?.companyId ?? undefined)) return;
   }
-  await prisma.floor.create({ data: { level, buildingId } });
+  await prisma.floor.create({ data: { name: `Lantai ${level}`, level, buildingId } });
   refreshLocation();
   redirect("/admin/location-management?toast=Floor%20berhasil%20ditambahkan")
 }

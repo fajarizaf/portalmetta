@@ -117,7 +117,7 @@ async function main() {
     icon: "Users",
     branchId: null,
     config: {
-      listFields: ["visit_date", "purpose"],
+      listFields: ["visit_date", "purpose", "qr_status"],
       filterFields: ["visit_date"],
       childDocTypeKey: "visitor_request_item",
       naming: {
@@ -130,6 +130,14 @@ async function main() {
       { key: "visit_date", label: "Tanggal Kunjungan", type: "DATE", required: true, order: 10 },
       { key: "purpose", label: "Keperluan", type: "TEXTAREA", required: true, order: 20 },
       { key: "naming_series", label: "Series", type: "TEXT", required: false, order: 30, config: { defaultValue: "VR-####" } },
+      { key: "qr_token", label: "QR Token", type: "TEXT", required: false, order: 35, readOnly: true },
+      { key: "qr_status", label: "QR Status", type: "DROPDOWN", required: false, order: 36, readOnly: true, config: { options: [
+        { label: "Pending", value: "pending" },
+        { label: "Checked In", value: "checked_in" },
+        { label: "Checked Out", value: "checked_out" },
+      ], defaultValue: "pending" } },
+      { key: "check_in_time", label: "Waktu Check-In", type: "TEXT", required: false, order: 37, readOnly: true },
+      { key: "check_out_time", label: "Waktu Check-Out", type: "TEXT", required: false, order: 38, readOnly: true },
       { key: "visitors", label: "Daftar Visitor", type: "TABLE", required: false, order: 100, config: { childDocTypeKey: "visitor_request_item" } },
     ],
   })
@@ -139,7 +147,7 @@ async function main() {
     { roleName: "ADMIN", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: true },
     { roleName: "Admin", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: true },
     { roleName: "Operational Manager", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: false },
-    { roleName: "Security", canRead: true, canCreate: false, canWrite: false, canAssign: false, canDelete: false },
+    { roleName: "Security", canRead: true, canCreate: false, canWrite: true, canAssign: false, canDelete: false },
   ])
 
   await upsertPermissions(visitorChild.id, [
@@ -147,7 +155,7 @@ async function main() {
     { roleName: "ADMIN", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: true },
     { roleName: "Admin", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: true },
     { roleName: "Operational Manager", canRead: true, canCreate: true, canWrite: true, canAssign: true, canDelete: false },
-    { roleName: "Security", canRead: true, canCreate: false, canWrite: false, canAssign: false, canDelete: false },
+    { roleName: "Security", canRead: true, canCreate: false, canWrite: true, canAssign: false, canDelete: false },
   ])
 
   console.log("Done:", { visitorRequest: visitorRequest.key, visitorChild: visitorChild.key })

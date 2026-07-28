@@ -40,28 +40,78 @@ async function run() {
 
   const allPerms = await prisma.permission.findMany();
 
-  const company = await prisma.company.upsert({
-    where: { name: "Default Company" },
-    update: {},
-    create: { name: "Default Company" },
-  });
+  // --- Companies ---
+  const companyData = [
+    { name: "Default Company" },
+    { name: "PT. MettaDC", isDataCenter: true, address: "SCBD, Treasury Tower, 5th Floor, District 8, Jl. Jenderal Sudirman No.52-53, RT.5/RW.3, Senayan, South Jakarta", companyEmail: "info@mettadc.com", companyPhoneNumber: "089238234324" },
+    { name: "PT. Metro Data" },
+    { name: "PT. Limputra Manggala Nusantara", isDataCenter: true },
+    { name: "PT. Media Energi" },
+    { name: "PT Gajah Mungkur" },
+  ];
+  const companiesByName: Record<string, string> = {};
+  for (const c of companyData) {
+    const existing = await prisma.company.findUnique({ where: { name: c.name } });
+    if (existing) {
+      companiesByName[c.name] = existing.id;
+    } else {
+      const created = await prisma.company.create({ data: { name: c.name, isDataCenter: c.isDataCenter ?? false, address: c.address ?? null, companyEmail: c.companyEmail ?? null, companyPhoneNumber: c.companyPhoneNumber ?? null } });
+      companiesByName[c.name] = created.id;
+    }
+  }
+  const company = await prisma.company.findUnique({ where: { name: "Default Company" } });
+  if (!company) throw new Error("Default Company not found");
 
-  const branch = await prisma.branch.upsert({
-    where: { code: "HQ" },
-    update: {},
-    create: { name: "Headquarters", code: "HQ", companyId: company.id },
-  });
+  // --- Branches ---
+  const branchData = [
+    { name: "JABABEKA", code: "HQ", companyName: "PT. MettaDC" },
+    { name: "CYBER POP 1", code: "POP-1", companyName: "PT. MettaDC" },
+    { name: "Holding Group", code: "HG", companyName: "PT. Limputra Manggala Nusantara" },
+  ];
+  const branchesByCode: Record<string, string> = {};
+  for (const b of branchData) {
+    const existing = await prisma.branch.findUnique({ where: { code: b.code } });
+    if (existing) {
+      branchesByCode[b.code] = existing.id;
+    } else {
+      const created = await prisma.branch.create({ data: { name: b.name, code: b.code, companyId: companiesByName[b.companyName] } });
+      branchesByCode[b.code] = created.id;
+    }
+  }
+  const branch = await prisma.branch.findUnique({ where: { code: "HQ" } });
+  if (!branch) throw new Error("Branch HQ not found");
 
-  const adminRole = await prisma.role.upsert({
-    where: { branchId_name: { branchId: branch.id, name: "ADMIN" } },
-    update: {},
-    create: { name: "ADMIN", branchId: branch.id },
-  });
-  const customerRole = await prisma.role.upsert({
-    where: { branchId_name: { branchId: branch.id, name: "CUSTOMER" } },
-    update: {},
-    create: { name: "CUSTOMER", branchId: branch.id },
-  });
+  // --- Roles ---
+  const roleData = [
+    { name: "ADMIN", branchCode: null },
+    { name: "Admin", branchCode: "HQ" },
+    { name: "Customer", branchCode: "HQ" },
+    { name: "Engginer", branchCode: "HQ" },
+    { name: "Finances", branchCode: "HQ" },
+    { name: "Moderator", branchCode: "HQ" },
+    { name: "Operational Manager", branchCode: "HQ" },
+    { name: "Sales", branchCode: "HQ" },
+    { name: "Sales Manager", branchCode: "HQ" },
+    { name: "Security", branchCode: "POP-1" },
+    { name: "Super Admin", branchCode: "HG" },
+  ];
+  const rolesByName: Record<string, string> = {};
+  for (const r of roleData) {
+    const bid = r.branchCode ? branchesByCode[r.branchCode] : null;
+    if (bid === undefined) continue;
+    const existing = bid
+      ? await prisma.role.findFirst({ where: { name: r.name, branchId: bid } })
+      : await prisma.role.findFirst({ where: { name: r.name, branchId: null } });
+    if (existing) {
+      rolesByName[r.name] = existing.id;
+    } else {
+      const created = await prisma.role.create({ data: { name: r.name, branchId: bid } });
+      rolesByName[r.name] = created.id;
+    }
+  }
+  const adminRole = await prisma.role.findFirst({ where: { name: "ADMIN", branchId: null } });
+  const customerRole = await prisma.role.findFirst({ where: { name: "Customer", branchId: branch.id } });
+  if (!adminRole || !customerRole) throw new Error("Required roles not found");
   for (const perm of allPerms) {
     await prisma.rolePermission.upsert({
       where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
@@ -69,25 +119,6 @@ async function run() {
       create: { roleId: adminRole.id, permissionId: perm.id },
     });
   }
-
-  const adminPassword = await bcrypt.hash("admin123", 10);
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      email: "admin@example.com",
-      name: "Admin",
-      passwordHash: adminPassword,
-      roleId: adminRole.id,
-      companyId: company.id,
-    },
-  });
-
-  await prisma.userBranchAssignment.upsert({
-    where: { userId_branchId: { userId: admin.id, branchId: branch.id } },
-    update: {},
-    create: { userId: admin.id, branchId: branch.id },
-  });
 
   const superPassword = await bcrypt.hash("superadmin123", 10);
   const superadmin = await prisma.user.upsert({
@@ -107,9 +138,37 @@ async function run() {
     update: {},
     create: { userId: superadmin.id, branchId: branch.id },
   });
+  await prisma.userBranchAssignment.upsert({
+    where: { userId_branchId: { userId: superadmin.id, branchId: branchesByCode["HG"] } },
+    update: {},
+    create: { userId: superadmin.id, branchId: branchesByCode["HG"] },
+  });
+
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: {},
+    create: {
+      email: "admin@example.com",
+      name: "Admin",
+      passwordHash: adminPassword,
+      roleId: rolesByName["Admin"],
+      companyId: companiesByName["PT. MettaDC"],
+    },
+  });
+  await prisma.userBranchAssignment.upsert({
+    where: { userId_branchId: { userId: admin.id, branchId: branchesByCode["HQ"] } },
+    update: {},
+    create: { userId: admin.id, branchId: branchesByCode["HQ"] },
+  });
+  await prisma.userBranchAssignment.upsert({
+    where: { userId_branchId: { userId: admin.id, branchId: branchesByCode["POP-1"] } },
+    update: {},
+    create: { userId: admin.id, branchId: branchesByCode["POP-1"] },
+  });
 
   const customerPassword = await bcrypt.hash("customer123", 10);
-  await prisma.user.upsert({
+  const customer = await prisma.user.upsert({
     where: { email: "customer@example.com" },
     update: {},
     create: {
@@ -117,15 +176,54 @@ async function run() {
       name: "Customer",
       passwordHash: customerPassword,
       roleId: customerRole.id,
-      companyId: company.id,
+      companyId: companiesByName["PT. Metro Data"],
     },
   });
+
+  // --- Additional Users (from dump) ---
+  const defaultPassword = await bcrypt.hash("password123", 10);
+  const additionalUsers = [
+    { email: "customer2@example.com", name: "customer2", role: "Customer", company: "PT. Media Energi" },
+    { email: "engginer@example.com", name: "engginer", role: "Engginer", company: "PT. MettaDC", branches: ["HQ", "POP-1"] },
+    { email: "finance@example.com", name: "finance", role: "Finances", company: "PT. MettaDC", branches: ["HQ", "POP-1"] },
+    { email: "operation@example.com", name: "operation", role: "Operational Manager", company: "PT. MettaDC", branches: ["HQ", "POP-1"] },
+    { email: "raka@limputra.com", name: "Raka Renaldi", role: "Super Admin", company: "PT. Limputra Manggala Nusantara" },
+    { email: "rio@limputra.com", name: "Rio Renaldi", role: "Super Admin", company: "PT. Limputra Manggala Nusantara" },
+    { email: "sales@example.com", name: "sales metta", role: "Sales", company: "PT. MettaDC", branches: ["HQ", "POP-1"] },
+    { email: "salesmanager@example.com", name: "salesmanager", role: "Sales Manager", company: "PT. MettaDC", branches: ["HQ", "POP-1"] },
+    { email: "security@example.com", name: "security Wanaya", role: "Security", company: "PT. MettaDC", branches: ["POP-1"] },
+  ];
+  for (const u of additionalUsers) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email } });
+    if (!existing) {
+      const created = await prisma.user.create({
+        data: {
+          email: u.email,
+          name: u.name,
+          passwordHash: defaultPassword,
+          roleId: rolesByName[u.role],
+          companyId: companiesByName[u.company],
+        },
+      });
+      const branchCodes = (u as any).branches ?? [];
+      for (const bc of branchCodes) {
+        const bid = branchesByCode[bc];
+        if (bid) {
+          await prisma.userBranchAssignment.upsert({
+            where: { userId_branchId: { userId: created.id, branchId: bid } },
+            update: {},
+            create: { userId: created.id, branchId: bid },
+          });
+        }
+      }
+    }
+  }
 
   // DocType: Quotation (header)
   const quotation = await prisma.docType.upsert({
     where: { key: "quotation" },
-    update: {},
-    create: { key: "quotation", name: "Quotation", description: "Dokumen penawaran", branchId: branch.id },
+    update: { icon: "Plus" },
+    create: { key: "quotation", name: "Quotation", description: "Dokumen penawaran", branchId: branch.id, icon: "Plus" },
   })
 
   // Fields for Quotation
@@ -263,8 +361,8 @@ async function run() {
   // DocType: Sales Order (header)
   const salesOrder = await prisma.docType.upsert({
     where: { key: "sales_order" },
-    update: {},
-    create: { key: "sales_order", name: "Sales Order", description: "Dokumen pesanan penjualan", branchId: branch.id },
+    update: { icon: "Plus" },
+    create: { key: "sales_order", name: "Sales Order", description: "Dokumen pesanan penjualan", branchId: branch.id, icon: "Plus" },
   })
 
   // Fields for Sales Order (mirip Quotation)
@@ -401,13 +499,13 @@ async function run() {
   // DocType: Subscription Management
   const subMgmt = await prisma.docType.upsert({
     where: { key: "subscription_management" },
-    update: { branchId: null },
+    update: { branchId: null, icon: "LayoutGrid" },
     create: { 
       key: "subscription_management", 
       name: "Subscription Management", 
       description: "Manajemen langganan recurring", 
       branchId: null,
-      icon: "Repeat",
+      icon: "LayoutGrid",
       config: {
         naming: {
           mode: "series",
@@ -480,8 +578,8 @@ async function run() {
   // DocType: Request (header)
   const request = await prisma.docType.upsert({
     where: { key: "request" },
-    update: {},
-    create: { key: "request", name: "Request", description: "Dokumen permintaan", branchId: branch.id },
+    update: { icon: "Plus" },
+    create: { key: "request", name: "Request", description: "Dokumen permintaan", branchId: branch.id, icon: "Plus" },
   })
 
   const reqFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
@@ -579,8 +677,8 @@ async function run() {
   // DocType: Work Order (header)
   const workOrder = await prisma.docType.upsert({
     where: { key: "work_order" },
-    update: {},
-    create: { key: "work_order", name: "Work Order", description: "Dokumen perintah kerja", branchId: branch.id },
+    update: { icon: "Pickaxe" },
+    create: { key: "work_order", name: "Work Order", description: "Dokumen perintah kerja", branchId: branch.id, icon: "Pickaxe" },
   })
 
   const woFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
@@ -688,15 +786,16 @@ async function run() {
   // --- Goods In Request ---
   const goodsIn = await prisma.docType.upsert({
     where: { key: "goods_in_request" },
-    update: {},
+    update: { icon: "Plus" },
     create: { 
       key: "goods_in_request", 
       name: "Goods In Request", 
       description: "Permintaan Barang Masuk", 
       branchId: branch.id,
+      icon: "Plus",
       config: {
         naming: { defaultPattern: "GIN-{YYYY}-{MM}-{#####}" },
-        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods In Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Sender: {{sender_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Item</th><th>Qty</th><th>Serial No</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
+        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods In Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Sender: {{sender_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Material</th><th>Item</th><th>Qty</th><th>Serial No</th><th>Building</th><th>Floor</th><th>Room</th><th>Customer</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.type_of_material}}</td><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.building_id}}</td><td>{{row.floor_id}}</td><td>{{row.room_id}}</td><td>{{row.owner_customer_id}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
       }
     },
   });
@@ -733,10 +832,29 @@ async function run() {
   });
 
   const goodsInItemFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "item_name", label: "Nama Barang", type: "TEXT", required: true, order: 1 },
-    { key: "quantity", label: "Jumlah", type: "NUMBER", required: true, order: 2 },
-    { key: "serial_number", label: "Serial Number", type: "TEXT", required: false, order: 3 },
-    { key: "description", label: "Deskripsi/Kondisi", type: "TEXTAREA", required: false, order: 4 },
+    { key: "type_of_material", label: "Type Of Material", type: "DROPDOWN", required: true, order: 1, config: { options: [
+      { label: "Fiber Optic", value: "Fiber Optic" },
+      { label: "UTP Cable", value: "UTP Cable" },
+      { label: "Coaxial Cable", value: "Coaxial Cable" },
+      { label: "Connector", value: "Connector" },
+      { label: "Patch Panel", value: "Patch Panel" },
+      { label: "Rack", value: "Rack" },
+      { label: "Switch", value: "Switch" },
+      { label: "Router", value: "Router" },
+      { label: "Power Cable", value: "Power Cable" },
+      { label: "Other", value: "Other" }
+    ] } },
+    { key: "item_name", label: "Nama Barang", type: "TEXT", required: false, order: 2 },
+    { key: "quantity", label: "Jumlah", type: "NUMBER", required: true, order: 3 },
+    { key: "serial_number", label: "Serial Number", type: "TEXT", required: false, order: 4 },
+    { key: "description", label: "Deskripsi/Kondisi", type: "TEXTAREA", required: false, order: 5 },
+    { key: "building_id", label: "Gedung", type: "DROPDOWN", required: true, order: 6,
+      config: { source: { table: "Building", labelField: "name", valueField: "id", filter: { dependsOn: "branch_id", field: "branchId" } } } },
+    { key: "floor_id", label: "Lantai", type: "DROPDOWN", required: true, order: 7,
+      config: { source: { table: "Floor", labelField: "name", valueField: "id", filter: { dependsOn: "building_id", field: "buildingId" } } } },
+    { key: "room_id", label: "Ruangan", type: "DROPDOWN", required: true, order: 8,
+      config: { source: { table: "Room", labelField: "name", valueField: "id", filter: { dependsOn: "floor_id", field: "floorId" } } } },
+    { key: "owner_customer_id", label: "Customer Pemilik", type: "TEXT", required: false, order: 9 },
   ];
 
   for (const f of goodsInItemFields) {
@@ -747,6 +865,9 @@ async function run() {
       create: { docTypeId: goodsInItem.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
     });
   }
+
+  // Cleanup old product_id field (replaced by type_of_material)
+  await prisma.docField.deleteMany({ where: { docTypeId: goodsInItem.id, key: "product_id" } });
 
   // Link child
   {
@@ -762,15 +883,16 @@ async function run() {
   // --- Goods Out Request ---
   const goodsOut = await prisma.docType.upsert({
     where: { key: "goods_out_request" },
-    update: {},
+    update: { icon: "Plus" },
     create: { 
       key: "goods_out_request", 
       name: "Goods Out Request", 
       description: "Permintaan Barang Keluar", 
       branchId: branch.id,
+      icon: "Plus",
       config: {
         naming: { defaultPattern: "GOUT-{YYYY}-{MM}-{#####}" },
-        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods Out Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Recipient: {{recipient_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Item</th><th>Qty</th><th>Serial No</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
+        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods Out Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Recipient: {{recipient_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Material</th><th>Item</th><th>Qty</th><th>Serial No</th><th>Building</th><th>Floor</th><th>Room</th><th>Customer</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.type_of_material}}</td><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.building_id}}</td><td>{{row.floor_id}}</td><td>{{row.room_id}}</td><td>{{row.owner_customer_id}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
       }
     },
   });
@@ -807,10 +929,29 @@ async function run() {
   });
 
   const goodsOutItemFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "item_name", label: "Nama Barang", type: "TEXT", required: true, order: 1 },
-    { key: "quantity", label: "Jumlah", type: "NUMBER", required: true, order: 2 },
-    { key: "serial_number", label: "Serial Number", type: "TEXT", required: false, order: 3 },
-    { key: "description", label: "Deskripsi/Kondisi", type: "TEXTAREA", required: false, order: 4 },
+    { key: "type_of_material", label: "Type Of Material", type: "DROPDOWN", required: true, order: 1, config: { options: [
+      { label: "Fiber Optic", value: "Fiber Optic" },
+      { label: "UTP Cable", value: "UTP Cable" },
+      { label: "Coaxial Cable", value: "Coaxial Cable" },
+      { label: "Connector", value: "Connector" },
+      { label: "Patch Panel", value: "Patch Panel" },
+      { label: "Rack", value: "Rack" },
+      { label: "Switch", value: "Switch" },
+      { label: "Router", value: "Router" },
+      { label: "Power Cable", value: "Power Cable" },
+      { label: "Other", value: "Other" }
+    ] } },
+    { key: "item_name", label: "Nama Barang", type: "TEXT", required: false, order: 2 },
+    { key: "quantity", label: "Jumlah", type: "NUMBER", required: true, order: 3 },
+    { key: "serial_number", label: "Serial Number", type: "TEXT", required: false, order: 4 },
+    { key: "description", label: "Deskripsi/Kondisi", type: "TEXTAREA", required: false, order: 5 },
+    { key: "building_id", label: "Gedung", type: "DROPDOWN", required: true, order: 6,
+      config: { source: { table: "Building", labelField: "name", valueField: "id", filter: { dependsOn: "branch_id", field: "branchId" } } } },
+    { key: "floor_id", label: "Lantai", type: "DROPDOWN", required: true, order: 7,
+      config: { source: { table: "Floor", labelField: "name", valueField: "id", filter: { dependsOn: "building_id", field: "buildingId" } } } },
+    { key: "room_id", label: "Ruangan", type: "DROPDOWN", required: true, order: 8,
+      config: { source: { table: "Room", labelField: "name", valueField: "id", filter: { dependsOn: "floor_id", field: "floorId" } } } },
+    { key: "owner_customer_id", label: "Customer Pemilik", type: "TEXT", required: false, order: 9 },
   ];
 
   for (const f of goodsOutItemFields) {
@@ -821,6 +962,9 @@ async function run() {
       create: { docTypeId: goodsOutItem.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
     });
   }
+
+  // Cleanup old product_id field (replaced by type_of_material)
+  await prisma.docField.deleteMany({ where: { docTypeId: goodsOutItem.id, key: "product_id" } });
 
   // Link child
   {
@@ -855,6 +999,289 @@ async function run() {
       });
     }
   }
+
+  // --- Visitor Request & Support Ticket ---
+  const visitorRequest = await prisma.docType.upsert({
+    where: { key: "visitor_request" },
+    update: { icon: "Users" },
+    create: {
+      key: "visitor_request",
+      name: "Visitor Request",
+      description: "Permintaan kunjungan visitor",
+      branchId: branch.id,
+      icon: "Users",
+      config: {
+        naming: { mode: "series", field: "naming_series", defaultPattern: "VR-####" },
+        listFields: ["visit_date", "purpose"],
+        filterFields: ["visit_date"],
+        childDocTypeKey: "visitor_request_item",
+      },
+    },
+  });
+
+  const visitorRequestItem = await prisma.docType.upsert({
+    where: { key: "visitor_request_item" },
+    update: {},
+    create: {
+      key: "visitor_request_item",
+      name: "Visitor",
+      description: "Daftar visitor yang akan datang",
+      branchId: branch.id,
+      config: {
+        listFields: ["visitor_name", "nik", "ktp_file"],
+        filterFields: [],
+      },
+    },
+  });
+
+  const supportTicket = await prisma.docType.upsert({
+    where: { key: "support_ticket" },
+    update: { icon: "LifeBuoy" },
+    create: {
+      key: "support_ticket",
+      name: "Support Ticket",
+      description: "Tiket bantuan/support",
+      branchId: branch.id,
+      icon: "LifeBuoy",
+      config: {
+        naming: { mode: "series", field: "naming_series", defaultPattern: "TIC-#####" },
+        listFields: ["subject", "status", "priority", "category"],
+        filterFields: ["status", "priority", "category"],
+        childDocTypeKey: "ticket_message",
+        assignmentEnabled: false,
+      },
+    },
+  });
+
+  const ticketMessage = await prisma.docType.upsert({
+    where: { key: "ticket_message" },
+    update: { icon: "Plus" },
+    create: {
+      key: "ticket_message",
+      name: "Ticket Message",
+      description: "Pesan percakapan tiket",
+      branchId: branch.id,
+      icon: "Plus",
+      config: {
+        listFields: ["message", "sender_name", "createdAt"],
+        assignmentEnabled: false,
+      },
+    },
+  });
+
+  const visitorRequestFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "visit_date", label: "Tanggal Kunjungan", type: "DATE", required: true, order: 10 },
+    { key: "purpose", label: "Keperluan", type: "TEXTAREA", required: false, order: 20 },
+    { key: "status", label: "Status", type: "DROPDOWN", required: true, order: 5, config: { options: [
+      { label: "Draft", value: "Draft" },
+      { label: "Submitted", value: "Submitted" },
+      { label: "Approved", value: "Approved" },
+      { label: "Rejected", value: "Rejected" },
+      { label: "Completed", value: "Completed" }
+    ], defaultValue: "Draft" } },
+    { key: "visitors", label: "Daftar Visitor", type: "TABLE", required: false, order: 100, config: { childDocTypeKey: "visitor_request_item" } },
+  ];
+
+  for (const f of visitorRequestFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: visitorRequest.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: visitorRequest.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const visitorRequestItemFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number }> = [
+    { key: "visitor_name", label: "Nama Visitor", type: "TEXT", required: true, order: 10 },
+    { key: "nik", label: "NIK", type: "TEXT", required: false, order: 20 },
+    { key: "phone_number", label: "No. HP", type: "TEXT", required: false, order: 30 },
+    { key: "email", label: "Email", type: "TEXT", required: false, order: 40 },
+    { key: "ktp_file", label: "Upload KTP", type: "ATTACHMENT", required: false, order: 50 },
+    { key: "notes", label: "Catatan", type: "TEXTAREA", required: false, order: 60 },
+  ];
+
+  for (const f of visitorRequestItemFields) {
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: visitorRequestItem.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order },
+      create: { docTypeId: visitorRequestItem.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order },
+    });
+  }
+
+  const supportTicketFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "subject", label: "Subjek", type: "TEXT", required: true, order: 10 },
+    { key: "category", label: "Kategori", type: "DROPDOWN", required: false, order: 20, config: { options: [
+      { label: "Technical", value: "Technical" },
+      { label: "Billing", value: "Billing" },
+      { label: "General", value: "General" },
+      { label: "Complaint", value: "Complaint" }
+    ] } },
+    { key: "priority", label: "Prioritas", type: "DROPDOWN", required: false, order: 30, config: { options: [
+      { label: "Low", value: "Low" },
+      { label: "Medium", value: "Medium" },
+      { label: "High", value: "High" },
+      { label: "Urgent", value: "Urgent" }
+    ], defaultValue: "Medium" } },
+    { key: "status", label: "Status", type: "DROPDOWN", required: true, order: 5, config: { options: [
+      { label: "Draft", value: "Draft" },
+      { label: "Submitted", value: "Submitted" },
+      { label: "Approved", value: "Approved" },
+      { label: "Rejected", value: "Rejected" },
+      { label: "Completed", value: "Completed" }
+    ], defaultValue: "Draft" } },
+    { key: "description", label: "Deskripsi Lengkap", type: "TEXTAREA", required: true, order: 40 },
+    { key: "attachment", label: "Lampiran", type: "ATTACHMENT", required: false, order: 45 },
+    { key: "messages", label: "Percakapan Tiket", type: "TABLE", required: false, order: 50, config: { childDocTypeKey: "ticket_message" } },
+  ];
+
+  for (const f of supportTicketFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: supportTicket.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: supportTicket.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const ticketMessageFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number }> = [
+    { key: "message", label: "Pesan", type: "TEXTAREA", required: true, order: 10 },
+    { key: "sender_name", label: "Pengirim", type: "TEXT", required: false, order: 20 },
+    { key: "attachment", label: "Lampiran", type: "ATTACHMENT", required: false, order: 30 },
+  ];
+
+  for (const f of ticketMessageFields) {
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: ticketMessage.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order },
+      create: { docTypeId: ticketMessage.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order },
+    });
+  }
+
+  // Permissions for Visitor Request & Support Ticket
+  const visitTicketDocTypes = [visitorRequest, visitorRequestItem, supportTicket, ticketMessage];
+  if (adminRole) {
+    for (const dt of visitTicketDocTypes) {
+      await prisma.docPermission.upsert({
+        where: { docTypeId_roleId: { roleId: adminRole.id, docTypeId: dt.id } },
+        update: { canCreate: true, canRead: true, canWrite: true, canDelete: true },
+        create: { roleId: adminRole.id, docTypeId: dt.id, canCreate: true, canRead: true, canWrite: true, canDelete: true },
+      });
+    }
+  }
+  if (customerRole) {
+    for (const dt of visitTicketDocTypes) {
+      await prisma.docPermission.upsert({
+        where: { docTypeId_roleId: { roleId: customerRole.id, docTypeId: dt.id } },
+        update: { canCreate: true, canRead: true, canWrite: true, canDelete: true },
+        create: { roleId: customerRole.id, docTypeId: dt.id, canCreate: true, canRead: true, canWrite: true, canDelete: true },
+      });
+    }
+  }
+
+  // --- Product Groups ---
+  const productGroups = [
+    { name: "Additional Accessories", description: "peralatan pelengkap dan penunjang" },
+    { name: "Additional Power", description: "Increate power to rack on datacenter" },
+    { name: "Additional Rack", description: "Rack additional request" },
+    { name: "Additional Services", description: "Layanan tambahan buat pelanggan data center" },
+    { name: "Connectivity Services", description: "Layanan pendukung konektivitas" },
+    { name: "Smart Hands", description: "Layanan pendukung untuk data center" },
+  ];
+  for (const g of productGroups) {
+    const existing = await prisma.productGroup.findFirst({ where: { name: g.name, branchId: branch.id } });
+    if (existing) {
+      await prisma.productGroup.update({ where: { id: existing.id }, data: { description: g.description } });
+    } else {
+      await prisma.productGroup.create({ data: { name: g.name, description: g.description, branchId: branch.id } });
+    }
+  }
+
+  // --- Sample Products ---
+  const groupMap: Record<string, string> = {};
+  for (const g of productGroups) {
+    const rec = await prisma.productGroup.findFirst({ where: { name: g.name, branchId: branch.id } });
+    if (rec) groupMap[g.name] = rec.id;
+  }
+
+  const sampleProducts = [
+    { name: "Visual Inspection", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Smart Hands", description: "1 Request = 1 Rack\nPerform a visual inspection of the device (LED indicators, cables, and panels).\nSend photos/videos of the device condition as requested by the customer." },
+    { name: "Soft Reboot", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Smart Hands", description: "1 Request = 1 Device\nLogin and procedure are provided and reset after work completion by customer" },
+    { name: "Additional Power", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Additional Power", description: "Increate power to rack selected" },
+    { name: "Black Panel", classification: "ONETIME" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "CCTV", classification: "ONETIME" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "Network Connector", classification: "ONETIME" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "rPDU", classification: "ONETIME" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "TakeOf Box", classification: "ONETIME" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "Product Recuring", classification: "RECURRING" as const, orderMode: "DIRECT" as const, group: "Additional Accessories", description: null },
+    { name: "Additional Rack", classification: "RECURRING" as const, orderMode: "REQUEST" as const, group: "Additional Rack", description: null },
+    { name: "Cross Connect", classification: "RECURRING" as const, orderMode: "REQUEST" as const, group: "Connectivity Services", description: null },
+    { name: "Component Replacement", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Smart Hands", description: null },
+    { name: "Hard Reboot", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Smart Hands", description: null },
+    { name: "Remote Assistance", classification: "ONETIME" as const, orderMode: "REQUEST" as const, group: "Smart Hands", description: null },
+  ];
+
+  for (const p of sampleProducts) {
+    const existing = await prisma.product.findFirst({ where: { name: p.name, branchId: branch.id } });
+    if (!existing) {
+      await prisma.product.create({
+        data: {
+          name: p.name,
+          branchId: branch.id,
+          groupId: groupMap[p.group] ?? null,
+          classification: p.classification,
+          orderMode: p.orderMode,
+          description: p.description,
+          active: true,
+        },
+      });
+    }
+  }
+
+  // --- Building / Floor / Room sample data ---
+  const jbBranch = await prisma.branch.findUnique({ where: { code: "HQ" } });
+  const cbBranch = await prisma.branch.findUnique({ where: { code: "POP-1" } });
+
+  const buildingJB = jbBranch ? await prisma.building.upsert({
+    where: { id: "cml5y51p8000oairnbfuf1b0a" },
+    update: { name: "JB Building 1" },
+    create: { id: "cml5y51p8000oairnbfuf1b0a", name: "JB Building 1", branchId: jbBranch.id },
+  }) : null;
+
+  const buildingCB = cbBranch ? await prisma.building.upsert({
+    where: { id: "cml5y5aj9000pairn0inrthyf" },
+    update: { name: "CB Building 1" },
+    create: { id: "cml5y5aj9000pairn0inrthyf", name: "CB Building 1", branchId: cbBranch.id },
+  }) : null;
+
+  const floorJB = buildingJB ? await prisma.floor.upsert({
+    where: { id: "cmnebejlu0000zorn14oe6m0y" },
+    update: { name: "Lantai 1" },
+    create: { id: "cmnebejlu0000zorn14oe6m0y", name: "Lantai 1", level: 1, buildingId: buildingJB.id },
+  }) : null;
+
+  const floorCB = buildingCB ? await prisma.floor.upsert({
+    where: { id: "cmmu1rnex0000x1rn8eu3fcbk" },
+    update: { name: "Lantai 1" },
+    create: { id: "cmmu1rnex0000x1rn8eu3fcbk", name: "Lantai 1", level: 1, buildingId: buildingCB.id },
+  }) : null;
+
+  if (floorJB) {
+    await prisma.room.upsert({
+      where: { id: "cmnebejmw0001zornlkqfib2e" },
+      update: {},
+      create: { id: "cmnebejmw0001zornlkqfib2e", name: "Data Center Room A", floorId: floorJB.id },
+    });
+  }
+  if (floorCB) {
+    await prisma.room.upsert({
+      where: { id: "cmmu1sbet0001x1rnvy2fi2pe" },
+      update: {},
+      create: { id: "cmmu1sbet0001x1rnvy2fi2pe", name: "MMR", floorId: floorCB.id },
+    });
+  }
+
+  // Update existing Floor records that may lack a name
+  await prisma.$executeRawUnsafe('UPDATE `Floor` SET `name` = CONCAT("Lantai ", `level`) WHERE `name` = "Lantai" OR `name` = ""');
 }
 
 run()

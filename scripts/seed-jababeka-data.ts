@@ -23,7 +23,7 @@ async function main() {
   let floor = await prisma.floor.findFirst({ where: { buildingId: building.id } });
   if (!floor) {
     floor = await prisma.floor.create({
-      data: { level: 1, buildingId: building.id }
+      data: { name: `Lantai ${1}`, level: 1, buildingId: building.id }
     });
   }
 

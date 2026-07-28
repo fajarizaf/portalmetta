@@ -21,6 +21,7 @@ import { FormValidationProvider } from "@/components/form-validation-context"
 import { ValidatedButton } from "@/components/validated-button"
 import QuotationItemSpecs from "@/components/quotation-item-specs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { VisitorQRCard } from "@/components/visitor-qr-card"
 import fs from "fs/promises"
 import path from "path"
 import * as React from "react"
@@ -381,13 +382,21 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
            const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
            const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
            const recs = await client[modelProp].findMany()
-           dynamicOptions[f.key] = recs.map((r) => {
-             const labelRaw = r[labelField]
-             const valueRaw = r[valueField]
-             const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
-             const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
-             return { label, value }
-           })
+            dynamicOptions[f.key] = recs.map((r) => {
+              const labelRaw = r[labelField]
+              const valueRaw = r[valueField]
+              let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+              if (!label) {
+                const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                for (const fb of fallbacks) {
+                  if (typeof fb === "string" && fb) { label = fb; break }
+                  if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                }
+                if (!label) label = String(r["id"] ?? "")
+              }
+              const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
+              return { label, value }
+            })
          }
       }
     }
@@ -499,7 +508,15 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
             childOptionsByFieldKey[tf.key][f.key] = filtered.map((r) => {
               const labelRaw = r[labelField]
               const valueRaw = r[valueField]
-              const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+              let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+              if (!label) {
+                const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                for (const fb of fallbacks) {
+                  if (typeof fb === "string" && fb) { label = fb; break }
+                  if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                }
+                if (!label) label = String(r["id"] ?? "")
+              }
               const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
               return { label, value }
             })
@@ -827,6 +844,20 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
             )}
         </div>
       </div>
+
+      {key === "visitor_request" && (
+        <div className="mb-8 max-w-sm mx-auto">
+          <VisitorQRCard
+            recordId={id}
+            companyId={user.companyId ?? ""}
+            qrToken={typeof values["qr_token"] === "string" ? values["qr_token"] as string : null}
+            qrStatus={typeof values["qr_status"] === "string" ? values["qr_status"] as string : null}
+            checkInTime={typeof values["check_in_time"] === "string" ? values["check_in_time"] as string : null}
+            checkOutTime={typeof values["check_out_time"] === "string" ? values["check_out_time"] as string : null}
+            visitDate={typeof values["visit_date"] === "string" ? values["visit_date"] as string : null}
+          />
+        </div>
+      )}
 
       <form action={updateRecord} id="customer-edit-form" className="space-y-8">
         <input type="hidden" name="docTypeKey" value={key} />

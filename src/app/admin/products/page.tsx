@@ -110,6 +110,16 @@ async function deleteProduct(formData: FormData) {
   redirect(`${referer}?toast=Produk%20berhasil%20dihapus`)
 }
 
+async function toggleProductActive(formData: FormData) {
+  "use server"
+  const id = String(formData.get("id") || "")
+  const currentActive = String(formData.get("currentActive") || "") === "true"
+  if (!id) return
+  await prisma.product.update({ where: { id }, data: { active: !currentActive } })
+  const referer = (await headers()).get("referer") || "/admin/products"
+  redirect(`${referer}?toast=Produk%20${currentActive ? "dinonaktifkan" : "diaktifkan"}`)
+}
+
 async function addSpecField(formData: FormData) {
   "use server"
   const productId = String(formData.get("productId") || "")
@@ -349,6 +359,12 @@ export default async function ProductsPage() {
       </div>
 
       <div className="space-y-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Produk</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">Klik status untuk aktif/nonaktif produk. Produk nonaktif tidak akan muncul di dropdown Goods In/Out.</p>
+        </div>
         <div className="flex items-center gap-2">
           <Input placeholder="Cari produk..." defaultValue={q} name="q" />
           <SearchableSelect name="model" placeholder="Semua model" defaultValue={model ?? ""} options={[
@@ -366,6 +382,7 @@ export default async function ProductsPage() {
                 <th className="p-2">Nama</th>
                 <th className="p-2">Group</th>
                 <th className="p-2">Model</th>
+                <th className="p-2">Status</th>
                 <th className="p-2">Specs</th>
                 <th className="p-2">Prices</th>
                 <th className="p-2">Aksi</th>
@@ -376,10 +393,19 @@ export default async function ProductsPage() {
                 <tr key={p.id} className="border-b align-top">
                   <td className="p-2">
                     <div className="font-medium">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">{p.active ? "Aktif" : "Nonaktif"}</div>
                   </td>
                   <td className="p-2">{p.group?.name ?? "—"}</td>
                   <td className="p-2">{p.classification}</td>
+                  <td className="p-2">
+                    <form action={toggleProductActive}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="currentActive" value={String(p.active)} />
+                      <button type="submit" className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${p.active ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${p.active ? "bg-green-500" : "bg-gray-400"}`} />
+                        {p.active ? "Aktif" : "Nonaktif"}
+                      </button>
+                    </form>
+                  </td>
                   <td className="p-2">
                     <Dialog>
                       <DialogTrigger asChild>

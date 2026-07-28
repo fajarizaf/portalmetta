@@ -2,7 +2,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight, Home, Settings, Building2, Users, FileText, Folder, LayoutGrid, Package, type LucideIcon } from "lucide-react"
+import { ChevronRight, Home, Settings, Building2, Users, FileText, Folder, LayoutGrid, Package, QrCode, type LucideIcon } from "lucide-react"
 import { IconDisplay } from "@/components/icon-display"
 import { TeamSwitcher } from "@/components/team-switcher"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -30,6 +30,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   canManageDoctypes?: boolean
   canManageDocuments?: boolean
   showSettings?: boolean
+  canManageVisits?: boolean
   roleName?: string
   docTypes?: { key: string; name: string; icon?: string | null }[]
 }
@@ -44,6 +45,7 @@ export function AppSidebar({
   canManageDoctypes,
   canManageDocuments,
   showSettings = false,
+  canManageVisits = false,
   roleName,
   docTypes,
   ...props
@@ -56,6 +58,8 @@ export function AppSidebar({
       items: [
         { title: "Dashboard", href: "/admin", icon: Home },
         { title: "Rack Mapping", href: "/admin/rack-mapping", icon: LayoutGrid },
+        { title: "Inventory", href: "/admin/inventory/management", icon: Package },
+        ...(canManageVisits ? [{ title: "Visits", href: "/admin/visits", icon: QrCode }] : []),
         ...(showSettings ? [{ title: "Settings", href: "/admin/settings", icon: Settings }] : []),
       ],
     },

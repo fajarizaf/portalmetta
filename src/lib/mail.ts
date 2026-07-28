@@ -201,3 +201,97 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
   await browser.close();
   return Buffer.from(pdf);
 }
+
+export async function sendVisitorPassEmail(params: {
+  toEmail: string;
+  customerName: string;
+  recordCode: string | null;
+  visitDate: string;
+  purpose: string;
+  qrDataUrl: string;
+  visitors: Array<{ visitor_name: string; nik: string; phone_number?: string; email?: string }>;
+}) {
+  const { toEmail, customerName, recordCode, visitDate, purpose, qrDataUrl, visitors } = params;
+
+  const visitorRows = visitors.map((v, i) => `
+    <tr>
+      <td style="padding: 8px 10px; border: 1px solid #ddd; background: #f9f9f9;">${i + 1}</td>
+      <td style="padding: 8px 10px; border: 1px solid #ddd;">${v.visitor_name}</td>
+      <td style="padding: 8px 10px; border: 1px solid #ddd;">${v.nik}</td>
+      <td style="padding: 8px 10px; border: 1px solid #ddd;">${v.phone_number || "-"}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+    <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="color: #007bff; margin-bottom: 5px;">Visitor Pass - Approved</h2>
+        <p style="margin: 0; color: #666; font-size: 14px;">MettaDC Visitor Management</p>
+      </div>
+
+      <p>Halo <strong>${customerName}</strong>,</p>
+      <p>Visitor request Anda telah <strong style="color: #28a745;">di-approve</strong>. Berikut adalah QR Code Visitor Pass yang dapat Anda tampilkan saat datang ke lokasi:</p>
+
+      <div style="text-align: center; margin: 30px 0; padding: 25px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #dee2e6;">
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057; font-size: 14px;">QR Visitor Pass</p>
+        <img src="${qrDataUrl}" alt="QR Code Visitor Pass" style="width: 220px; height: 220px; border: 4px solid white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">Tunjukkan QR ini ke petugas security saat datang</p>
+      </div>
+
+      <h3 style="border-bottom: 2px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px;">Detail Kunjungan</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <tr>
+          <td style="padding: 8px 10px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9; width: 35%;">Kode</td>
+          <td style="padding: 8px 10px; border: 1px solid #ddd;">${recordCode || "-"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 10px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9;">Tanggal Kunjungan</td>
+          <td style="padding: 8px 10px; border: 1px solid #ddd;">${visitDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 10px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9;">Keperluan</td>
+          <td style="padding: 8px 10px; border: 1px solid #ddd;">${purpose}</td>
+        </tr>
+      </table>
+
+      ${visitors.length > 0 ? `
+      <h3 style="border-bottom: 2px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px;">Daftar Visitor</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="background: #007bff; color: white;">
+            <th style="padding: 8px 10px; border: 1px solid #ddd; width: 40px;">#</th>
+            <th style="padding: 8px 10px; border: 1px solid #ddd;">Nama</th>
+            <th style="padding: 8px 10px; border: 1px solid #ddd;">NIK</th>
+            <th style="padding: 8px 10px; border: 1px solid #ddd;">No. HP</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${visitorRows}
+        </tbody>
+      </table>
+      ` : ""}
+
+      <div style="background: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin-bottom: 20px;">
+        <strong style="color: #155724;">Catatan Penting:</strong><br/>
+        <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #155724;">
+          <li>QR Code berlaku selama 24 jam sejak diterbitkan</li>
+          <li>Tunjukkan QR Code ini ke petugas security saat datang</li>
+          <li>Harap datang sesuai tanggal kunjungan yang terdaftar</li>
+        </ul>
+      </div>
+
+      <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
+      <p style="font-size: 0.8em; color: #777; text-align: center;">
+        Email ini dikirim secara otomatis oleh sistem MettaDC.<br/>
+        Kunjungan dapat dikelola melalui portal MettaDC.
+      </p>
+    </div>
+  `;
+
+  return transporter.sendMail({
+    from: '"MettaDC Visitor Pass" <no-reply@mettadc.id>',
+    to: toEmail,
+    subject: `Visitor Pass Disetujui - ${recordCode || "Visitor Request"}`,
+    html,
+  });
+}

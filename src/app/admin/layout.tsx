@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bell, LifeBuoy, LayoutGrid } from "lucide-react";
+import { Bell, LifeBuoy, LayoutGrid, QrCode } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
@@ -122,6 +122,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         canManageCustomers={perm.has("CUSTOMER_MANAGEMENT")}
         canManageDoctypes={perm.has("DOCTYPE_MANAGEMENT")}
         canManageDocuments={perm.has("DOCUMENTS_MANAGEMENT")}
+        canManageVisits={perm.has("VISITING_MANAGEMENT") || perm.has("ADMIN_PANEL_ACCESS")}
         showSettings={perm.has("ADMIN_PANEL_ACCESS")}
         roleName={me?.role?.name}
         docTypes={navDocTypes}
@@ -162,6 +163,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <LifeBuoy className="w-4 h-4" />
                 <span className="hidden sm:inline">Support</span>
               </Link>
+
+              {(perm.has("VISITING_MANAGEMENT") || perm.has("ADMIN_PANEL_ACCESS")) && (
+                <Link
+                  href="/admin/visits/scanner"
+                  className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 rounded-lg transition-all"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span className="hidden sm:inline">Scanner</span>
+                </Link>
+              )}
 
               <div className="w-px h-5 bg-slate-200 mx-1" />
 

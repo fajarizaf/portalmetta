@@ -76,23 +76,24 @@ model RolePermission {
 }
 
 model Company {
-  id                 String    @id @default(cuid())
-  name               String    @unique
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   address            String?
   companyEmail       String?
   companyPhoneNumber String?
   fax                String?
-  isDataCenter       Boolean   @default(false)
+  isDataCenter       Boolean             @default(false)
   parentId           String?
   logoUrl            String?
   picId              String?
   branches           Branch[]
-  parent             Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
-  children           Company[] @relation("CompanyHierarchy")
-  pic                User?     @relation("CompanyPIC", fields: [picId], references: [id])
-  customers          User[]    @relation("CompanyCustomers")
+  parent             Company?            @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  children           Company[]           @relation("CompanyHierarchy")
+  pic                User?               @relation("CompanyPIC", fields: [picId], references: [id])
+  customers          User[]              @relation("CompanyCustomers")
+  inventoryMovements InventoryMovement[]
 
   @@index([parentId], map: "Company_parentId_fkey")
   @@index([picId], map: "Company_picId_fkey")
@@ -134,6 +135,7 @@ model Building {
 
 model Floor {
   id         String   @id @default(cuid())
+  name       String
   level      Int
   buildingId String
   createdAt  DateTime @default(now())
@@ -145,12 +147,13 @@ model Floor {
 }
 
 model Room {
-  id        String   @id @default(cuid())
+  id        String              @id @default(cuid())
   name      String
   floorId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  floor     Floor    @relation(fields: [floorId], references: [id])
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  floor     Floor               @relation(fields: [floorId], references: [id])
+  movements InventoryMovement[]
 
   @@index([floorId], map: "Room_floorId_fkey")
 }
@@ -253,15 +256,22 @@ model Inventory {
 }
 
 model InventoryMovement {
-  id          String    @id @default(cuid())
-  inventoryId String
-  quantity    Int       // Positive for IN, Negative for OUT
-  reference   String?   // DocRecord ID or Code
-  type        String    // "IN" | "OUT" | "ADJUSTMENT"
-  createdAt   DateTime  @default(now())
-  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  id              String    @id @default(cuid())
+  inventoryId     String?
+  quantity        Int       // Positive for IN, Negative for OUT
+  reference       String?   // DocRecord ID or Code
+  type            String    // "IN" | "OUT" | "ADJUSTMENT"
+  roomId          String?
+  ownerCustomerId String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  inventory       Inventory? @relation(fields: [inventoryId], references: [id])
+  room            Room?     @relation(fields: [roomId], references: [id])
+  ownerCustomer   Company?  @relation(fields: [ownerCustomerId], references: [id])
 
   @@index([inventoryId])
+  @@index([roomId])
+  @@index([ownerCustomerId])
 }
 
 model DocType {

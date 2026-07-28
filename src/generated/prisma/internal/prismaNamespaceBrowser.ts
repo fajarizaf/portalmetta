@@ -193,6 +193,7 @@ export type BuildingScalarFieldEnum = (typeof BuildingScalarFieldEnum)[keyof typ
 
 export const FloorScalarFieldEnum = {
   id: 'id',
+  name: 'name',
   level: 'level',
   buildingId: 'buildingId',
   createdAt: 'createdAt',
@@ -301,6 +302,9 @@ export const InventoryMovementScalarFieldEnum = {
   quantity: 'quantity',
   reference: 'reference',
   type: 'type',
+  roomId: 'roomId',
+  ownerCustomerId: 'ownerCustomerId',
+  metadata: 'metadata',
   createdAt: 'createdAt'
 } as const
 
@@ -533,6 +537,7 @@ export type BuildingOrderByRelevanceFieldEnum = (typeof BuildingOrderByRelevance
 
 export const FloorOrderByRelevanceFieldEnum = {
   id: 'id',
+  name: 'name',
   buildingId: 'buildingId'
 } as const
 
@@ -627,7 +632,9 @@ export const InventoryMovementOrderByRelevanceFieldEnum = {
   id: 'id',
   inventoryId: 'inventoryId',
   reference: 'reference',
-  type: 'type'
+  type: 'type',
+  roomId: 'roomId',
+  ownerCustomerId: 'ownerCustomerId'
 } as const
 
 export type InventoryMovementOrderByRelevanceFieldEnum = (typeof InventoryMovementOrderByRelevanceFieldEnum)[keyof typeof InventoryMovementOrderByRelevanceFieldEnum]

@@ -405,9 +405,9 @@ export type InventorySumOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
 }
 
-export type InventoryScalarRelationFilter = {
-  is?: Prisma.InventoryWhereInput
-  isNot?: Prisma.InventoryWhereInput
+export type InventoryNullableScalarRelationFilter = {
+  is?: Prisma.InventoryWhereInput | null
+  isNot?: Prisma.InventoryWhereInput | null
 }
 
 export type InventoryCreateNestedManyWithoutBranchInput = {
@@ -500,10 +500,12 @@ export type InventoryCreateNestedOneWithoutMovementsInput = {
   connect?: Prisma.InventoryWhereUniqueInput
 }
 
-export type InventoryUpdateOneRequiredWithoutMovementsNestedInput = {
+export type InventoryUpdateOneWithoutMovementsNestedInput = {
   create?: Prisma.XOR<Prisma.InventoryCreateWithoutMovementsInput, Prisma.InventoryUncheckedCreateWithoutMovementsInput>
   connectOrCreate?: Prisma.InventoryCreateOrConnectWithoutMovementsInput
   upsert?: Prisma.InventoryUpsertWithoutMovementsInput
+  disconnect?: Prisma.InventoryWhereInput | boolean
+  delete?: Prisma.InventoryWhereInput | boolean
   connect?: Prisma.InventoryWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.InventoryUpdateToOneWithWhereWithoutMovementsInput, Prisma.InventoryUpdateWithoutMovementsInput>, Prisma.InventoryUncheckedUpdateWithoutMovementsInput>
 }

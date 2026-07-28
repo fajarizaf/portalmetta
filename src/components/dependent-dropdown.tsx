@@ -122,6 +122,10 @@ export default function DependentDropdown({
           return matchDep(it.dependsOn, suf)
         })
         val = found?.value || ""
+        if (!val) {
+          const globalEl = document.querySelector<HTMLInputElement>(`input[name="${it.dependsOn}"]`)
+          val = globalEl?.value || ""
+        }
       } else {
         const el = scopeEl ? scopeEl.querySelector<HTMLInputElement>(`input[name="${it.dependsOn}"]`) : document.querySelector<HTMLInputElement>(`input[name="${it.dependsOn}"]`)
         val = el?.value || ""

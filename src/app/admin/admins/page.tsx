@@ -51,7 +51,8 @@ async function createAdmin(formData: FormData) {
     }
     roleId = role.id;
   }
-  const effectiveCompanyId = meSession?.companyId ?? null;
+  const formCompanyId = String(formData.get("companyId") || "").trim();
+  const effectiveCompanyId = permSession.has("COMPANY_MANAGEMENT") && formCompanyId ? formCompanyId : (meSession?.companyId ?? null);
   if (!effectiveCompanyId) return;
   const validBranches = await prisma.branch.findMany({ where: { id: { in: branchIds }, companyId: effectiveCompanyId } });
   if (validBranches.length !== branchIds.length) return;
@@ -112,7 +113,8 @@ async function updateAdmin(formData: FormData) {
   if (finalName) data.name = finalName;
   data.address = address || null;
   data.phoneNumber = phoneNumber || null;
-  const effectiveCompanyId = meSession?.companyId ?? null;
+  const formCompanyId = String(formData.get("companyId") || "").trim();
+  const effectiveCompanyId = permSession.has("COMPANY_MANAGEMENT") && formCompanyId ? formCompanyId : (meSession?.companyId ?? null);
   if (!effectiveCompanyId) return;
   data.companyId = effectiveCompanyId;
   if (password) {
@@ -157,6 +159,14 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
     ? await prisma.branch.findMany({ where: { admins: { some: { userId: me.id } }, companyId: me.companyId ?? undefined }, orderBy: { name: "asc" } })
     : [];
   const branches = await prisma.branch.findMany({ where: { companyId: me?.companyId ?? undefined }, orderBy: { name: "asc" } });
+  const companies = isSuper
+    ? await prisma.company.findMany({ orderBy: { name: "asc" } })
+    : me?.companyId
+    ? await prisma.company.findMany({ where: { id: me.companyId } })
+    : [];
+  const allBranches = isSuper
+    ? await prisma.branch.findMany({ orderBy: { name: "asc" } })
+    : branches;
   const cookieStore = await cookies();
   const cookieBranchId = cookieStore.get("branchId")?.value;
   const sp = ((await searchParams) ?? {}) as Record<string, string | string[] | undefined>;
@@ -171,7 +181,7 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
       ...(isSuper ? {} : { companyId: me?.companyId ?? undefined }),
       ...(roleNameFilter !== "ALL" ? { role: { name: roleNameFilter } } : {}),
     },
-    include: { assignedBranches: true },
+    include: { assignedBranches: true, role: { include: { permissions: { include: { permission: true } } } } },
   });
   return (
     <div className="space-y-6">
@@ -227,13 +237,13 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
                 </div>
               </div>
               <CompanyBranchFields
-                companies={[]}
-                branches={branches}
-                isSuper={false}
+                companies={companies}
+                branches={allBranches}
+                isSuper={isSuper}
                 defaultCompanyId={me?.companyId ?? ""}
                 defaultSelectedBranchId={selectedBranchId}
                 selectId="companyId"
-                showCompanySelect={false}
+                showCompanySelect={isSuper}
               />
               <div className="space-y-1.5">
                 <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
@@ -315,13 +325,13 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
                                 </div>
                               </div>
                               <CompanyBranchFields
-                                companies={[]}
-                                branches={branches}
-                                isSuper={false}
-                                defaultCompanyId={me?.companyId ?? ""}
+                                companies={companies}
+                                branches={allBranches}
+                                isSuper={isSuper}
+                                defaultCompanyId={a.companyId ?? me?.companyId ?? ""}
                                 selectedBranchIds={new Set(a.assignedBranches.map((ab) => ab.branchId))}
                                 selectId={`admin_company_${a.id}`}
-                                showCompanySelect={false}
+                                showCompanySelect={isSuper}
                               />
                               <div className="space-y-1.5">
                                 <Label htmlFor={`admin_password_${a.id}`} className="text-sm font-medium text-slate-700">Password baru</Label>

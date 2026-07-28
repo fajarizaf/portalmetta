@@ -196,7 +196,11 @@ export default function ChildRowsAccordion({
                         for (const it of filters) {
                           const raw = (rowValuesMap[rid] ?? {})[it.dependsOn]
                           const v = typeof raw === "string" ? raw : String(raw ?? "")
-                          if (v) initMap[it.dependsOn] = v
+                          if (v) {
+                            initMap[it.dependsOn] = v
+                          } else if (branchId && it.field === "branchId") {
+                            initMap[it.dependsOn] = branchId
+                          }
                         }
                         return (
                           <div key={cf.id} className="space-y-2">

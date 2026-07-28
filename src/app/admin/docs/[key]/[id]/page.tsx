@@ -885,34 +885,36 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           }
           const goodsInItems = await prisma.docRow.findMany({ where: { childDocTypeId: goodsInItemType.id, ...commonWhere } })
           const goodsOutItems = await prisma.docRow.findMany({ where: { childDocTypeId: goodsOutItemType.id, ...commonWhere } })
-          const balanceMap = new Map<string, { itemName: string, qty: number }>()
+          const balanceMap = new Map<string, { productName: string, qty: number }>()
           goodsInItems.forEach(row => {
             const d = (row.data as any) || {}
+            const productId = d.product_id || ""
             const name = d.item_name || "Unknown Item"
             const qty = Number(d.quantity || 0)
-            const k = name.trim().toLowerCase()
-            if (!balanceMap.has(k)) balanceMap.set(k, { itemName: name, qty: 0 })
+            const k = productId || name.trim().toLowerCase()
+            if (!balanceMap.has(k)) balanceMap.set(k, { productName: productId ? name : name, qty: 0 })
             balanceMap.get(k)!.qty += qty
           })
           goodsOutItems.forEach(row => {
             const d = (row.data as any) || {}
+            const productId = d.product_id || ""
             const name = d.item_name || "Unknown Item"
             const qty = Number(d.quantity || 0)
-            const k = name.trim().toLowerCase()
+            const k = productId || name.trim().toLowerCase()
             if (balanceMap.has(k)) balanceMap.get(k)!.qty -= qty
           })
 
           const currentValue = values[f.key] ? String(values[f.key]) : undefined
           const options = Array.from(balanceMap.values())
             .filter(item => item.qty > 0)
-            .map(item => ({ label: `${item.itemName} (Stok: ${item.qty})`, value: item.itemName }))
+            .map(item => ({ label: `${item.productName} (Stok: ${item.qty})`, value: item.productName }))
           
           if (currentValue && !options.some(opt => opt.value === currentValue)) {
             const currentItemInMap = balanceMap.get(currentValue.trim().toLowerCase())
             if (currentItemInMap) {
               options.unshift({
-                label: `${currentItemInMap.itemName} (Stok: ${currentItemInMap.qty})`,
-                value: currentItemInMap.itemName,
+                label: `${currentItemInMap.productName} (Stok: ${currentItemInMap.qty})`,
+                value: currentItemInMap.productName,
               })
             } else {
               options.unshift({ label: `${currentValue} (Stok: 0)`, value: currentValue })
@@ -1059,7 +1061,15 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             childOptionsByFieldKey[tf.key][f.key] = filtered.map((r: any) => {
               const labelRaw = r[labelField]
               const valueRaw = r[valueField]
-              const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+              let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+              if (!label) {
+                const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                for (const fb of fallbacks) {
+                  if (typeof fb === "string" && fb) { label = fb; break }
+                  if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                }
+                if (!label) label = String(r["id"] ?? "")
+              }
               const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
               return { label, value }
             })

@@ -18,7 +18,7 @@ async function createFloor(formData: FormData) {
   const level = Number(formData.get("level") || 0);
   const buildingId = String(formData.get("buildingId") || "").trim();
   if (!level || !buildingId) return;
-  await prisma.floor.create({ data: { level, buildingId } });
+  await prisma.floor.create({ data: { name: `Lantai ${level}`, level, buildingId } });
   revalidatePath("/admin/floors");
   redirect("/admin/floors?toast=Floor%20berhasil%20ditambahkan")
 }

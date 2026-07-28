@@ -212,7 +212,15 @@ export default async function OrderByGroupPage(props: { params: Promise<{ groupI
             per[s.key] = filteredRows.map((r) => {
               const labelRaw = r[labelField]
               const valueRaw = r[valueField]
-              const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+              let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+              if (!label) {
+                const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                for (const fb of fallbacks) {
+                  if (typeof fb === "string" && fb) { label = fb; break }
+                  if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                }
+                if (!label) label = String(r["id"] ?? "")
+              }
               const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
               return { label, value }
             })

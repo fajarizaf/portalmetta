@@ -329,7 +329,15 @@ export default async function DocsByTypePage({ params, searchParams }: { params?
           dynamicOptions[f.key] = rows.map((r) => {
             const labelRaw = r[labelField]
             const valueRaw = r[valueField]
-            const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+            let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+            if (!label) {
+              const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+              for (const fb of fallbacks) {
+                if (typeof fb === "string" && fb) { label = fb; break }
+                if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+              }
+              if (!label) label = String(r["id"] ?? "")
+            }
             const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
             return { label, value }
           })
@@ -385,7 +393,15 @@ export default async function DocsByTypePage({ params, searchParams }: { params?
             childOptions[f.key] = rows.map((r) => {
               const labelRaw = r[labelField]
               const valueRaw = r[valueField]
-              const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+              let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+              if (!label) {
+                const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                for (const fb of fallbacks) {
+                  if (typeof fb === "string" && fb) { label = fb; break }
+                  if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                }
+                if (!label) label = String(r["id"] ?? "")
+              }
               const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
               return { label, value }
             })

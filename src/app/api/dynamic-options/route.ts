@@ -138,22 +138,24 @@ export async function GET(req: Request) {
         },
       })
 
-      const balanceMap = new Map<string, { itemName: string, qty: number }>()
+      const balanceMap = new Map<string, { productName: string, qty: number }>()
 
       goodsInItems.forEach(row => {
         const d = (row.data as any) || {}
+        const productId = d.product_id || ""
         const name = d.item_name || d.name || d.itemName || d.label || "Unknown Item"
         const qty = Number(d.quantity || d.qty || d.amount || 0)
-        const key = name.trim().toLowerCase()
-        if (!balanceMap.has(key)) balanceMap.set(key, { itemName: name, qty: 0 })
+        const key = productId || name.trim().toLowerCase()
+        if (!balanceMap.has(key)) balanceMap.set(key, { productName: productId ? name : name, qty: 0 })
         balanceMap.get(key)!.qty += qty
       })
 
       goodsOutItems.forEach(row => {
         const d = (row.data as any) || {}
+        const productId = d.product_id || ""
         const name = d.item_name || d.name || d.itemName || d.label || "Unknown Item"
         const qty = Number(d.quantity || d.qty || d.amount || 0)
-        const key = name.trim().toLowerCase()
+        const key = productId || name.trim().toLowerCase()
         if (balanceMap.has(key)) {
           balanceMap.get(key)!.qty -= qty
         }
@@ -162,8 +164,8 @@ export async function GET(req: Request) {
       for (const item of balanceMap.values()) {
         if (item.qty > 0) {
           options.push({
-            label: `${item.itemName} (Stok: ${item.qty})`,
-            value: item.itemName
+            label: `${item.productName} (Stok: ${item.qty})`,
+            value: item.productName
           })
         }
       }
@@ -196,7 +198,15 @@ export async function GET(req: Request) {
         for (const r of filtered) {
           const labelRaw = r[labelField]
           const valueRaw = r[valueField]
-          const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r["id"]) 
+          let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+          if (!label) {
+            const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+            for (const fb of fallbacks) {
+              if (typeof fb === "string" && fb) { label = fb; break }
+              if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+            }
+            if (!label) label = String(r["id"] ?? "")
+          }
           const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
           options.push({ label, value })
         }

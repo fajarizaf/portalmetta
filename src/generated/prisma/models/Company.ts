@@ -243,6 +243,7 @@ export type CompanyWhereInput = {
   children?: Prisma.CompanyListRelationFilter
   pic?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   customers?: Prisma.UserListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
 }
 
 export type CompanyOrderByWithRelationInput = {
@@ -263,6 +264,7 @@ export type CompanyOrderByWithRelationInput = {
   children?: Prisma.CompanyOrderByRelationAggregateInput
   pic?: Prisma.UserOrderByWithRelationInput
   customers?: Prisma.UserOrderByRelationAggregateInput
+  inventoryMovements?: Prisma.InventoryMovementOrderByRelationAggregateInput
   _relevance?: Prisma.CompanyOrderByRelevanceInput
 }
 
@@ -287,6 +289,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   children?: Prisma.CompanyListRelationFilter
   pic?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   customers?: Prisma.UserListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
 }, "id" | "name">
 
 export type CompanyOrderByWithAggregationInput = {
@@ -341,6 +344,7 @@ export type CompanyCreateInput = {
   children?: Prisma.CompanyCreateNestedManyWithoutParentInput
   pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
   customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateInput = {
@@ -359,6 +363,7 @@ export type CompanyUncheckedCreateInput = {
   branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
   children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
   customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUpdateInput = {
@@ -377,6 +382,7 @@ export type CompanyUpdateInput = {
   children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
   pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
   customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateInput = {
@@ -395,6 +401,7 @@ export type CompanyUncheckedUpdateInput = {
   branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
   customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyCreateManyInput = {
@@ -642,6 +649,22 @@ export type CompanyUpdateOneWithoutBranchesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutBranchesInput, Prisma.CompanyUpdateWithoutBranchesInput>, Prisma.CompanyUncheckedUpdateWithoutBranchesInput>
 }
 
+export type CompanyCreateNestedOneWithoutInventoryMovementsInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutInventoryMovementsInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneWithoutInventoryMovementsNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutInventoryMovementsInput
+  upsert?: Prisma.CompanyUpsertWithoutInventoryMovementsInput
+  disconnect?: Prisma.CompanyWhereInput | boolean
+  delete?: Prisma.CompanyWhereInput | boolean
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutInventoryMovementsInput, Prisma.CompanyUpdateWithoutInventoryMovementsInput>, Prisma.CompanyUncheckedUpdateWithoutInventoryMovementsInput>
+}
+
 export type CompanyCreateWithoutPicInput = {
   id?: string
   name: string
@@ -657,6 +680,7 @@ export type CompanyCreateWithoutPicInput = {
   parent?: Prisma.CompanyCreateNestedOneWithoutChildrenInput
   children?: Prisma.CompanyCreateNestedManyWithoutParentInput
   customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateWithoutPicInput = {
@@ -674,6 +698,7 @@ export type CompanyUncheckedCreateWithoutPicInput = {
   branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
   children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
   customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyCreateOrConnectWithoutPicInput = {
@@ -701,6 +726,7 @@ export type CompanyCreateWithoutCustomersInput = {
   parent?: Prisma.CompanyCreateNestedOneWithoutChildrenInput
   children?: Prisma.CompanyCreateNestedManyWithoutParentInput
   pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateWithoutCustomersInput = {
@@ -718,6 +744,7 @@ export type CompanyUncheckedCreateWithoutCustomersInput = {
   picId?: string | null
   branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
   children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyCreateOrConnectWithoutCustomersInput = {
@@ -785,6 +812,7 @@ export type CompanyUpdateWithoutCustomersInput = {
   parent?: Prisma.CompanyUpdateOneWithoutChildrenNestedInput
   children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
   pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutCustomersInput = {
@@ -802,6 +830,7 @@ export type CompanyUncheckedUpdateWithoutCustomersInput = {
   picId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyCreateWithoutChildrenInput = {
@@ -819,6 +848,7 @@ export type CompanyCreateWithoutChildrenInput = {
   parent?: Prisma.CompanyCreateNestedOneWithoutChildrenInput
   pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
   customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateWithoutChildrenInput = {
@@ -836,6 +866,7 @@ export type CompanyUncheckedCreateWithoutChildrenInput = {
   picId?: string | null
   branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
   customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyCreateOrConnectWithoutChildrenInput = {
@@ -858,6 +889,7 @@ export type CompanyCreateWithoutParentInput = {
   children?: Prisma.CompanyCreateNestedManyWithoutParentInput
   pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
   customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateWithoutParentInput = {
@@ -875,6 +907,7 @@ export type CompanyUncheckedCreateWithoutParentInput = {
   branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
   children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
   customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyCreateOrConnectWithoutParentInput = {
@@ -913,6 +946,7 @@ export type CompanyUpdateWithoutChildrenInput = {
   parent?: Prisma.CompanyUpdateOneWithoutChildrenNestedInput
   pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
   customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChildrenInput = {
@@ -930,6 +964,7 @@ export type CompanyUncheckedUpdateWithoutChildrenInput = {
   picId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUpsertWithWhereUniqueWithoutParentInput = {
@@ -963,6 +998,7 @@ export type CompanyCreateWithoutBranchesInput = {
   children?: Prisma.CompanyCreateNestedManyWithoutParentInput
   pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
   customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyUncheckedCreateWithoutBranchesInput = {
@@ -980,6 +1016,7 @@ export type CompanyUncheckedCreateWithoutBranchesInput = {
   picId?: string | null
   children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
   customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOwnerCustomerInput
 }
 
 export type CompanyCreateOrConnectWithoutBranchesInput = {
@@ -1013,6 +1050,7 @@ export type CompanyUpdateWithoutBranchesInput = {
   children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
   pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
   customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutBranchesInput = {
@@ -1028,6 +1066,95 @@ export type CompanyUncheckedUpdateWithoutBranchesInput = {
   parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   picId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
+  customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
+}
+
+export type CompanyCreateWithoutInventoryMovementsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  address?: string | null
+  companyEmail?: string | null
+  companyPhoneNumber?: string | null
+  fax?: string | null
+  isDataCenter?: boolean
+  logoUrl?: string | null
+  branches?: Prisma.BranchCreateNestedManyWithoutCompanyInput
+  parent?: Prisma.CompanyCreateNestedOneWithoutChildrenInput
+  children?: Prisma.CompanyCreateNestedManyWithoutParentInput
+  pic?: Prisma.UserCreateNestedOneWithoutPicForCompaniesInput
+  customers?: Prisma.UserCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutInventoryMovementsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  address?: string | null
+  companyEmail?: string | null
+  companyPhoneNumber?: string | null
+  fax?: string | null
+  isDataCenter?: boolean
+  parentId?: string | null
+  logoUrl?: string | null
+  picId?: string | null
+  branches?: Prisma.BranchUncheckedCreateNestedManyWithoutCompanyInput
+  children?: Prisma.CompanyUncheckedCreateNestedManyWithoutParentInput
+  customers?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutInventoryMovementsInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedCreateWithoutInventoryMovementsInput>
+}
+
+export type CompanyUpsertWithoutInventoryMovementsInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedUpdateWithoutInventoryMovementsInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedCreateWithoutInventoryMovementsInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutInventoryMovementsInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutInventoryMovementsInput, Prisma.CompanyUncheckedUpdateWithoutInventoryMovementsInput>
+}
+
+export type CompanyUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fax?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDataCenter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  branches?: Prisma.BranchUpdateManyWithoutCompanyNestedInput
+  parent?: Prisma.CompanyUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
+  pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
+  customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fax?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDataCenter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  picId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
   customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
 }
@@ -1061,6 +1188,7 @@ export type CompanyUpdateWithoutPicInput = {
   parent?: Prisma.CompanyUpdateOneWithoutChildrenNestedInput
   children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
   customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPicInput = {
@@ -1078,6 +1206,7 @@ export type CompanyUncheckedUpdateWithoutPicInput = {
   branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
   customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateManyWithoutPicInput = {
@@ -1123,6 +1252,7 @@ export type CompanyUpdateWithoutParentInput = {
   children?: Prisma.CompanyUpdateManyWithoutParentNestedInput
   pic?: Prisma.UserUpdateOneWithoutPicForCompaniesNestedInput
   customers?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutParentInput = {
@@ -1140,6 +1270,7 @@ export type CompanyUncheckedUpdateWithoutParentInput = {
   branches?: Prisma.BranchUncheckedUpdateManyWithoutCompanyNestedInput
   children?: Prisma.CompanyUncheckedUpdateManyWithoutParentNestedInput
   customers?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOwnerCustomerNestedInput
 }
 
 export type CompanyUncheckedUpdateManyWithoutParentInput = {
@@ -1165,12 +1296,14 @@ export type CompanyCountOutputType = {
   branches: number
   children: number
   customers: number
+  inventoryMovements: number
 }
 
 export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | CompanyCountOutputTypeCountBranchesArgs
   children?: boolean | CompanyCountOutputTypeCountChildrenArgs
   customers?: boolean | CompanyCountOutputTypeCountCustomersArgs
+  inventoryMovements?: boolean | CompanyCountOutputTypeCountInventoryMovementsArgs
 }
 
 /**
@@ -1204,6 +1337,13 @@ export type CompanyCountOutputTypeCountCustomersArgs<ExtArgs extends runtime.Typ
   where?: Prisma.UserWhereInput
 }
 
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountInventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventoryMovementWhereInput
+}
+
 
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1223,6 +1363,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   children?: boolean | Prisma.Company$childrenArgs<ExtArgs>
   pic?: boolean | Prisma.Company$picArgs<ExtArgs>
   customers?: boolean | Prisma.Company$customersArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.Company$inventoryMovementsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["company"]>
 
@@ -1250,6 +1391,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   children?: boolean | Prisma.Company$childrenArgs<ExtArgs>
   pic?: boolean | Prisma.Company$picArgs<ExtArgs>
   customers?: boolean | Prisma.Company$customersArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.Company$inventoryMovementsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1261,6 +1403,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     children: Prisma.$CompanyPayload<ExtArgs>[]
     pic: Prisma.$UserPayload<ExtArgs> | null
     customers: Prisma.$UserPayload<ExtArgs>[]
+    inventoryMovements: Prisma.$InventoryMovementPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1620,6 +1763,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   children<T extends Prisma.Company$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pic<T extends Prisma.Company$picArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$picArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   customers<T extends Prisma.Company$customersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$customersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventoryMovements<T extends Prisma.Company$inventoryMovementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$inventoryMovementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2111,6 +2255,30 @@ export type Company$customersArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
+}
+
+/**
+ * Company.inventoryMovements
+ */
+export type Company$inventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventoryMovement
+   */
+  select?: Prisma.InventoryMovementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventoryMovement
+   */
+  omit?: Prisma.InventoryMovementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryMovementInclude<ExtArgs> | null
+  where?: Prisma.InventoryMovementWhereInput
+  orderBy?: Prisma.InventoryMovementOrderByWithRelationInput | Prisma.InventoryMovementOrderByWithRelationInput[]
+  cursor?: Prisma.InventoryMovementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
 }
 
 /**

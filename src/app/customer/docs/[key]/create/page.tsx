@@ -105,6 +105,11 @@ async function createRecord(formData: FormData) {
       payload[f.key] = raw
     }
   }
+  // Auto-fill owner_customer_id from session (customer's company)
+  if (me.companyId) {
+    const company = await prisma.company.findUnique({ where: { id: me.companyId }, select: { name: true } })
+    payload["owner_customer_id"] = company?.name || me.companyId
+  }
   {
     const productField = docType.fields.find((cf) => {
       const cfg = (cf.config ?? {}) as unknown as { source?: Record<string, unknown> }
@@ -509,6 +514,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
   const userCompanyId = user.companyId ?? null
   const parentCompanyId = userCompanyId ? (await prisma.company.findUnique({ where: { id: userCompanyId }, select: { parentId: true } }))?.parentId ?? null : null
   const scopeCompanyId = parentCompanyId ?? userCompanyId
+  const companyName = userCompanyId ? (await prisma.company.findUnique({ where: { id: userCompanyId }, select: { name: true } }))?.name ?? "" : ""
   const branches = scopeCompanyId ? await prisma.branch.findMany({ where: { companyId: scopeCompanyId }, orderBy: { name: "asc" } }) : []
   const allowedBranchIds = new Set(branches.map((b) => b.id))
   const candidateBranchId = cookieBranchId ?? branches[0]?.id
@@ -670,9 +676,47 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
           const cfg = (f.config ?? {}) as unknown as { options?: Array<{ label: string; value: string }>; source?: Record<string, unknown> }
           const src = cfg?.source as Record<string, unknown> | undefined
           const targetKey = src && typeof src["key"] === "string" ? (src["key"] as string) : ""
-          if (src && src["table"] === "Product" && targetKey) {
-             const products = await prisma.product.findMany({ where: { active: true } })
-             childOptionsMap[f.key] = products.map((prod) => ({ label: prod.name, value: prod.id }))
+          if (targetKey) {
+            // DocType mode — fetch all records (client-side DependentDropdown handles filtering)
+            const dt = await prisma.docType.findUnique({ where: { key: targetKey } })
+            if (dt) {
+              const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
+              const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
+              const recs = await prisma.docRecord.findMany({ where: { docTypeId: dt.id, ...(selectedBranchId ? { branchId: selectedBranchId } : {}) }, orderBy: { createdAt: "desc" } })
+              childOptionsMap[f.key] = recs.map((r) => {
+                const d = (r.data ?? {}) as Record<string, unknown>
+                const labelRaw = d[labelField]
+                const valueRaw = d[valueField]
+                const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r.id)
+                const value = typeof valueRaw === "string" ? valueRaw : r.id
+                return { label, value }
+              })
+            }
+          } else if (src && typeof src["table"] === "string" && src["table"]) {
+            // Table mode — fetch from Prisma model directly (client-side DependentDropdown handles filtering)
+            const tableName = String(src["table"])
+            const modelProp = tableName.slice(0, 1).toLowerCase() + tableName.slice(1)
+            const client = prisma as unknown as Record<string, { findMany: () => Promise<Array<Record<string, unknown>>> }>
+            if (typeof client[modelProp]?.findMany === "function") {
+              const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
+              const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
+              const recs = await client[modelProp].findMany()
+              childOptionsMap[f.key] = recs.map((r) => {
+                const labelRaw = r[labelField]
+                const valueRaw = r[valueField]
+                let label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? "")
+                if (!label) {
+                  const fallbacks = [r["name"], r["title"], r["label"], r["level"]]
+                  for (const fb of fallbacks) {
+                    if (typeof fb === "string" && fb) { label = fb; break }
+                    if (typeof fb === "number") { label = `Lantai ${fb}`; break }
+                  }
+                  if (!label) label = String(r["id"] ?? "")
+                }
+                const value = typeof valueRaw === "string" ? valueRaw : String(r["id"])
+                return { label, value }
+              })
+            }
           } else if (cfg?.options) {
              childOptionsMap[f.key] = cfg.options
           }
@@ -710,6 +754,16 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
                 if (f.key === "status") return null
                 if (f.key === "branch_id") {
                   return <input key={f.id} type="hidden" name="branch_id" value={selectedBranchId || ""} />
+                }
+
+                if (f.key === "owner_customer_id") {
+                  return (
+                    <div key={f.id} className="col-span-1">
+                      <Label className="mb-2 block">{f.label}</Label>
+                      <input type="hidden" name="owner_customer_id" value={companyName} />
+                      <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">{companyName || "-"}</div>
+                    </div>
+                  )
                 }
 
                 if (f.key.startsWith("__header_")) {
@@ -853,7 +907,9 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
                     optionsMap={childOptionsMap}
                     formId={formId}
                     childName={childDocType.name}
-                    defaultValues={[]} 
+                    branchId={selectedBranchId || undefined}
+                    defaultValues={[]}
+                    initialData={companyName ? { owner_customer_id: companyName } : undefined}
                 />
             </div>
         )}

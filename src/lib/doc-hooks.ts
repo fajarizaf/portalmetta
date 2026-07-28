@@ -1,5 +1,8 @@
 import { prisma } from "./prisma"
 import { Prisma } from "@/generated/prisma/client"
+import crypto from "crypto"
+import QRCodeLib from "qrcode"
+import { sendVisitorPassEmail } from "./mail"
 
 export type DocEventName = "before_insert" | "validate" | "before_save" | "after_insert" | "on_submit" | "on_cancel" | "on_update_after_submit" | "on_approve"
 
@@ -406,6 +409,66 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
 
   if (event === "on_approve") {
     console.log(`[runDocEventHook] on_approve hook for ${docTypeKey}`)
+
+    // --- Visitor Request: Send QR Pass Email ---
+    if (docTypeKey === "visitor_request") {
+      try {
+        const data = (rec.data ?? {}) as Record<string, unknown>
+        const qrToken = typeof data["qr_token"] === "string" ? data["qr_token"] : null
+
+        if (qrToken) {
+          // Get creator info
+          const creator = rec.createdById
+            ? await prisma.user.findUnique({ where: { id: rec.createdById }, select: { email: true, name: true, companyId: true } })
+            : null
+
+          const customerEmail = creator?.email
+          const customerName = creator?.name || "Customer"
+
+          if (customerEmail) {
+            const qrPayload = JSON.stringify({
+              docType: "visitor_request",
+              id: rec.id,
+              token: qrToken,
+              customerId: creator?.companyId || "",
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            })
+
+            const qrDataUrl = await QRCodeLib.toDataURL(qrPayload, {
+              width: 300,
+              margin: 2,
+              color: { dark: "#000000", light: "#ffffff" },
+            })
+
+            const visitors = Array.isArray(data["visitors"])
+              ? (data["visitors"] as Array<Record<string, unknown>>).map((v) => ({
+                  visitor_name: String(v["visitor_name"] || "-"),
+                  nik: String(v["nik"] || "-"),
+                  phone_number: typeof v["phone_number"] === "string" ? v["phone_number"] : undefined,
+                  email: typeof v["email"] === "string" ? v["email"] : undefined,
+                }))
+              : []
+
+            await sendVisitorPassEmail({
+              toEmail: customerEmail,
+              customerName,
+              recordCode: rec.code,
+              visitDate: typeof data["visit_date"] === "string" ? data["visit_date"] : "-",
+              purpose: typeof data["purpose"] === "string" ? data["purpose"] : "-",
+              qrDataUrl,
+              visitors,
+            })
+
+            console.log(`[runDocEventHook] Visitor pass email sent to ${customerEmail} for ${rec.code}`)
+          } else {
+            console.warn(`[runDocEventHook] No creator email found for visitor_request ${rec.id}`)
+          }
+        }
+      } catch (e) {
+        console.error("[runDocEventHook] Error sending visitor pass email:", e)
+      }
+    }
+
     // --- Subscription Management Hook for Sales Order ---
     if (docTypeKey === "sales_order") {
       const data = (rec.data ?? {}) as Record<string, unknown>
@@ -590,60 +653,74 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
     const isGoodsOut = docTypeKey === "goods_out_request"
     
     if (isGoodsIn || isGoodsOut) {
-       const childKey = isGoodsIn ? "goods_in_item" : "goods_out_item"
-       const childDt = await prisma.docType.findUnique({ where: { key: childKey } })
-       
-       if (childDt) {
-           const rows = await prisma.docRow.findMany({ where: { recordId, childDocTypeId: childDt.id } })
-           
-           for (const row of rows) {
-               const d = (row.data ?? {}) as Record<string, unknown>
-               const productId = String(d["product_id"] || "")
-               const qty = toNumber(d["quantity"] || d["qty"])
-               const branchId = rec.branchId
-               
-               if (productId && qty > 0 && branchId) {
-                   const sign = isGoodsIn ? 1 : -1
-                   const change = qty * sign
-                   
-                   // Execute sequentially to avoid race conditions on same inventory record
-                   await prisma.$transaction(async (tx) => {
-                       const inv = await tx.inventory.findUnique({
-                           where: { productId_branchId: { productId, branchId } }
-                       })
-                       
-                       let inventoryId = inv?.id
-                       
-                       if (inv) {
-                           await tx.inventory.update({
-                               where: { id: inv.id },
-                               data: { quantity: { increment: change } }
-                           })
-                       } else {
-                           const newInv = await tx.inventory.create({
-                               data: {
-                                   productId,
-                                   branchId,
-                                   quantity: change
-                               }
-                           })
-                           inventoryId = newInv.id
-                       }
-                       
-                       if (inventoryId) {
-                           await tx.inventoryMovement.create({
-                               data: {
-                                   inventoryId,
-                                   quantity: change,
-                                   reference: rec.code || rec.id,
-                                   type: isGoodsIn ? "IN" : "OUT"
-                               }
-                           })
-                       }
-                   })
-               }
-           }
-       }
+        if (!rec.branchId) {
+            console.error(`[runDocEventHook] Goods in/out record ${rec.id} has no branchId — skipping inventory update`)
+            return
+        }
+
+        const childKey = isGoodsIn ? "goods_in_item" : "goods_out_item"
+        const childDt = await prisma.docType.findUnique({ where: { key: childKey } })
+        
+        if (childDt) {
+            const rows = await prisma.docRow.findMany({ where: { recordId, childDocTypeId: childDt.id } })
+            
+            for (const row of rows) {
+                const d = (row.data ?? {}) as Record<string, unknown>
+                const typeOfMaterial = String(d["type_of_material"] || "")
+                const qty = toNumber(d["quantity"] || d["qty"])
+                const branchId = rec.branchId
+                const roomId = String(d["room_id"] || "") || null
+                const ownerCustomerId = String(d["owner_customer_id"] || "") || null
+                
+                if (typeOfMaterial && qty > 0 && branchId) {
+                    const sign = isGoodsIn ? 1 : -1
+                    const change = qty * sign
+                    
+                    await prisma.inventoryMovement.create({
+                        data: {
+                            quantity: change,
+                            reference: rec.code || rec.id,
+                            type: isGoodsIn ? "IN" : "OUT",
+                            roomId: roomId || null,
+                            ownerCustomerId: ownerCustomerId || null,
+                            metadata: {
+                                typeOfMaterial,
+                                itemName: d["item_name"] || "",
+                                serialNumber: d["serial_number"] || "",
+                                buildingId: d["building_id"] || "",
+                                floorId: d["floor_id"] || "",
+                                branchId,
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    }
+  }
+
+  // --- Visitor Request QR Token Auto-Generation ---
+  if (event === "after_insert" && docTypeKey === "visitor_request") {
+    try {
+      const data = (rec.data ?? {}) as Record<string, unknown>
+      if (!data["qr_token"]) {
+        const qrToken = crypto.randomUUID()
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        await prisma.docRecord.update({
+          where: { id: recordId },
+          data: {
+            data: {
+              ...data,
+              qr_token: qrToken,
+              qr_status: "pending",
+              qr_expires_at: expiresAt,
+              qr_generated_at: new Date().toISOString(),
+            } as any,
+          },
+        })
+      }
+    } catch (e) {
+      console.error("[runDocEventHook] Error generating QR token for visitor_request:", e)
     }
   }
 }
