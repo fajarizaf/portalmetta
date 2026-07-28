@@ -696,11 +696,22 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
             // Table mode — fetch from Prisma model directly (client-side DependentDropdown handles filtering)
             const tableName = String(src["table"])
             const modelProp = tableName.slice(0, 1).toLowerCase() + tableName.slice(1)
-            const client = prisma as unknown as Record<string, { findMany: () => Promise<Array<Record<string, unknown>>> }>
+            const client = prisma as unknown as Record<string, { findMany: (args?: unknown) => Promise<Array<Record<string, unknown>>> }>
             if (typeof client[modelProp]?.findMany === "function") {
               const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
               const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
-              const recs = await client[modelProp].findMany()
+              // Build where clause based on model type
+              const whereClause: Record<string, unknown> = {}
+              if (selectedBranchId) {
+                if (modelProp === "building") {
+                  whereClause.branchId = selectedBranchId
+                } else if (modelProp === "floor") {
+                  whereClause.building = { branchId: selectedBranchId }
+                } else if (modelProp === "room") {
+                  whereClause.floor = { building: { branchId: selectedBranchId } }
+                }
+              }
+              const recs = await client[modelProp].findMany({ where: whereClause })
               childOptionsMap[f.key] = recs.map((r) => {
                 const labelRaw = r[labelField]
                 const valueRaw = r[valueField]

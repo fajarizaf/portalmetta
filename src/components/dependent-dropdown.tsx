@@ -198,7 +198,8 @@ export default function DependentDropdown({
     <div className="space-y-2">
       <Label>{label}{required ? " *" : ""}</Label>
       {(() => {
-        const showOpts = loaded ? opts : (options ?? [])
+        // If has filter, only show loaded opts (don't fallback to options which may be unfiltered)
+        const showOpts = filtersArr.length > 0 ? (loaded ? opts : []) : (loaded ? opts : (options ?? []))
         return <SearchableSelect name={name} placeholder={placeholder} options={showOpts} defaultValue={defaultValue} emitChangeEvent={true} disabled={disabled} required={required} containerId={containerId} form={form} />
       })()}
     </div>

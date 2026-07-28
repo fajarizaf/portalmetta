@@ -934,7 +934,18 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           const depSourceField = filterObj && typeof filterObj["field"] === "string" ? (filterObj["field"] as string) : ""
           const parentValRaw = depFieldKey ? (values as any)[depFieldKey] : undefined
           const parentValStr = typeof parentValRaw === "string" ? parentValRaw : String(parentValRaw ?? "")
-          const recs: Array<Record<string, unknown>> = await client[modelProp].findMany()
+          // Build where clause based on model type
+          const whereClause: Record<string, unknown> = {}
+          if (selectedBranchId) {
+            if (modelProp === "building") {
+              whereClause.branchId = selectedBranchId
+            } else if (modelProp === "floor") {
+              whereClause.building = { branchId: selectedBranchId }
+            } else if (modelProp === "room") {
+              whereClause.floor = { building: { branchId: selectedBranchId } }
+            }
+          }
+          const recs: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
           const toCamel = (s: string) => s.replace(/[_-]([a-zA-Z])/g, (_, c) => c.toUpperCase())
           const depFieldCamel = toCamel(depSourceField)
           const filtered = (depFieldKey && depSourceField && parentValStr) ? recs.filter((r: any) => {
@@ -1048,7 +1059,18 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           if (modelProp && client && typeof client[modelProp]?.findMany === "function") {
             const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
             const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
-            const recs: Array<Record<string, unknown>> = await client[modelProp].findMany()
+            // Build where clause based on model type
+            const whereClause: Record<string, unknown> = {}
+            if (selectedBranchId) {
+              if (modelProp === "building") {
+                whereClause.branchId = selectedBranchId
+              } else if (modelProp === "floor") {
+                whereClause.building = { branchId: selectedBranchId }
+              } else if (modelProp === "room") {
+                whereClause.floor = { building: { branchId: selectedBranchId } }
+              }
+            }
+            const recs: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
             const toCamel = (s: string) => s.replace(/[_-]([a-zA-Z])/g, (_, c) => c.toUpperCase())
             const depFieldCamel = toCamel(depSourceField)
             const filtered = (depFieldKey && depSourceField && parentValStr) ? recs.filter((r) => {

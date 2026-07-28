@@ -496,7 +496,9 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
   const cookieBranchId = cookieStore.get("branchId")?.value
   const branches = user?.assignedBranches?.map((a) => a.branch) ?? []
   const assigned = new Set(branches.map((b) => b.id))
-  const selectedBranchId = cookieBranchId ?? branches[0]?.id
+  // Priority: cookie > DocType's branch (if user has access) > first assigned branch
+  const docTypeBranchId = docType.branchId && assigned.has(docType.branchId) ? docType.branchId : undefined
+  const selectedBranchId = (cookieBranchId && assigned.has(cookieBranchId)) ? cookieBranchId : (docTypeBranchId ?? branches[0]?.id)
   const dynamicOptions: Record<string, Array<{ label: string; value: string }>> = {}
   for (const f of docType.fields) {
     if (f.type === ("DROPDOWN" as FieldType)) {
@@ -638,7 +640,18 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
             if (modelProp && client && typeof client[modelProp]?.findMany === "function") {
               const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
               const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
-              const rows: Array<Record<string, unknown>> = await client[modelProp].findMany()
+              // Build where clause based on model type
+              const whereClause: Record<string, unknown> = {}
+              if (selectedBranchId) {
+                if (modelProp === "building") {
+                  whereClause.branchId = selectedBranchId
+                } else if (modelProp === "floor") {
+                  whereClause.building = { branchId: selectedBranchId }
+                } else if (modelProp === "room") {
+                  whereClause.floor = { building: { branchId: selectedBranchId } }
+                }
+              }
+              const rows: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
               childOptionsByFieldKey[tf.key][f.key] = rows.map((r) => {
                 const labelRaw = r[labelField]
                 const valueRaw = r[valueField]
@@ -684,6 +697,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
         <input type="hidden" name="docTypeKey" value={docType.key} />
         <input type="hidden" name="parentId" value={parentId} />
         <input type="hidden" name="parentDocType" value={parentDocTypeKey} />
+        <input type="hidden" name="branch_id" value={selectedBranchId || ""} />
         {suggestedRackId && <input type="hidden" name="id_rack" value={suggestedRackId} />}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {docType.fields.map((f) => {

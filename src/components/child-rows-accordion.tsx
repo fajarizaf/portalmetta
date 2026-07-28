@@ -205,6 +205,7 @@ export default function ChildRowsAccordion({
                         return (
                           <div key={cf.id} className="space-y-2">
                             <DependentDropdown
+                              key={`${fieldName}-${JSON.stringify(initMap)}`}
                               name={fieldName}
                               label={cf.label}
                               required={cf.required}
