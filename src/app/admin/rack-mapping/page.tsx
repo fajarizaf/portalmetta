@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import RackMappingClient from "./rack-mapping-client"
 
-import { Plus } from "lucide-react"
+import { Plus, ArrowLeft, LayoutGrid, Server, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -30,7 +30,17 @@ export default async function RackMappingPage({
 
   const perm = new Set((me?.role?.permissions ?? []).map((rp) => rp.permission.key))
   if (!perm.has("ADMIN_PANEL_ACCESS")) {
-    return <div>Access Denied</div>
+    return (
+      <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center">
+          <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <Server className="h-8 w-8 text-slate-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-slate-900">Access Denied</h1>
+          <p className="text-sm text-slate-500 max-w-sm">Anda tidak memiliki akses ke halaman ini.</p>
+        </div>
+      </div>
+    )
   }
 
   const params = await searchParams
@@ -42,7 +52,7 @@ export default async function RackMappingPage({
 
   // Fetch all hierarchy data for filters
   const branches = await prisma.branch.findMany({ orderBy: { name: "asc" } })
-  const buildings = selectedBranchId 
+  const buildings = selectedBranchId
     ? await prisma.building.findMany({ where: { branchId: selectedBranchId }, orderBy: { name: "asc" } })
     : []
   const floors = selectedBuildingId
@@ -87,31 +97,83 @@ export default async function RackMappingPage({
     room_id: selectedRoomId || ""
   }).toString()}`
 
-  return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Rack Mapping</h1>
-        <Button asChild>
-          <Link href={createUrl}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Rack
-          </Link>
-        </Button>
-      </div>
+  const selectedBranch = branches.find((b) => b.id === selectedBranchId)
+  const selectedBuilding = buildings.find((b) => b.id === selectedBuildingId)
+  const selectedFloor = floors.find((f) => f.id === selectedFloorId)
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId)
 
-      <RackMappingClient 
-        branches={branches}
-        buildings={buildings}
-        floors={floors}
-        rooms={rooms}
-        racks={racks}
-        companies={companies}
-        selectedBranchId={selectedBranchId}
-        selectedBuildingId={selectedBuildingId}
-        selectedFloorId={selectedFloorId}
-        selectedRoomId={selectedRoomId}
-        selectedCompanyId={selectedCompanyId}
-      />
+  return (
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900 font-medium">Rack Mapping</span>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                <LayoutGrid className="h-7 w-7 text-slate-700" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Rack Mapping</h1>
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>{selectedBranch?.name ?? "All Branches"}</span>
+                  {selectedBuilding && (
+                    <>
+                      <span className="text-slate-300">/</span>
+                      <span>{selectedBuilding.name}</span>
+                    </>
+                  )}
+                  {selectedFloor && (
+                    <>
+                      <span className="text-slate-300">/</span>
+                      <span>Level {selectedFloor.level}</span>
+                    </>
+                  )}
+                  {selectedRoom && (
+                    <>
+                      <span className="text-slate-300">/</span>
+                      <span>{selectedRoom.name}</span>
+                    </>
+                  )}
+                  <span className="text-slate-300">·</span>
+                  <span className="font-medium text-slate-700">{racks.length} racks</span>
+                </div>
+              </div>
+            </div>
+
+            <Button asChild className="h-9 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+              <Link href={createUrl}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Rack
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <RackMappingClient
+          branches={branches}
+          buildings={buildings}
+          floors={floors}
+          rooms={rooms}
+          racks={racks}
+          companies={companies}
+          selectedBranchId={selectedBranchId}
+          selectedBuildingId={selectedBuildingId}
+          selectedFloorId={selectedFloorId}
+          selectedRoomId={selectedRoomId}
+          selectedCompanyId={selectedCompanyId}
+        />
+      </div>
     </div>
   )
 }

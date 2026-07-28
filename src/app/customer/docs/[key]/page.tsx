@@ -10,10 +10,52 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/ui/select"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
-import { Card, CardContent } from "@/components/ui/card"
-import { Filter as FilterIcon, ArrowLeft, Eye, FileText, Plus } from "lucide-react"
+import { IconDisplay } from "@/components/icon-display"
+import { cn } from "@/lib/utils"
+import {
+  Filter as FilterIcon,
+  ArrowLeft,
+  ArrowRight,
+  ChevronRight,
+  ChevronDown,
+  Eye,
+  FileText,
+  Plus,
+  Search,
+  XCircle,
+  Inbox,
+  Calendar,
+  X,
+  Package,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+} from "lucide-react"
 import type { FieldType } from "@/generated/prisma/enums"
 import type { Prisma } from "@/generated/prisma/client"
+
+type StatusStyle = {
+  bg: string
+  text: string
+  border: string
+  icon: typeof FileText
+}
+
+function getStatusStyle(name: string): StatusStyle {
+  const s = String(name || "").toLowerCase()
+  if (s.includes("cancel") || s.includes("reject")) {
+    return { bg: "bg-red-50", text: "text-red-700", border: "border-red-200/60", icon: XCircle }
+  }
+  if (s.includes("draft")) {
+    return { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200/60", icon: FileText }
+  }
+  if (s.includes("submit") || s.includes("review") || s.includes("pending")) {
+    return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200/60", icon: ArrowUpFromLine }
+  }
+  if (s.includes("approve") || s.includes("active") || s.includes("verified") || s.includes("publish") || s.includes("complete")) {
+    return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200/60", icon: ArrowDownToLine }
+  }
+  return { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200/60", icon: FileText }
+}
 
 function statusBadgeVariant(name: string): "default" | "secondary" | "destructive" | "outline" {
   const s = String(name || "").toLowerCase()
@@ -219,285 +261,402 @@ export default async function CustomerDocsListByType({ params, searchParams }: {
 
   const isCrossConnect = key === "cross_connect"
 
+  const totalPages = Math.ceil(totalCount / pageSize)
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">{docType.name}</h1>
-          <div className="text-xs text-muted-foreground">{docType.key}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/customer/docs" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Kembali
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/customer/docs" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Documents
             </Link>
-          </Button>
-          {permission?.canCreate && (
-            <Button size="sm" asChild>
-              <Link href={`/customer/docs/${docType.key}/create`} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Buat Baru
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-medium">{docType.name}</span>
+          </div>
 
-      {summaryCards.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {summaryCards.map((s) => (
-            <Card key={s.name} className="py-3">
-              <CardContent className="flex items-center justify-between">
-                <div className="text-sm font-medium">{s.name}</div>
-                <div className="text-2xl font-semibold">{s.count}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : null}
-
-      <Collapsible>
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold">Filter</div>
-          <CollapsibleTrigger asChild>
-            <Button type="button" variant="outline"><FilterIcon />Filter</Button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent>
-          <form className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label>Pencarian</Label>
-              <Input name="q" defaultValue={q} placeholder="Cari kode atau field daftar" />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <SearchableSelect name="status" placeholder="-" defaultValue={statusFilter} options={stateNames.map((n) => ({ label: n, value: n }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Dari Tanggal</Label>
-              <Input name="createdFrom" type="date" defaultValue={createdFrom} />
-            </div>
-            <div className="space-y-2">
-              <Label>Sampai Tanggal</Label>
-              <Input name="createdTo" type="date" defaultValue={createdTo} />
-            </div>
-            {filterFields.map((k) => {
-              const f = docType.fields.find((x) => x.key === k)
-              if (!f) return null
-              const def = (() => {
-                const raw = sp?.[k]
-                return typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""
-              })()
-              if (f.type === ("TEXT" as FieldType) || f.type === ("TEXTAREA" as FieldType) || f.type === ("LINK" as FieldType)) {
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <Input name={k} defaultValue={def} />
-                  </div>
-                )
-              }
-              if (f.type === ("NUMBER" as FieldType) || f.type === ("PRICE" as FieldType)) {
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <Input name={k} type="number" defaultValue={def} />
-                  </div>
-                )
-              }
-              if (f.type === ("DATE" as FieldType)) {
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <Input name={k} type="date" defaultValue={def} />
-                  </div>
-                )
-              }
-              if (f.type === ("DATETIME" as FieldType)) {
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <Input name={k} type="datetime-local" defaultValue={def} />
-                  </div>
-                )
-              }
-              if (f.type === ("CHECKBOX" as FieldType)) {
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <SearchableSelect name={k} defaultValue={def} options={[{ label: "Ya", value: "true" }, { label: "Tidak", value: "false" }]} />
-                  </div>
-                )
-              }
-              if (f.type === ("DROPDOWN" as FieldType)) {
-                const cfg = (f.config ?? {}) as unknown as { options?: Array<{ label: string; value: string }> }
-                const options = dynamicOptions[f.key] ?? (Array.isArray(cfg.options) ? cfg.options : [])
-                return (
-                  <div key={f.id} className="space-y-2">
-                    <Label>{f.label}</Label>
-                    <SearchableSelect name={k} placeholder="-" defaultValue={def} options={options} />
-                  </div>
-                )
-              }
-              return null
-            })}
-            <div className="mt-2 md:col-span-3 flex items-center gap-2">
-              <Button type="submit">Terapkan Filter</Button>
-              <Link href={`/customer/docs/${docType.key}`} className="text-sm underline">Reset</Link>
-            </div>
-          </form>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="space-y-2">
-        {records.map((r) => (
-          <div key={r.id} className="border rounded-lg p-4 flex items-center justify-between bg-white shadow-sm hover:shadow-md transition-shadow">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                 <div className="bg-primary/10 text-primary p-2 rounded-md">
-                    <FileText className="w-4 h-4" />
-                 </div>
-                 <div>
-                    <div className="text-sm font-bold text-gray-900">{r.code ?? r.id}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(r.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                      {r.children.length > 0 && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
-                           {(() => {
-                              const firstChild = r.children[0]
-                              const d = firstChild.data as any
-                              const pid = d?.product_id
-                              const name = productMap.get(pid) || d?.spec_description || ""
-                              return name ? `${name}${r.children.length > 1 ? ` (+${r.children.length - 1} more)` : ""}` : ""
-                           })()}
-                        </span>
-                      )}
-                    </div>
-                 </div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                {docType.icon ? (
+                  <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
+                ) : (
+                  <FileText className="h-7 w-7 text-slate-700" />
+                )}
               </div>
-              {listFields.length > 0 || isCrossConnect ? (
-                <div className="text-xs space-y-1">
-                  {isCrossConnect && (
-                    <div className="flex flex-col gap-2 mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col gap-1 p-2 rounded-lg bg-primary/5 border border-primary/10 text-primary min-w-[200px]">
-                          <div className="flex items-center gap-1.5">
-                            <span className="opacity-50 text-[10px] uppercase font-bold tracking-tighter">Source</span>
-                            <span className="font-bold text-sm">{(() => {
-                              const d = (r.data ?? {}) as any
-                              return rackMap.get(d.source_rack_id) || d.source_rack_id || "-"
-                            })()}</span>
-                          </div>
-                          <div className="flex flex-col text-[10px] opacity-80 leading-tight border-t border-primary/10 pt-1 mt-1">
-                            <span>Material: {(() => {
-                              const d = (r.data ?? {}) as any
-                              return productMap.get(d.source_material) || d.source_material || "-"
-                            })()}</span>
-                            <span>Type: {(() => {
-                              const d = (r.data ?? {}) as any
-                              return d.source_connector_type || "-"
-                            })()}</span>
-                          </div>
-                        </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{docType.name}</h1>
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{docType.key}</span>
+                  <span>·</span>
+                  <span>{totalCount} total</span>
+                  <span>·</span>
+                  <span>{records.length} shown</span>
+                </div>
+              </div>
+            </div>
 
-                        <div className="flex flex-col items-center justify-center gap-1">
-                          <div className="w-8 h-[1px] bg-gray-200 relative">
-                            <div className="absolute -right-1 -top-[3.5px] border-t-[4px] border-b-[4px] border-l-[6px] border-t-transparent border-b-transparent border-l-gray-300" />
-                          </div>
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-white whitespace-nowrap">
-                            {(() => {
-                              const d = (r.data ?? {}) as any
-                              return d.cross_connect_type || "FO"
-                            })()}
-                          </Badge>
-                        </div>
+            <div className="flex items-center gap-2">
+              {permission?.canCreate && (
+                <Button asChild className="h-9 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+                  <Link href={`/customer/docs/${docType.key}/create`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Buat Baru
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
-                        <div className="flex flex-col gap-1 p-2 rounded-lg bg-orange-500/5 border border-orange-500/10 text-orange-700 min-w-[200px]">
-                          <div className="flex items-center gap-1.5">
-                            <span className="opacity-50 text-[10px] uppercase font-bold tracking-tighter">Destination</span>
-                            <span className="font-bold text-sm">{(() => {
-                              const d = (r.data ?? {}) as any
-                              return companyMap.get(d.destination) || d.destination || "Target"
-                            })()}</span>
-                          </div>
-                          <div className="flex flex-col text-[10px] opacity-80 leading-tight border-t border-orange-500/10 pt-1 mt-1">
-                            <span>Rack: {(() => {
-                              const d = (r.data ?? {}) as any
-                              return rackMap.get(d.destination_rack_id) || d.destination_rack_id || "-"
-                            })()}</span>
-                            <span>Type: {(() => {
-                              const d = (r.data ?? {}) as any
-                              return d.destination_connector_type || "-"
-                            })()}</span>
-                          </div>
+        {/* Stats Cards */}
+        {summaryCards.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {summaryCards.map((s) => {
+              const style = getStatusStyle(s.name)
+              const StatusIcon = style.icon
+              const isActive = statusFilter === s.name
+              const params = new URLSearchParams()
+              if (q) params.set("q", q)
+              if (createdFrom) params.set("createdFrom", createdFrom)
+              if (createdTo) params.set("createdTo", createdTo)
+              for (const k of filterFields) {
+                const raw = sp?.[k]
+                const val = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""
+                if (val) params.set(k, val)
+              }
+              if (!isActive) params.set("status", s.name)
+              const href = `/customer/docs/${docType.key}${params.toString() ? `?${params.toString()}` : ""}`
+
+              return (
+                <Link key={s.name} href={href} className="group">
+                  <div
+                    className={cn(
+                      "relative bg-white rounded-xl border p-4 transition-all duration-200",
+                      "border-slate-200/80 hover:border-slate-300 hover:shadow-sm",
+                      isActive && "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={cn(
+                            "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                            isActive ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-500"
+                          )}
+                        >
+                          <StatusIcon className="h-4 w-4" />
                         </div>
+                        <span className={cn("text-sm font-medium", isActive ? "text-slate-900" : "text-slate-600")}>
+                          {s.name}
+                        </span>
+                      </div>
+                      <span className="text-2xl font-semibold tracking-tight tabular-nums text-slate-900">
+                        {s.count}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Search & Filter Bar */}
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm">
+          <div className="p-3 flex items-center gap-2 flex-wrap">
+            <form className="flex-1 min-w-[200px] relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                name="q"
+                defaultValue={q}
+                placeholder="Cari kode atau field daftar..."
+                className="pl-10 h-9 border-slate-200 bg-slate-50/50 focus-visible:bg-white"
+              />
+            </form>
+
+            {(q || statusFilter || createdFrom || createdTo || filterFields.some((k) => sp?.[k])) && (
+              <Link
+                href={`/customer/docs/${docType.key}`}
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              >
+                <span>Reset all filters</span>
+                <X className="h-3.5 w-3.5" />
+              </Link>
+            )}
+
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="h-9 border-slate-200">
+                  <FilterIcon className="h-3.5 w-3.5 mr-1.5" />
+                  Filters
+                  <ChevronDown className="h-3.5 w-3.5 ml-1.5" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-3 pb-3 pt-2 border-t border-slate-100 mt-2">
+                  <form className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-600">Status</Label>
+                      <SearchableSelect name="status" placeholder="-" defaultValue={statusFilter} options={stateNames.map((n) => ({ label: n, value: n }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-600">Dari Tanggal</Label>
+                      <Input name="createdFrom" type="date" defaultValue={createdFrom} className="h-9" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-600">Sampai Tanggal</Label>
+                      <Input name="createdTo" type="date" defaultValue={createdTo} className="h-9" />
+                    </div>
+                    {filterFields.map((k) => {
+                      const f = docType.fields.find((x) => x.key === k)
+                      if (!f) return null
+                      const def = (() => {
+                        const raw = sp?.[k]
+                        return typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""
+                      })()
+                      if (f.type === ("TEXT" as FieldType) || f.type === ("TEXTAREA" as FieldType) || f.type === ("LINK" as FieldType)) {
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <Input name={k} defaultValue={def} className="h-9" />
+                          </div>
+                        )
+                      }
+                      if (f.type === ("NUMBER" as FieldType) || f.type === ("PRICE" as FieldType)) {
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <Input name={k} type="number" defaultValue={def} className="h-9" />
+                          </div>
+                        )
+                      }
+                      if (f.type === ("DATE" as FieldType)) {
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <Input name={k} type="date" defaultValue={def} className="h-9" />
+                          </div>
+                        )
+                      }
+                      if (f.type === ("DATETIME" as FieldType)) {
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <Input name={k} type="datetime-local" defaultValue={def} className="h-9" />
+                          </div>
+                        )
+                      }
+                      if (f.type === ("CHECKBOX" as FieldType)) {
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <SearchableSelect name={k} defaultValue={def} options={[{ label: "Ya", value: "true" }, { label: "Tidak", value: "false" }]} />
+                          </div>
+                        )
+                      }
+                      if (f.type === ("DROPDOWN" as FieldType)) {
+                        const cfg = (f.config ?? {}) as unknown as { options?: Array<{ label: string; value: string }> }
+                        const options = dynamicOptions[f.key] ?? (Array.isArray(cfg.options) ? cfg.options : [])
+                        return (
+                          <div key={f.id} className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">{f.label}</Label>
+                            <SearchableSelect name={k} placeholder="-" defaultValue={def} options={options} />
+                          </div>
+                        )
+                      }
+                      return null
+                    })}
+                    <div className="md:col-span-3 flex items-center gap-2 pt-1">
+                      <Button type="submit" size="sm" className="h-9 bg-slate-900 hover:bg-slate-800">
+                        Terapkan Filter
+                      </Button>
+                      <Link
+                        href={`/customer/docs/${docType.key}`}
+                        className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                      >
+                        Reset
+                      </Link>
+                    </div>
+                  </form>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        </div>
+
+        {/* Records List */}
+        <div className="space-y-2">
+          {records.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200/80 border-dashed py-16 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                <Inbox className="h-6 w-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-900">No documents found</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                {q || statusFilter || createdFrom || createdTo || filterFields.some((k) => sp?.[k])
+                  ? "Try adjusting your filters or search query"
+                  : `Get started by creating your first ${docType.name.toLowerCase()}`}
+              </p>
+              {permission?.canCreate && !q && !statusFilter && !createdFrom && !createdTo && !filterFields.some((k) => sp?.[k]) && (
+                <Button asChild size="sm" className="mt-4 bg-slate-900 hover:bg-slate-800">
+                  <Link href={`/customer/docs/${docType.key}/create`}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    Buat {docType.name}
+                  </Link>
+                </Button>
+              )}
+            </div>
+          ) : (
+            records.map((r) => {
+              const data = (r.data ?? {}) as Record<string, unknown>
+              const visitors = Array.isArray(data["visitors"])
+                ? (data["visitors"] as Array<Record<string, unknown>>)
+                : []
+              const firstChild = r.children[0]
+              const cd = firstChild?.data as any
+              const pid = cd?.product_id
+              const childName = productMap.get(pid) || cd?.spec_description || ""
+              const statusName = r.status ?? "DRAFT"
+              const style = getStatusStyle(statusName)
+              const StatusIcon = style.icon
+
+              return (
+                <div
+                  key={r.id}
+                  className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
+                >
+                  <div className="p-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <Link
+                          href={`/customer/docs/${docType.key}/${r.id}`}
+                          className="font-mono text-sm font-medium text-slate-900 hover:text-slate-700 transition-colors"
+                        >
+                          {r.code ?? r.id.slice(0, 8)}
+                        </Link>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border",
+                            style.bg, style.text, style.border
+                          )}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {statusName}
+                        </span>
+                        {r.children.length > 0 && childName && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
+                            <Package className="h-3 w-3" />
+                            {childName}{r.children.length > 1 ? ` +${r.children.length - 1}` : ""}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3 text-slate-400" />
+                          <span>{new Date(r.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        </div>
+                        {isCrossConnect && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">From</span>
+                            <span className="text-slate-700 font-medium">{rackMap.get(String(data["source_rack_id"] ?? "")) || data["source_rack_id"] || "-"}</span>
+                            <ArrowRight className="h-3 w-3 text-slate-300" />
+                            <span className="text-slate-400">to</span>
+                            <span className="text-slate-700 font-medium">{companyMap.get(String(data["destination"] ?? "")) || data["destination"] || "-"}</span>
+                          </div>
+                        )}
+                        {listFields.length > 0 && !isCrossConnect && listFields.slice(0, 3).map((k) => {
+                          const f = docType.fields.find((x) => x.key === k)
+                          if (!f) return null
+                          const raw = data[k]
+                          let val: React.ReactNode = "-"
+                          if (raw !== undefined && raw !== null) {
+                            if (f.type === ("DROPDOWN" as FieldType)) {
+                              const opts = dynamicOptions[f.key] ?? []
+                              const found = opts.find((o) => o.value === String(raw))
+                              val = found ? found.label : String(raw)
+                            } else if (f.type === ("CHECKBOX" as FieldType)) {
+                              val = raw ? "Ya" : "Tidak"
+                            } else {
+                              val = String(raw)
+                            }
+                          }
+                          return (
+                            <div key={k} className="flex items-center gap-1.5">
+                              <span className="text-slate-400">{f.label}:</span>
+                              <span className="text-slate-700 font-medium">{val}</span>
+                            </div>
+                          )
+                        })}
+                        {listFields.length > 3 && (
+                          <span className="text-slate-400 text-xs">+{listFields.length - 3} more</span>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {listFields.length > 0 && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      {listFields.map((k) => {
-                        // Skip fields already shown in the Cross Connect summary box
-                        if (isCrossConnect && [
-                          "source_rack_id", "source_material", "source_connector_type",
-                          "destination", "destination_rack_id", "destination_connector_type",
-                          "cross_connect_type", "branch_id"
-                        ].includes(k)) return null
 
-                        const f = docType.fields.find((x) => x.key === k)
-                        if (!f) return null
-                        const d = (r.data ?? {}) as Record<string, unknown>
-                        const raw = d[k]
-                        let val = "-"
-                        if (raw !== undefined && raw !== null) {
-                          if (f.type === ("DROPDOWN" as FieldType)) {
-                            const opts = dynamicOptions[f.key] ?? []
-                            const found = opts.find((o) => o.value === String(raw))
-                            val = found ? found.label : String(raw)
-                          } else if (f.type === ("CHECKBOX" as FieldType)) {
-                            val = (raw as boolean) ? "Ya" : "Tidak"
-                          } else {
-                            val = String(raw)
-                          }
-                        }
-                        return (
-                          <span key={k} className="inline-block">{f.label}: <span className="text-gray-700">{val}</span></span>
-                        )
-                      })}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link href={`/customer/docs/${docType.key}/${r.id}/preview`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/customer/docs/${docType.key}/${r.id}`}>
+                        <Button variant="outline" size="sm" className="h-8 border-slate-200">
+                          Detail
+                        </Button>
+                      </Link>
                     </div>
-                  )}
+                  </div>
                 </div>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={statusBadgeVariant(r.status ?? "DRAFT")}>{r.status ?? "DRAFT"}</Badge>
-              <Button variant="outline" size="sm" className="h-8" asChild>
-                <Link href={`/customer/docs/${docType.key}/${r.id}`}>
-                  Detail
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Preview" asChild>
-                <Link href={`/customer/docs/${docType.key}/${r.id}/preview`}>
-                  <Eye className="w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        ))}
-        {records.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Belum ada dokumen.</div>
-        ) : null}
-        <div className="flex items-center justify-between mt-2">
-          <div className="text-xs text-muted-foreground">Menampilkan {totalCount === 0 ? 0 : (skip + 1)}–{Math.min(skip + records.length, totalCount)} dari total {totalCount}</div>
-          <div className="flex items-center gap-2">
-            {page > 1 ? (
-              <Link href={`/customer/docs/${docType.key}?${(() => { const cur = new URLSearchParams(); if (q) cur.set("q", q); if (statusFilter) cur.set("status", statusFilter); if (createdFrom) cur.set("createdFrom", createdFrom); if (createdTo) cur.set("createdTo", createdTo); for (const k of filterFields) { const raw = sp?.[k]; const val = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""; if (val) cur.set(k, val) } cur.set("page", String(page - 1)); cur.set("pageSize", String(pageSize)); return cur.toString() })()}` } className="text-sm underline">Prev</Link>
-            ) : null}
-            {skip + records.length < totalCount ? (
-              <Link href={`/customer/docs/${docType.key}?${(() => { const cur = new URLSearchParams(); if (q) cur.set("q", q); if (statusFilter) cur.set("status", statusFilter); if (createdFrom) cur.set("createdFrom", createdFrom); if (createdTo) cur.set("createdTo", createdTo); for (const k of filterFields) { const raw = sp?.[k]; const val = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""; if (val) cur.set(k, val) } cur.set("page", String(page + 1)); cur.set("pageSize", String(pageSize)); return cur.toString() })()}` } className="text-sm underline">Next</Link>
-            ) : null}
-          </div>
+              )
+            })
+          )}
         </div>
+
+        {/* Pagination */}
+        {totalCount > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <div className="text-xs text-slate-500">
+              Menampilkan {skip + 1}–{Math.min(skip + records.length, totalCount)} dari {totalCount}
+            </div>
+            <div className="flex items-center gap-1">
+              {page > 1 ? (
+                <Link
+                  href={`/customer/docs/${docType.key}?${(() => { const cur = new URLSearchParams(); if (q) cur.set("q", q); if (statusFilter) cur.set("status", statusFilter); if (createdFrom) cur.set("createdFrom", createdFrom); if (createdTo) cur.set("createdTo", createdTo); for (const k of filterFields) { const raw = sp?.[k]; const val = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""; if (val) cur.set(k, val) } cur.set("page", String(page - 1)); cur.set("pageSize", String(pageSize)); return cur.toString() })()}`}
+                  className="inline-flex items-center gap-1 h-8 px-3 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Previous
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 h-8 px-3 text-xs font-medium text-slate-300 rounded-md">
+                  <ArrowLeft className="h-3 w-3" />
+                  Previous
+                </span>
+              )}
+              <span className="text-xs text-slate-500 px-2">
+                Page {page} of {totalPages}
+              </span>
+              {skip + records.length < totalCount ? (
+                <Link
+                  href={`/customer/docs/${docType.key}?${(() => { const cur = new URLSearchParams(); if (q) cur.set("q", q); if (statusFilter) cur.set("status", statusFilter); if (createdFrom) cur.set("createdFrom", createdFrom); if (createdTo) cur.set("createdTo", createdTo); for (const k of filterFields) { const raw = sp?.[k]; const val = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : ""; if (val) cur.set(k, val) } cur.set("page", String(page + 1)); cur.set("pageSize", String(pageSize)); return cur.toString() })()}`}
+                  className="inline-flex items-center gap-1 h-8 px-3 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+                >
+                  Next
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 h-8 px-3 text-xs font-medium text-slate-300 rounded-md">
+                  Next
+                  <ArrowRight className="h-3 w-3" />
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -219,13 +219,7 @@ export function InventoryManagementClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Inventory Management</h1>
-        <p className="text-sm text-muted-foreground">
-          Monitor all inventory items grouped by location and customer ownership.
-        </p>
-      </div>
-
+    
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">

@@ -3,11 +3,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { QrCode, Camera, Eye, RefreshCw } from "lucide-react"
+import { ArrowLeft, Camera, Eye, Inbox, QrCode, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock, Users } from "lucide-react"
 
 export default async function AdminVisitsPage() {
   const session = await getServerSession(authOptions)
@@ -34,8 +32,7 @@ export default async function AdminVisitsPage() {
   const weekLater = new Date(today)
   weekLater.setDate(weekLater.getDate() + 7)
 
-  // Build today date string in LOCAL timezone (YYYY-MM-DD format) to match
-  // the format of data["visit_date"] stored in the database
+  // Build today date string in LOCAL timezone (YYYY-MM-DD format)
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
   const weekLaterStr = `${weekLater.getFullYear()}-${String(weekLater.getMonth() + 1).padStart(2, "0")}-${String(weekLater.getDate()).padStart(2, "0")}`
 
@@ -45,22 +42,18 @@ export default async function AdminVisitsPage() {
     take: 500,
   })
 
-  // Filter records whose visit_date is within range (string comparison)
+  // Filter records whose visit_date is within range
   const filtered = records.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     const visitDate = typeof data["visit_date"] === "string" ? data["visit_date"] : null
     if (!visitDate) return false
-    // Direct string comparison works for YYYY-MM-DD format
     return visitDate >= todayStr && visitDate <= weekLaterStr
   })
 
-  // Stats: today's visits
   const todayVisits = filtered.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     return data["visit_date"] === todayStr
   })
-  // Active = checked in (regardless of check_out, they may still be on premise)
-  // OR checked out today (just finished visit)
   const activeVisits = todayVisits.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
     return data["qr_status"] === "checked_in"
@@ -69,125 +62,216 @@ export default async function AdminVisitsPage() {
     const data = (r.data ?? {}) as Record<string, unknown>
     return data["qr_status"] === "checked_out"
   })
+  const totalCount = records.length
+  const upcomingCount = filtered.length
 
-  function qrStatusBadge(status: unknown) {
+  // Helper for status badge
+  function qrStatusBadge(status: unknown, size: "sm" | "md" = "sm") {
     const s = String(status || "pending")
-    if (s === "checked_in") return <Badge className="bg-green-100 text-green-800 border-green-300">Checked In</Badge>
-    if (s === "checked_out") return <Badge className="bg-gray-100 text-gray-600 border-gray-300">Checked Out</Badge>
-    return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>
+    const sizeClasses = size === "md" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[11px]"
+    if (s === "checked_in") return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60", sizeClasses)}><CheckCircle2 className="h-3 w-3" />Checked In</span>
+    if (s === "checked_out") return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-slate-50 text-slate-600 border-slate-200/60", sizeClasses)}><Clock className="h-3 w-3" />Checked Out</span>
+    return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-amber-50 text-amber-700 border-amber-200/60", sizeClasses)}><Clock className="h-3 w-3" />Pending</span>
+  }
+
+  function docStatusBadge(status: string) {
+    const s = status?.toLowerCase() || ""
+    if (s.includes("approve")) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60"><CheckCircle2 className="h-3 w-3" />{status}</span>
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">{status}</span>
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Visits</h1>
-          <p className="text-sm text-muted-foreground">Manage visitor passes and QR codes</p>
-        </div>
-        <Link href="/admin/visits/scanner">
-          <Button>
-            <Camera className="w-4 h-4 mr-2" />
-            Open Scanner
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Today&apos;s Visits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{todayVisits.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active (Checked In)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{activeVisits.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-500">{completedVisits.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visitor Requests ({filtered.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Visitor</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Visit Date</TableHead>
-                  <TableHead>Purpose</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>QR Status</TableHead>
-                  <TableHead>Check-In</TableHead>
-                  <TableHead>Check-Out</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                      No visitor requests found for the next 7 days.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((r) => {
-                    const data = (r.data ?? {}) as Record<string, unknown>
-                    const visitors = Array.isArray(data["visitors"]) ? (data["visitors"] as Array<Record<string, unknown>>) : []
-                    const firstVisitor = visitors[0]
-                    const visitorName = firstVisitor ? String(firstVisitor["visitor_name"] || "N/A") : "N/A"
-                    const companyId = typeof data["company_id"] === "string" ? data["company_id"] : ""
-
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell className="font-mono text-sm">{r.code ?? r.id.slice(0, 8)}</TableCell>
-                        <TableCell>{visitorName}{visitors.length > 1 ? ` (+${visitors.length - 1})` : ""}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{companyId ? companyId.slice(0, 8) + "..." : "-"}</TableCell>
-                        <TableCell className="text-sm">{String(data["visit_date"] || "-")}</TableCell>
-                        <TableCell className="text-sm max-w-[200px] truncate">{String(data["purpose"] || "-")}</TableCell>
-                        <TableCell>
-                          <Badge variant={r.status === "Approved" ? "default" : "outline"}>{r.status ?? "Draft"}</Badge>
-                        </TableCell>
-                        <TableCell>{qrStatusBadge(data["qr_status"])}</TableCell>
-                        <TableCell className="text-sm">{data["check_in_time"] ? new Date(data["check_in_time"] as string).toLocaleTimeString("id-ID") : "-"}</TableCell>
-                        <TableCell className="text-sm">{data["check_out_time"] ? new Date(data["check_out_time"] as string).toLocaleTimeString("id-ID") : "-"}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Link href={`/admin/docs/visitor_request/${r.id}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </Link>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900 font-medium">Visits</span>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                <QrCode className="h-7 w-7 text-slate-700" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Visitor Visits</h1>
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <Users className="h-3.5 w-3.5" />
+                  <span>{totalCount} total</span>
+                  <span className="text-slate-300">·</span>
+                  <span>{upcomingCount} this week</span>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-slate-700 font-medium">{todayVisits.length} today</span>
+                </div>
+              </div>
+            </div>
+
+            <Button asChild className="h-9 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+              <Link href="/admin/visits/scanner">
+                <Camera className="h-4 w-4 mr-2" />
+                Open Scanner
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-medium">Today&apos;s Visits</p>
+                  <p className="text-xs text-slate-400 mt-0.5">All scheduled</p>
+                </div>
+              </div>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums text-slate-900">
+                {todayVisits.length}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <ArrowDownToLine className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-medium">Active (Checked In)</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Currently on premise</p>
+                </div>
+              </div>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums text-emerald-600">
+                {activeVisits.length}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center">
+                  <ArrowUpFromLine className="h-5 w-5 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-medium">Completed</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Checked out today</p>
+                </div>
+              </div>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums text-slate-600">
+                {completedVisits.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Records List */}
+        <div className="space-y-2">
+          {filtered.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200/80 border-dashed py-16 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                <Inbox className="h-6 w-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-900">No visitor requests found</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                No visitor requests scheduled for the next 7 days.
+              </p>
+            </div>
+          ) : (
+            filtered.map((r) => {
+              const data = (r.data ?? {}) as Record<string, unknown>
+              const visitors = Array.isArray(data["visitors"])
+                ? (data["visitors"] as Array<Record<string, unknown>>)
+                : []
+              const firstVisitor = visitors[0]
+              const visitorName = firstVisitor
+                ? String(firstVisitor["visitor_name"] || "N/A")
+                : "N/A"
+              const purpose = String(data["purpose"] || "-")
+              const visitDate = String(data["visit_date"] || "-")
+
+              return (
+                <div
+                  key={r.id}
+                  className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
+                >
+                  <div className="p-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <Link
+                          href={`/admin/docs/visitor_request/${r.id}`}
+                          className="font-mono text-sm font-medium text-slate-900 hover:text-slate-700 transition-colors"
+                        >
+                          {r.code ?? r.id.slice(0, 8)}
+                        </Link>
+                        {docStatusBadge(r.status ?? "Draft")}
+                        {qrStatusBadge(data["qr_status"])}
+                        {visitors.length > 1 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
+                            <Users className="h-3 w-3" />
+                            {visitors.length} visitors
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-700 font-medium">{visitorName}</span>
+                          {visitors.length > 1 && (
+                            <span className="text-slate-400">+{visitors.length - 1} more</span>
+                          )}
+                        </div>
+                        <span className="text-slate-300">·</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-slate-400" />
+                          {visitDate}
+                        </span>
+                        <span className="text-slate-300">·</span>
+                        <span className="truncate max-w-[200px]">{purpose}</span>
+                        {data["check_in_time"] ? (
+                          <>
+                            <span className="text-slate-300">·</span>
+                            <span className="text-emerald-600">
+                              In: {new Date(String(data["check_in_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </>
+                        ) : null}
+                        {data["check_out_time"] ? (
+                          <>
+                            <span className="text-slate-300">·</span>
+                            <span className="text-slate-500">
+                              Out: {new Date(String(data["check_out_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link href={`/admin/docs/visitor_request/${r.id}`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
     </div>
   )
 }
