@@ -6,6 +6,15 @@ export function NavigationLoadingOverlay() {
   const pathname = usePathname()
   const sp = useSearchParams()
   const [loading, setLoading] = React.useState(false)
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  const clearLoading = React.useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    setLoading(false)
+  }, [])
 
   React.useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -25,6 +34,14 @@ export function NavigationLoadingOverlay() {
     }
     const onSubmit = () => {
       setLoading(true)
+      // Fallback: auto-clear loading after 10 seconds in case the server action
+      // completes without triggering a navigation (e.g., delete/update actions
+      // that just revalidate the path).
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false)
+        timeoutRef.current = null
+      }, 10000)
     }
     document.addEventListener("click", onClick, true)
     document.addEventListener("submit", onSubmit, true)
@@ -35,8 +52,9 @@ export function NavigationLoadingOverlay() {
   }, [])
 
   React.useEffect(() => {
-    setLoading(false)
-  }, [pathname, sp])
+    // Page navigated — clear loading immediately and cancel any pending timeout
+    clearLoading()
+  }, [pathname, sp, clearLoading])
 
   if (!loading) return null
 

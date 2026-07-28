@@ -1,6 +1,8 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import type { Prisma } from "../src/generated/prisma/client";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { FieldType } from "../src/generated/prisma/enums";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
@@ -784,6 +786,10 @@ async function run() {
   }
 
   // --- Goods In Request ---
+  const goodsInPreviewTemplate = fs.readFileSync(
+    path.join(__dirname, "templates", "goods_in_request_preview.html"),
+    "utf-8"
+  )
   const goodsIn = await prisma.docType.upsert({
     where: { key: "goods_in_request" },
     update: { icon: "Plus" },
@@ -795,7 +801,7 @@ async function run() {
       icon: "Plus",
       config: {
         naming: { defaultPattern: "GIN-{YYYY}-{MM}-{#####}" },
-        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods In Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Sender: {{sender_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Material</th><th>Item</th><th>Qty</th><th>Serial No</th><th>Building</th><th>Floor</th><th>Room</th><th>Customer</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.type_of_material}}</td><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.building_id}}</td><td>{{row.floor_id}}</td><td>{{row.room_id}}</td><td>{{row.owner_customer_id}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
+        previewTemplate: goodsInPreviewTemplate,
       }
     },
   });
@@ -881,6 +887,10 @@ async function run() {
   }
 
   // --- Goods Out Request ---
+  const goodsOutPreviewTemplate = fs.readFileSync(
+    path.join(__dirname, "templates", "goods_out_request_preview.html"),
+    "utf-8"
+  )
   const goodsOut = await prisma.docType.upsert({
     where: { key: "goods_out_request" },
     update: { icon: "Plus" },
@@ -892,7 +902,7 @@ async function run() {
       icon: "Plus",
       config: {
         naming: { defaultPattern: "GOUT-{YYYY}-{MM}-{#####}" },
-        previewTemplate: `<!DOCTYPE html><div><h1 class="text-xl font-bold">Goods Out Request</h1><div>Code: {{code}}</div><div>Date: {{request_date}}</div><div>Recipient: {{recipient_name}}</div><div>Status: {{status}}</div><br/><table><thead><tr><th>Material</th><th>Item</th><th>Qty</th><th>Serial No</th><th>Building</th><th>Floor</th><th>Room</th><th>Customer</th><th>Desc</th></tr></thead><tbody>{{#rows}}<tr><td>{{row.type_of_material}}</td><td>{{row.item_name}}</td><td>{{row.quantity}}</td><td>{{row.serial_number}}</td><td>{{row.building_id}}</td><td>{{row.floor_id}}</td><td>{{row.room_id}}</td><td>{{row.owner_customer_id}}</td><td>{{row.description}}</td></tr>{{/rows}}</tbody></table></div>`
+        previewTemplate: goodsOutPreviewTemplate,
       }
     },
   });
