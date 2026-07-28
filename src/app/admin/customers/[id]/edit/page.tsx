@@ -6,11 +6,11 @@ import { redirect, notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // keep for type compatibility (unused but imported)
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import { SearchableSelect } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Building, Phone, Mail, CreditCard, Activity, Package, ShieldCheck, MapPin, FileText, LayoutGrid, FileSearch, ShoppingCart } from "lucide-react";
+import { ArrowLeft, User, Building, Phone, Mail, CreditCard, Activity, Package, ShieldCheck, MapPin, FileText, LayoutGrid, FileSearch, ShoppingCart, ChevronRight, Save, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
@@ -269,96 +269,124 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
   const lastName = nameParts.slice(1).join(" ");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/admin/customers">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Customer</h1>
-          <p className="text-muted-foreground">Manage customer profiles and view their related activities.</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin/customers" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Customers
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-medium">{customer.name}</span>
+          </div>
 
-      {/* Top Summary Card */}
-      <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shrink-0">
-                {customer.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                <User className="h-8 w-8 text-slate-700" />
               </div>
-              <div className="flex-1 text-center md:text-left space-y-2">
-                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center md:justify-start">
-                  <h2 className="text-2xl font-bold">{customer.name}</h2>
-                  <div className="flex gap-2 justify-center">
-                    <Badge variant={customer.company ? "default" : "outline"}>
-                      {customer.company?.name ?? "Individual"}
-                    </Badge>
-                    <Badge variant="secondary">{customer.partnerType ?? "Standard"}</Badge>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">{customer.jobTitle ?? "No Job Title"}</p>
-                
-                <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span>{customer.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{customer.phoneNumber ?? "-"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{customer.address ? `${customer.address}, ${customer.country}` : "-"}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8 border-l pl-8 hidden md:grid">
-                <div className="text-center">
-                  <p className="text-xs text-slate-500 font-medium mb-1">Active Services</p>
-                  <p className="text-[28px] font-bold tracking-tight leading-none">{subscriptions.filter(s => s.status === "Active").length}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-slate-500 font-medium mb-1">Total MRC</p>
-                  <p className="text-[28px] font-bold text-primary tracking-tight leading-none">
-                    {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
-                      subscriptions.reduce((acc, s) => acc + Number((s.data as any)?.total_mrc ?? 0), 0)
-                    )}
-                  </p>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{customer.name}</h1>
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span>{customer.email}</span>
+                  {customer.company?.name && (
+                    <>
+                      <span className="text-slate-300">·</span>
+                      <Building className="h-3.5 w-3.5" />
+                      <span>{customer.company.name}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="flex items-center gap-2">
+              {customer.company ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60">
+                  <Building className="h-3 w-3" />
+                  {customer.company.name}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
+                  Individual
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
+                {customer.partnerType ?? "Standard"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Summary Card */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+              <span className="text-2xl font-semibold tracking-tight text-slate-700">
+                {customer.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+              </span>
+            </div>
+            <div className="flex-1 text-center md:text-left space-y-2">
+              <p className="text-slate-900 font-medium">{customer.jobTitle ?? "No Job Title"}</p>
+
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-1">
+                <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>{customer.email}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <Phone className="h-3.5 w-3.5" />
+                  <span>{customer.phoneNumber ?? "-"}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{customer.address ? `${customer.address}, ${customer.country}` : "-"}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8 border-l border-slate-200 pl-8 hidden md:flex">
+              <div className="text-center">
+                <p className="text-xs text-slate-500 font-medium mb-1">Active Services</p>
+                <p className="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
+                  {subscriptions.filter(s => s.status === "Active").length}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-slate-500 font-medium mb-1">Total MRC</p>
+                <p className="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
+                    subscriptions.reduce((acc, s) => acc + Number((s.data as any)?.total_mrc ?? 0), 0)
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Detailed Info & Forms - Now Full Width */}
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Profile Info</TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Activity</TabsTrigger>
-            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Subscriptions</TabsTrigger>
-            <TabsTrigger value="racks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Racks</TabsTrigger>
-            <TabsTrigger value="inventory" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Inventory</TabsTrigger>
-            <TabsTrigger value="quotations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Quotations</TabsTrigger>
-            <TabsTrigger value="sales_orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border">Sales Orders</TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Profile Info</TabsTrigger>
+            <TabsTrigger value="activity" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Activity</TabsTrigger>
+            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Subscriptions</TabsTrigger>
+            <TabsTrigger value="racks" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Racks</TabsTrigger>
+            <TabsTrigger value="inventory" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Inventory</TabsTrigger>
+            <TabsTrigger value="quotations" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Quotations</TabsTrigger>
+            <TabsTrigger value="sales_orders" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Sales Orders</TabsTrigger>
           </TabsList>
 
             <TabsContent value="profile">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Detailed Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form action={updateCustomer} className="space-y-8">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Detailed Information</h3>
+                <form action={updateCustomer} className="space-y-8">
                     <input type="hidden" name="id" value={customer.id} />
                     
                     {/* Personal Section */}
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 font-semibold text-primary">
+                      <div className="flex items-center gap-2 font-semibold text-slate-900 tracking-tight">
                         <User className="h-4 w-4" />
                         <span>Personal & Contact</span>
                       </div>
@@ -475,16 +503,15 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                       <Button type="submit">Save Changes</Button>
                     </div>
                   </form>
-                </CardContent>
-              </Card>
+              </div>
             </TabsContent>
 
             <TabsContent value="activity">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Documents & Requests</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Recent Documents & Requests</h3>
+                </div>
+                <div className="space-y-3">
                   <div className="space-y-4">
                     {relatedDocs.length > 0 ? (
                       relatedDocs.map((doc) => (
@@ -513,16 +540,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="subscriptions">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Service Subscriptions</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Active Service Subscriptions</h3>
+                </div>
+                <div className="space-y-3">
                   <div className="space-y-4">
                     {subscriptions.length > 0 ? (
                       subscriptions.map((sub) => {
@@ -567,16 +594,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="racks">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Racks</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Racks</h3>
+                </div>
+                <div className="space-y-3">
                   <div className="space-y-4">
                     {customerRacks.length > 0 ? (
                       customerRacks.map((rack) => {
@@ -619,16 +646,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="inventory">
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Customer Inventory (Current Stock)</CardTitle>
-                 </CardHeader>
-                 <CardContent>
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                 <div>
+                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Inventory (Current Stock)</h3>
+                 </div>
+                 <div className="space-y-3">
                    <div className="space-y-6">
                      {/* Stock Balance Table */}
                      <div className="rounded-md border overflow-hidden">
@@ -712,16 +739,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                        </div>
                      )}
                    </div>
-                 </CardContent>
-               </Card>
+                 </div>
+               </div>
              </TabsContent>
 
              <TabsContent value="quotations">
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Customer Quotations</CardTitle>
-                 </CardHeader>
-                 <CardContent>
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                 <div>
+                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Quotations</h3>
+                 </div>
+                 <div className="space-y-3">
                    <div className="space-y-4">
                      {quotations.length > 0 ? (
                        quotations.map((q) => {
@@ -766,16 +793,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                        </div>
                      )}
                    </div>
-                 </CardContent>
-               </Card>
+                 </div>
+               </div>
              </TabsContent>
 
              <TabsContent value="sales_orders">
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Customer Sales Orders</CardTitle>
-                 </CardHeader>
-                 <CardContent>
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+                 <div>
+                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Sales Orders</h3>
+                 </div>
+                 <div className="space-y-3">
                    <div className="space-y-4">
                      {salesOrders.length > 0 ? (
                        salesOrders.map((so) => {
@@ -826,10 +853,11 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
                        </div>
                      )}
                    </div>
-                 </CardContent>
-               </Card>
+                 </div>
+               </div>
              </TabsContent>
           </Tabs>
       </div>
+    </div>
   );
 }

@@ -565,7 +565,10 @@ export default async function CustomerDocsListByType({ params, searchParams }: {
                             <span className="text-slate-700 font-medium">{rackMap.get(String(data["source_rack_id"] ?? "")) || data["source_rack_id"] || "-"}</span>
                             <ArrowRight className="h-3 w-3 text-slate-300" />
                             <span className="text-slate-400">to</span>
-                            <span className="text-slate-700 font-medium">{companyMap.get(String(data["destination"] ?? "")) || data["destination"] || "-"}</span>
+                            <span className="text-slate-700 font-medium">{(() => {
+                              const v = companyMap.get(String(data["destination"] ?? "")) ?? (typeof data["destination"] === "string" ? data["destination"] : null) ?? "-"
+                              return String(v)
+                            })()}</span>
                           </div>
                         )}
                         {listFields.length > 0 && !isCrossConnect && listFields.slice(0, 3).map((k) => {

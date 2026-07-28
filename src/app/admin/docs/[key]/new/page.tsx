@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { IconDisplay } from "@/components/icon-display"
 import type { FieldType } from "@/generated/prisma/enums"
 import type { Prisma } from "@/generated/prisma/client"
 import { SearchableSelect } from "@/components/ui/select"
@@ -15,6 +16,7 @@ import DependentDropdown from "@/components/dependent-dropdown"
 import ChildRowsAccordion from "@/components/child-rows-accordion"
 import { runDocEventHook } from "@/lib/doc-hooks"
 import QuotationItemSpecs from "@/components/quotation-item-specs"
+import { ArrowLeft, ChevronRight, Plus, Save, Copy, Link2 } from "lucide-react"
 
 function parseIDR(raw: string): number | null {
   if (!raw) return null
@@ -677,29 +679,68 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Tambah {docType.name}</h1>
-          <div className="text-xs text-muted-foreground">{docType.name} • {docType.key}</div>
-          {parentDocType && parentRecord && (
-            <div className="text-sm bg-muted/50 p-2 rounded border border-dashed">
-              Membuat dari <strong>{parentDocType.name}</strong>: {parentRecord.code}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href={`/admin/docs/${docType.key}`} className="text-sm underline">Kembali</Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <Link href={`/admin/docs/${docType.key}`} className="hover:text-slate-900 transition-colors">
+              {docType.name}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-medium">New</span>
+          </div>
 
-      <form action={createRecord} id="new-record-form" className="space-y-4">
-        <input type="hidden" name="docTypeKey" value={docType.key} />
-        <input type="hidden" name="parentId" value={parentId} />
-        <input type="hidden" name="parentDocType" value={parentDocTypeKey} />
-        <input type="hidden" name="branch_id" value={selectedBranchId || ""} />
-        {suggestedRackId && <input type="hidden" name="id_rack" value={suggestedRackId} />}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+                {docType.icon ? (
+                  <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
+                ) : (
+                  <Plus className="h-7 w-7 text-slate-700" />
+                )}
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Tambah {docType.name}</h1>
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{docType.key}</span>
+                  {parentDocType && parentRecord && (
+                    <>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <Link2 className="h-3 w-3" />
+                        Dari {parentDocType.name}: <span className="text-slate-700 font-mono">{parentRecord.code}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Button asChild variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 h-9">
+              <Link href={`/admin/docs/${docType.key}`}>
+                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                Kembali
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <form action={createRecord} id="new-record-form" className="space-y-6">
+          <input type="hidden" name="docTypeKey" value={docType.key} />
+          <input type="hidden" name="parentId" value={parentId} />
+          <input type="hidden" name="parentDocType" value={parentDocTypeKey} />
+          <input type="hidden" name="branch_id" value={selectedBranchId || ""} />
+          {suggestedRackId && <input type="hidden" name="id_rack" value={suggestedRackId} />}
+
+          {/* Form fields card */}
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           {docType.fields.map((f) => {
             const valFromParams = sp[f.key]
             const defaultValueFromParams = Array.isArray(valFromParams) ? valFromParams[0] : (valFromParams ?? undefined)
@@ -719,8 +760,11 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
 
             if (f.key.startsWith("__header_")) {
               return (
-                <div key={f.id} className="col-span-full pt-4 pb-2 border-b border-dashed">
-                  <h3 className="text-sm font-bold text-primary">{f.label}</h3>
+                <div key={f.id} className="col-span-full pt-2 pb-2 first:pt-0">
+                  <h3 className="text-sm font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span className="h-4 w-0.5 bg-slate-900 rounded-full" />
+                    {f.label}
+                  </h3>
                 </div>
               )
             }
@@ -910,32 +954,59 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
                 </div>
               )
             }
-            return null
-          })}
-          {docType.key === "invoice" && docType.fields.every((x) => x.type !== ("TABLE" as FieldType)) ? (
-            <div className="space-y-3 md:col-span-2">
-              <div className="text-sm font-semibold">Invoice Items</div>
-              <ChildRowsAccordion
-                fields={[
-                  { id: "invoice_item_description", key: "description", label: "Description", type: ("TEXT" as FieldType), required: true },
-                  { id: "invoice_item_qty", key: "qty", label: "Qty", type: ("NUMBER" as FieldType), required: true, config: { defaultValue: 1 } },
-                  { id: "invoice_item_price", key: "price", label: "Unit Price", type: ("PRICE" as FieldType), required: true },
-                  { id: "invoice_item_discount", key: "discount_percent", label: "Discount (%)", type: ("NUMBER" as FieldType) },
-                ]}
-                optionsMap={{}}
-                branchId={selectedBranchId}
-                formId="new-record-form"
-                canAddRows={true}
-                childName="Item"
-              />
-            </div>
-          ) : null}
+          return null
+        })}
+        {docType.key === "invoice" && docType.fields.every((x) => x.type !== ("TABLE" as FieldType)) ? (
+          <div className="space-y-3 md:col-span-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Invoice Items</div>
+            <ChildRowsAccordion
+              fields={[
+                { id: "invoice_item_description", key: "description", label: "Description", type: ("TEXT" as FieldType), required: true },
+                { id: "invoice_item_qty", key: "qty", label: "Qty", type: ("NUMBER" as FieldType), required: true, config: { defaultValue: 1 } },
+                { id: "invoice_item_price", key: "price", label: "Unit Price", type: ("PRICE" as FieldType), required: true },
+                { id: "invoice_item_discount", key: "discount_percent", label: "Discount (%)", type: ("NUMBER" as FieldType) },
+              ]}
+              optionsMap={{}}
+              branchId={selectedBranchId}
+              formId="new-record-form"
+              canAddRows={true}
+              childName="Item"
+            />
+          </div>
+        ) : null}
         </div>
-        <div className="flex items-center gap-3">
-          <Button type="submit">Simpan</Button>
-          <Button type="submit" variant="outline" name="saveAndAddAnother" value="true">Simpan & Tambah Lagi</Button>
+        </div>
+
+        {/* Submit Actions */}
+        <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm sticky bottom-4">
+          <div className="text-xs text-slate-500">
+            <span className="font-mono">{docType.key}</span>
+            <span className="mx-2">·</span>
+            <span>Fields dengan tanda <span className="text-red-500">*</span> wajib diisi</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="h-9 text-slate-600">
+              <Link href={`/admin/docs/${docType.key}`}>Batal</Link>
+            </Button>
+            <Button
+              type="submit"
+              name="saveAndAddAnother"
+              value="true"
+              variant="outline"
+              size="sm"
+              className="h-9 border-slate-200"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              Simpan & Tambah Lagi
+            </Button>
+            <Button type="submit" size="sm" className="h-9 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+              <Save className="h-3.5 w-3.5 mr-1.5" />
+              Simpan
+            </Button>
+          </div>
         </div>
       </form>
+    </div>
     </div>
   )
 }

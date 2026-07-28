@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Camera, Eye, Inbox, QrCode, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock, Users } from "lucide-react"
+import { ArrowLeft, Camera, Eye, Inbox, QrCode, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock, Users, User, Building, Phone, Calendar, LogIn, LogOut, Timer } from "lucide-react"
 
 export default async function AdminVisitsPage() {
   const session = await getServerSession(authOptions)
@@ -197,20 +197,41 @@ export default async function AdminVisitsPage() {
               const visitorName = firstVisitor
                 ? String(firstVisitor["visitor_name"] || "N/A")
                 : "N/A"
+              const visitorNik = firstVisitor
+                ? String(firstVisitor["nik"] || "-")
+                : "-"
+              const visitorPhone = firstVisitor
+                ? String(firstVisitor["phone_number"] || "-")
+                : "-"
               const purpose = String(data["purpose"] || "-")
               const visitDate = String(data["visit_date"] || "-")
+              const ownerCustomer = String(data["owner_customer_id"] || "-")
+
+              // Calculate duration if both check-in and check-out exist
+              let duration = ""
+              if (data["check_in_time"] && data["check_out_time"]) {
+                const inTime = new Date(String(data["check_in_time"]))
+                const outTime = new Date(String(data["check_out_time"]))
+                const diffMs = outTime.getTime() - inTime.getTime()
+                if (diffMs > 0) {
+                  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+                  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+                  duration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+                }
+              }
 
               return (
                 <div
                   key={r.id}
                   className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
                 >
-                  <div className="p-4 flex items-center gap-4">
+                  <div className="p-4 flex items-start gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      {/* Top line: Code + Status + Visitors count */}
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <Link
                           href={`/admin/docs/visitor_request/${r.id}`}
-                          className="font-mono text-sm font-medium text-slate-900 hover:text-slate-700 transition-colors"
+                          className="font-mono text-sm font-semibold text-slate-900 hover:text-slate-700 transition-colors"
                         >
                           {r.code ?? r.id.slice(0, 8)}
                         </Link>
@@ -224,41 +245,76 @@ export default async function AdminVisitsPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-slate-700 font-medium">{visitorName}</span>
+                      {/* Main info: Visitor + Company */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 mb-2">
+                        <div className="flex items-center gap-1.5 text-sm min-w-0">
+                          <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="text-slate-900 font-medium truncate">{visitorName}</span>
                           {visitors.length > 1 && (
-                            <span className="text-slate-400">+{visitors.length - 1} more</span>
+                            <span className="text-slate-400 text-xs shrink-0">+{visitors.length - 1} more</span>
                           )}
                         </div>
+                        <div className="flex items-center gap-1.5 text-sm min-w-0">
+                          <Building className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="text-slate-700 truncate">{ownerCustomer}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
+                          <span className="text-slate-400 shrink-0">NIK:</span>
+                          <span className="font-mono text-slate-600 truncate">{visitorNik}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
+                          <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                          <span className="text-slate-600 truncate">{visitorPhone}</span>
+                        </div>
+                      </div>
+
+                      {/* Bottom line: Date + Purpose + Check-in/out + Duration */}
+                      <div className="flex items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 flex-wrap pt-1.5 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3 text-slate-400" />
+                          <span className="text-slate-600 font-medium">{visitDate}</span>
+                        </div>
                         <span className="text-slate-300">·</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-slate-400" />
-                          {visitDate}
-                        </span>
-                        <span className="text-slate-300">·</span>
-                        <span className="truncate max-w-[200px]">{purpose}</span>
+                        <div className="flex items-center gap-1.5 min-w-0 max-w-[200px]">
+                          <span className="text-slate-400 shrink-0">Purpose:</span>
+                          <span className="text-slate-600 truncate">{purpose}</span>
+                        </div>
                         {data["check_in_time"] ? (
                           <>
                             <span className="text-slate-300">·</span>
-                            <span className="text-emerald-600">
-                              In: {new Date(String(data["check_in_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <LogIn className="h-3 w-3 text-emerald-600" />
+                              <span className="text-emerald-700 font-medium">
+                                {new Date(String(data["check_in_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
                           </>
                         ) : null}
                         {data["check_out_time"] ? (
                           <>
                             <span className="text-slate-300">·</span>
-                            <span className="text-slate-500">
-                              Out: {new Date(String(data["check_out_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <LogOut className="h-3 w-3 text-slate-500" />
+                              <span className="text-slate-600 font-medium">
+                                {new Date(String(data["check_out_time"])).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
                           </>
                         ) : null}
+                        {duration && (
+                          <>
+                            <span className="text-slate-300">·</span>
+                            <div className="flex items-center gap-1.5">
+                              <Timer className="h-3 w-3 text-slate-400" />
+                              <span className="text-slate-600 font-medium">{duration}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       <Link href={`/admin/docs/visitor_request/${r.id}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
                           <Eye className="h-4 w-4" />
