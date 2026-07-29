@@ -14,19 +14,16 @@ interface DocCalculatorProps {
 export function DocCalculator({ fields }: DocCalculatorProps) {
   React.useEffect(() => {
     const runCalculations = (form: HTMLFormElement) => {
-      // Determine if we are in a row form (prefixed with row_)
       const isRow = Array.from(form.elements).some(el => (el as HTMLInputElement).name?.startsWith("row_"))
       const prefix = isRow ? "row_" : ""
 
       const getVal = (key: string): number => {
-        // Try with prefix first, then without
         let el = form.elements.namedItem(`${prefix}${key}`) as HTMLInputElement
         if (!el && prefix) el = form.elements.namedItem(key) as HTMLInputElement
         
         if (!el) return 0
         let val = el.value || "0"
         
-        // Handle IDR format
         val = val.replace(/Rp\.?\s*/i, "")
         val = val.replace(/IDR\s*/i, "")
         val = val.replace(/\./g, "")
@@ -42,7 +39,6 @@ export function DocCalculator({ fields }: DocCalculatorProps) {
         
         if (!el) return
         
-        // If it's a price-like field, format it
         const name = String(el.name || "").toLowerCase()
         const isPrice = name.includes("total") || name.includes("nrc") || name.includes("mrc") || name.includes("price")
         
@@ -58,7 +54,6 @@ export function DocCalculator({ fields }: DocCalculatorProps) {
 
         if (el.value !== newVal) {
           el.value = newVal
-          // Trigger a change event so other listeners know
           el.dispatchEvent(new Event("change", { bubbles: true }))
         }
       }
@@ -92,12 +87,13 @@ export function DocCalculator({ fields }: DocCalculatorProps) {
       }
     }
 
-    // Run initial calculation if form exists
-    const forms = document.querySelectorAll("form")
-    forms.forEach(f => runCalculations(f))
+    if (typeof window !== "undefined") {
+      const forms = document.querySelectorAll("form")
+      forms.forEach(f => runCalculations(f))
 
-    document.addEventListener("input", handleInput)
-    return () => document.removeEventListener("input", handleInput)
+      document.addEventListener("input", handleInput)
+      return () => document.removeEventListener("input", handleInput)
+    }
   }, [fields])
 
   return null

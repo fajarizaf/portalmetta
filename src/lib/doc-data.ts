@@ -91,7 +91,7 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
             return { label, value }
           })
         }
-      } else if (src && typeof src["table"] === "string" && src["table"]) {
+        } else if (src && typeof src["table"] === "string" && src["table"]) {
         const tableName = String(src["table"]) || ""
         const modelProp = tableName ? (tableName.slice(0, 1).toLowerCase() + tableName.slice(1)) : ""
         const client = prisma as unknown as Record<string, { findMany: (args?: unknown) => Promise<Array<Record<string, unknown>>> }>
@@ -103,7 +103,15 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
           const depSourceField = filterObj && typeof filterObj["field"] === "string" ? (filterObj["field"] as string) : ""
           const parentValRaw = depFieldKey ? values[depFieldKey] : undefined
           const parentValStr = typeof parentValRaw === "string" ? parentValRaw : String(parentValRaw ?? "")
-          const recs: Array<Record<string, unknown>> = await client[modelProp].findMany()
+          // Build where clause from source config
+          const whereClause: Record<string, unknown> = {}
+          const srcWhere = src && typeof src["where"] === "object" && src["where"] ? (src["where"] as Record<string, unknown>) : undefined
+          if (srcWhere) {
+            for (const [k, v] of Object.entries(srcWhere)) {
+              whereClause[k] = v
+            }
+          }
+          const recs: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
           const toCamel = (s: string) => s.replace(/[_-]([a-zA-Z])/g, (_, c) => c.toUpperCase())
           const depFieldCamel = toCamel(depSourceField)
           const filtered = (depFieldKey && depSourceField && parentValStr) ? recs.filter((r) => {
@@ -194,7 +202,14 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
           if (modelProp && client && typeof client[modelProp]?.findMany === "function") {
             const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
             const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
-            const recs: Array<Record<string, unknown>> = await client[modelProp].findMany()
+            const whereClause: Record<string, unknown> = {}
+            const srcWhere = src && typeof src["where"] === "object" && src["where"] ? (src["where"] as Record<string, unknown>) : undefined
+            if (srcWhere) {
+              for (const [k, v] of Object.entries(srcWhere)) {
+                whereClause[k] = v
+              }
+            }
+            const recs: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
             const toCamel = (s: string) => s.replace(/[_-]([a-zA-Z])/g, (_, c) => c.toUpperCase())
             const depFieldCamel = toCamel(depSourceField)
             const filtered = (depFieldKey && depSourceField && parentValStr) ? recs.filter((r) => {

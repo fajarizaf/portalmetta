@@ -238,6 +238,9 @@ async function createRecord(formData: FormData) {
       code = chosenPattern
     }
   }
+  if (!code) {
+    code = `NEW-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+  }
   const parentId = String(formData.get("parentId") || "")
   const parentDocTypeKey = String(formData.get("parentDocType") || "")
   console.log("[createRecord] parentId:", parentId, "parentDocType:", parentDocTypeKey)
@@ -555,7 +558,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
   const cfgAll = (docType.config ?? {}) as unknown as Record<string, unknown>
   const childMap = (cfgAll["childDocTypes"] ?? {}) as Record<string, string>
   const singleChildKey = typeof cfgAll["childDocTypeKey"] === "string" ? (cfgAll["childDocTypeKey"] as string) : ""
-  const childEntitiesByFieldKey: Record<string, { id: string; key: string; name: string; fields: Array<{ id: string; key: string; label: string; type: FieldType; required?: boolean; readOnly?: boolean }> } | null> = {}
+  const childEntitiesByFieldKey: Record<string, { id: string; key: string; name: string; fields: Array<{ id: string; key: string; label: string; type: FieldType; required?: boolean; readOnly?: boolean; config?: Record<string, unknown> }> } | null> = {}
   const childOptionsByFieldKey: Record<string, Record<string, Array<{ label: string; value: string }>>> = {}
   const canAddRowsByFieldKey: Record<string, boolean> = {}
   const defaultValuesByFieldKey: Record<string, Array<Record<string, unknown>>> = {}
@@ -585,7 +588,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
     const tfConfig = (tf.config ?? {}) as Record<string, unknown>
     const childKey = childMap[tf.key] || (typeof tfConfig["childDocType"] === "string" ? tfConfig["childDocType"] as string : "") || singleChildKey
     const child = childKey ? await prisma.docType.findUnique({ where: { key: childKey }, include: { fields: { orderBy: { order: "asc" } }, permissions: true } }) : null
-    childEntitiesByFieldKey[tf.key] = child ? { id: child.id, key: child.key, name: child.name, fields: child.fields.map((cf) => ({ id: cf.id, key: cf.key, label: cf.label, type: cf.type as FieldType, required: cf.required, readOnly: Boolean(cf.readOnly) })) } : null
+    childEntitiesByFieldKey[tf.key] = child ? { id: child.id, key: child.key, name: child.name, fields: child.fields.map((cf) => ({ id: cf.id, key: cf.key, label: cf.label, type: cf.type as FieldType, required: cf.required, readOnly: Boolean(cf.readOnly), config: cf.config as Record<string, unknown> | undefined })) } : null
     const perm = child?.permissions?.find((p) => p.roleId === user?.roleId)
     canAddRowsByFieldKey[tf.key] = perm ? Boolean(perm.canCreate) : true
     childOptionsByFieldKey[tf.key] = {}
@@ -651,6 +654,13 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
                   whereClause.building = { branchId: selectedBranchId }
                 } else if (modelProp === "room") {
                   whereClause.floor = { building: { branchId: selectedBranchId } }
+                }
+              }
+              // Apply source-level where filter
+              const srcWhere = src && typeof src["where"] === "object" && src["where"] ? (src["where"] as Record<string, unknown>) : undefined
+              if (srcWhere) {
+                for (const [k, v] of Object.entries(srcWhere)) {
+                  whereClause[k] = v
                 }
               }
               const rows: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
@@ -939,7 +949,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
                     <div className="space-y-3">
                       <input type="hidden" name="childDocTypeKey" value={child.key} />
                       <ChildRowsAccordion
-                        fields={child.fields.map((cf) => ({ id: cf.id, key: cf.key, label: cf.label, type: cf.type as FieldType, required: cf.required, readOnly: cf.readOnly }))}
+                        fields={child.fields.map((cf) => ({ id: cf.id, key: cf.key, label: cf.label, type: cf.type as FieldType, required: cf.required, readOnly: cf.readOnly, config: cf.config as Record<string, unknown> | undefined }))}
                         optionsMap={childOptionsByFieldKey[f.key] ?? {}}
                         branchId={selectedBranchId}
                         formId="new-record-form"

@@ -15,6 +15,7 @@ import type { Prisma } from "@/generated/prisma/client"
 import { SearchableSelect } from "@/components/ui/select"
 import DependentDropdown from "@/components/dependent-dropdown"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
+import { FormDialog } from "@/components/form-dialog"
 import QuotationItemSpecs from "@/components/quotation-item-specs"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { runDocEventHook } from "@/lib/doc-hooks"
@@ -178,14 +179,17 @@ async function processTransition(
   try {
     if (record.branchId) {
       const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: record.branchId } } })
-      wf = cand && cand.isActive ? cand : null
+      if (cand) wf = cand
     }
     if (!wf && docType.branchId) {
       const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: docType.branchId } } })
-      wf = cand && cand.isActive ? cand : null
+      if (cand) wf = cand
     }
     if (!wf) {
       wf = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null, isActive: true } })
+    }
+    if (!wf) {
+      wf = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null } })
     }
   } catch {}
   if (!wf) {
@@ -233,17 +237,20 @@ async function processTransition(
   await prisma.docRecord.update({ where: { id: recordId }, data: { status: target, docStatus: wf?.dontOverrideStatus ? undefined : nextDocStatus, data: newData as Prisma.InputJsonValue, updatedById: me.id } })
   if (key) {
     const t = target.toUpperCase()
-    const actionsForTarget = (cfg.states ?? []).find((s) => s.name === target)?.actions ?? []
-    if (actionsForTarget.some((a) => /^create\s*:/i.test(a))) {
-      await runDocEventHook("on_submit", key, recordId, me.id)
-    } else if (t.includes("CANCEL")) {
+    let ranSubmit = false
+    if (t.includes("CANCEL")) {
       await runDocEventHook("on_cancel", key, recordId, me.id)
     } else if (t.includes("SUBMIT")) {
       await runDocEventHook("on_submit", key, recordId, me.id)
+      ranSubmit = true
     } else if (t.includes("APPROVE") || t.includes("COMPLETE")) {
       await runDocEventHook("on_approve", key, recordId, me.id)
     } else {
       await runDocEventHook("validate", key, recordId, me.id)
+    }
+    const actionsForTarget = (cfg.states ?? []).find((s) => s.name === target)?.actions ?? []
+    if (!ranSubmit && actionsForTarget.some((a) => /^create\s*:/i.test(a))) {
+      await runDocEventHook("on_submit", key, recordId, me.id)
     }
   }
   const notifyCfg = ((docType.config ?? {}) as unknown as { notifyConfig?: { toastEnabled?: boolean } }).notifyConfig
@@ -423,28 +430,28 @@ async function updateRecord(formData: FormData) {
   }
 }
 
-async function addRow(formData: FormData) {
+async function addRow(prevState: unknown, formData: FormData) {
   "use server"
   const session = await getServerSession(authOptions)
   const email = session?.user?.email ?? ""
   const me = email ? await prisma.user.findUnique({ where: { email }, include: { role: true } }) : null
-  if (!me) return
+  if (!me) return { ok: false }
   const key = String(formData.get("docTypeKey") || "")
   const recordId = String(formData.get("recordId") || "")
   const childKey = String(formData.get("childDocTypeKey") || "")
   const docType = await prisma.docType.findUnique({ where: { key }, include: { permissions: true } })
-  if (!docType || !recordId || !childKey) return
+  if (!docType || !recordId || !childKey) return { ok: false }
   const perm = docType.permissions.find((p) => p.roleId === me.roleId)
-  if (perm && !perm.canWrite) return
+  if (perm && !perm.canWrite) return { ok: false }
   const record = await prisma.docRecord.findUnique({ where: { id: recordId } })
-  if (!record) return
+  if (!record) return { ok: false }
   const isLocked = String(record.status ?? "").toUpperCase().includes("SUBMIT") || String(record.status ?? "").toUpperCase().includes("APPROVE") || record.docStatus === 1
-  if (isLocked) return
+  if (isLocked) return { ok: false }
   const child = await prisma.docType.findUnique({ where: { key: childKey }, include: { fields: true, permissions: true } })
-  if (!child) return
+  if (!child) return { ok: false }
   {
     const permChild = child.permissions.find((p) => p.roleId === me.roleId)
-    if (permChild && !permChild.canCreate) return
+    if (permChild && !permChild.canCreate) return { ok: false }
   }
   const payload: Record<string, unknown> = {}
   for (const f of child.fields) {
@@ -459,7 +466,7 @@ async function addRow(formData: FormData) {
       continue
     }
     const raw = String(formData.get(`row_${f.key}`) || "")
-    if (f.required && !raw) return
+    if (f.required && !raw) return { ok: false }
     if (f.type === ("PRICE" as FieldType) || isPriceLikeKey(f.key)) {
       const parsed = parseIDR(raw)
       payload[f.key] = parsed != null ? parsed : (raw ? Number(raw) : null)
@@ -472,8 +479,7 @@ async function addRow(formData: FormData) {
   // Collect spec fields
   for (const [k, v] of formData.entries()) {
     if (k.startsWith("row_spec_")) {
-      const specKey = k.slice(4) // Keep "spec_" prefix or remove it? 
-      // The database shows keys like "spec_destination", so we should keep "spec_"
+      const specKey = k.slice(4)
       payload[specKey] = String(v)
     }
   }
@@ -481,6 +487,7 @@ async function addRow(formData: FormData) {
   await prisma.docRow.create({ data: { recordId, childDocTypeId: child.id, idx: count, data: payload as Prisma.InputJsonValue } })
   if (key) await runDocEventHook("before_save", key, recordId)
   revalidatePath(`/admin/docs/${key}/${recordId}`)
+  return { ok: true }
 }
 
 async function sendDocEmail(formData: FormData) {
@@ -654,26 +661,26 @@ async function deleteRow(formData: FormData) {
   revalidatePath(`/admin/docs/${key}/${recordId}`)
 }
 
-async function updateRow(formData: FormData) {
+async function updateRow(prevState: unknown, formData: FormData) {
   "use server"
   const session = await getServerSession(authOptions)
   const email = session?.user?.email ?? ""
   const me = email ? await prisma.user.findUnique({ where: { email }, include: { role: true } }) : null
-  if (!me) return
+  if (!me) return { ok: false }
   const key = String(formData.get("docTypeKey") || "")
   const recordId = String(formData.get("recordId") || "")
   const rowId = String(formData.get("rowId") || "")
   const childKey = String(formData.get("childDocTypeKey") || "")
   const docType = await prisma.docType.findUnique({ where: { key }, include: { permissions: true } })
-  if (!docType || !recordId || !rowId || !childKey) return
+  if (!docType || !recordId || !rowId || !childKey) return { ok: false }
   const perm = docType.permissions.find((p) => p.roleId === me.roleId)
-  if (perm && !perm.canWrite) return
+  if (perm && !perm.canWrite) return { ok: false }
   const record = await prisma.docRecord.findUnique({ where: { id: recordId } })
-  if (!record) return
+  if (!record) return { ok: false }
   const isLocked = String(record.status ?? "").toUpperCase().includes("SUBMIT") || String(record.status ?? "").toUpperCase().includes("APPROVE") || record.docStatus === 1
-  if (isLocked) return
+  if (isLocked) return { ok: false }
   const child = await prisma.docType.findUnique({ where: { key: childKey }, include: { fields: true } })
-  if (!child) return
+  if (!child) return { ok: false }
   const payload: Record<string, unknown> = {}
   for (const f of child.fields) {
     if (f.type === ("CHECKBOX" as FieldType)) {
@@ -687,7 +694,7 @@ async function updateRow(formData: FormData) {
       continue
     }
     const raw = String(formData.get(`row_${f.key}`) || "")
-    if (f.required && !raw) return
+    if (f.required && !raw) return { ok: false }
     if (f.type === ("PRICE" as FieldType) || isPriceLikeKey(f.key)) {
       const parsed = parseIDR(raw)
       payload[f.key] = parsed != null ? parsed : (raw ? Number(raw) : null)
@@ -700,13 +707,14 @@ async function updateRow(formData: FormData) {
   // Collect spec fields
   for (const [k, v] of formData.entries()) {
     if (k.startsWith("row_spec_")) {
-      const specKey = k.slice(4) // Keep "spec_" prefix
+      const specKey = k.slice(4)
       payload[specKey] = String(v)
     }
   }
   await prisma.docRow.update({ where: { id: rowId }, data: { data: payload as Prisma.InputJsonValue } })
   if (key) await runDocEventHook("before_save", key, recordId)
   revalidatePath(`/admin/docs/${key}/${recordId}`)
+  return { ok: true }
 }
 
 function buildInvoiceItemPayload(formData: FormData): Record<string, unknown> | null {
@@ -1094,6 +1102,13 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                 whereClause.floor = { building: { branchId: selectedBranchId } }
               }
             }
+            // Apply source-level where filter
+            const srcWhere = src && typeof src["where"] === "object" && src["where"] ? (src["where"] as Record<string, unknown>) : undefined
+            if (srcWhere) {
+              for (const [k, v] of Object.entries(srcWhere)) {
+                whereClause[k] = v
+              }
+            }
             const recs: Array<Record<string, unknown>> = await client[modelProp].findMany({ where: whereClause })
             const toCamel = (s: string) => s.replace(/[_-]([a-zA-Z])/g, (_, c) => c.toUpperCase())
             const depFieldCamel = toCamel(depSourceField)
@@ -1151,6 +1166,25 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
     const disc = getDiscountPercent(d)
     const subtotal = qty * price * (disc ? (1 - disc / 100) : 1)
     grandTotal += subtotal
+  }
+
+  let salesOrderSubtotalNrc = 0
+  let salesOrderSubtotalMrc = 0
+  let salesOrderTotalContract = 0
+  if (docType.key === "sales_order") {
+    for (const row of rows) {
+      const d = (row.data ?? {}) as Record<string, unknown>
+      if (!("nrc" in d) && !("mrc" in d)) continue
+      const qtyN = typeof d.qty === "number" ? d.qty : Number(d.qty ?? 1)
+      const qty = Number.isFinite(qtyN) ? qtyN : 1
+      const nrcN = typeof d.nrc === "number" ? d.nrc : Number(d.nrc ?? 0)
+      const nrc = Number.isFinite(nrcN) ? nrcN : 0
+      const mrcN = typeof d.mrc === "number" ? d.mrc : Number(d.mrc ?? 0)
+      const mrc = Number.isFinite(mrcN) ? mrcN : 0
+      salesOrderSubtotalNrc += qty * nrc
+      salesOrderSubtotalMrc += qty * mrc
+      salesOrderTotalContract += qty * (nrc + mrc)
+    }
   }
 
   const invoiceSubtotalKey = docType.key === "invoice"
@@ -1420,12 +1454,20 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                       (invoiceSubtotalKey ? f.key === invoiceSubtotalKey : false) ||
                       (invoiceTotalKey ? f.key === invoiceTotalKey : false)
                     )
+                    const isSalesOrderAutoTotal = docType.key === "sales_order" && (
+                      f.key === "subtotal_nrc" || f.key === "subtotal_mrc" || f.key === "total_contract"
+                    )
+                    const soAutoNumber = isSalesOrderAutoTotal
+                      ? (f.key === "subtotal_nrc" ? salesOrderSubtotalNrc
+                          : f.key === "subtotal_mrc" ? salesOrderSubtotalMrc
+                          : salesOrderTotalContract)
+                      : 0
                     const autoNumber = isInvoiceAutoTotal
                       ? (f.key === invoiceSubtotalKey ? invoiceSubtotal : invoiceTotal)
-                      : 0
-                    const effectiveVal = isInvoiceAutoTotal ? String(autoNumber) : val
-                    const effectiveRaw = isInvoiceAutoTotal ? autoNumber : vRaw
-                    const disabled = isInvoiceAutoTotal ? !isEditable : isFieldReadOnly
+                      : soAutoNumber
+                    const effectiveVal = isInvoiceAutoTotal || isSalesOrderAutoTotal ? String(autoNumber) : val
+                    const effectiveRaw = isInvoiceAutoTotal || isSalesOrderAutoTotal ? autoNumber : vRaw
+                    const disabled = isInvoiceAutoTotal || isSalesOrderAutoTotal ? !isEditable : isFieldReadOnly
 
                     const typeStr = String(f.type).toUpperCase()
 
@@ -1789,59 +1831,68 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                     <div className="font-semibold text-lg">{f.label}</div>
                   </div>
                   {isEditable && (canAddRowsByFieldKey[f.key] ?? true) && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button type="button" size="sm">Add Item</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-5xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Add {child.name}</DialogTitle>
-                        </DialogHeader>
-                        <form action={addRow} className="space-y-4">
-                          <input type="hidden" name="docTypeKey" value={docType.key} />
-                          <input type="hidden" name="recordId" value={id} />
-                          <input type="hidden" name="childDocTypeKey" value={child.key} />
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {child.fields.map((cf) => {
-                              const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
-                              const cfCfg = (cf.config ?? {}) as Record<string, unknown>
-                              const defaultValue = cfCfg.default !== undefined ? String(cfCfg.default) : ""
-                              
-                              return (
-                                <div key={cf.id} className="space-y-2">
-                                  <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                                  {cf.type === "DROPDOWN" ? (
-                                    <SearchableSelect name={`row_${cf.key}`} options={opt} required={cf.required} defaultValue={defaultValue} emitChangeEvent={true} />
-                                  ) : (
-                                    <Input 
-                                      name={`row_${cf.key}`} 
-                                      type={cf.type === "NUMBER" ? "number" : "text"} 
-                                      required={cf.required} 
-                                      defaultValue={(cf.type === "PRICE" || isPriceLikeKey(cf.key)) && defaultValue ? formatIDR(defaultValue) : defaultValue} 
-                                    />
-                                  )}
-                                </div>
-                              )
-                            })}
-                            {(() => {
-                              const hasProductId = child.fields.some(cf => cf.key === "product_id")
-                              return hasProductId ? (
-                                <div className="col-span-full border-t pt-4 mt-4">
-                                  <QuotationItemSpecs 
-                                    dependsOnName="row_product_id" 
-                                    branchId={selectedBranchId || undefined} 
-                                    namePrefix="row_" 
-                                  />
-                                </div>
-                              ) : null
-                            })()}
-                          </div>
-                          <DialogFooter>
-                            <Button type="submit">Add Item</Button>
-                          </DialogFooter>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                    <FormDialog
+                      title={`Add ${child.name}`}
+                      className="sm:max-w-5xl max-h-[80vh] overflow-y-auto"
+                      action={addRow}
+                      trigger={<Button type="button" size="sm">Add Item</Button>}
+                    >
+                      <input type="hidden" name="docTypeKey" value={docType.key} />
+                      <input type="hidden" name="recordId" value={id} />
+                      <input type="hidden" name="childDocTypeKey" value={child.key} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {child.fields.map((cf) => {
+                          const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
+                          const cfCfg = (cf.config ?? {}) as Record<string, unknown>
+                          const defaultValue = cfCfg.default !== undefined ? String(cfCfg.default) : ""
+                          
+                          return (
+                            <div key={cf.id} className="space-y-2">
+                              <Label>{cf.label}{cf.required ? " *" : ""}</Label>
+                              {cf.type === "DROPDOWN" ? (
+                                <SearchableSelect name={`row_${cf.key}`} options={opt} required={cf.required} defaultValue={defaultValue} emitChangeEvent={true} />
+                              ) : cf.type === "TEXTAREA" ? (
+                                <textarea 
+                                  name={`row_${cf.key}`}
+                                  required={cf.required}
+                                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                  defaultValue={defaultValue}
+                                />
+                              ) : cf.type === "PRICE" ? (
+                                <Input 
+                                  name={`row_${cf.key}`} 
+                                  type="text"
+                                  required={cf.required} 
+                                  defaultValue={defaultValue ? formatIDR(defaultValue) : defaultValue} 
+                                />
+                              ) : (
+                                <Input 
+                                  name={`row_${cf.key}`} 
+                                  type={cf.type === "NUMBER" ? "number" : "text"} 
+                                  required={cf.required} 
+                                  defaultValue={defaultValue} 
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
+                        {(() => {
+                          const hasProductId = child.fields.some(cf => cf.key === "product_id")
+                          return hasProductId ? (
+                            <div className="col-span-full border-t pt-4 mt-4">
+                              <QuotationItemSpecs 
+                                dependsOnName="row_product_id" 
+                                branchId={selectedBranchId || undefined} 
+                                namePrefix="row_" 
+                              />
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit">Add Item</Button>
+                      </DialogFooter>
+                    </FormDialog>
                   )}
                 </div>
 
@@ -1878,70 +1929,81 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                             </div>
                           </CollapsibleTrigger>
                           <div className="flex items-center gap-1">
-                            {isEditable && (canEditRowsByFieldKey[f.key] ?? true) && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                                    <Edit className="size-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-5xl max-h-[80vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle>Edit {child.name}</DialogTitle>
-                                  </DialogHeader>
-                                  <form action={updateRow} className="space-y-4">
-                                    <input type="hidden" name="docTypeKey" value={docType.key} />
-                                    <input type="hidden" name="recordId" value={id} />
-                                    <input type="hidden" name="rowId" value={row.id} />
-                                    <input type="hidden" name="childDocTypeKey" value={child.key} />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      {child.fields.map((cf) => {
-                                        const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
-                                        const val = d[cf.key]
-                                        
-                                        return (
-                                          <div key={cf.id} className="space-y-2">
-                                            <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                                            {cf.type === "DROPDOWN" ? (
-                                              <SearchableSelect 
-                                                name={`row_${cf.key}`} 
-                                                options={opt} 
-                                                required={cf.required} 
-                                                defaultValue={String(val ?? "")} 
-                                                emitChangeEvent={true}
-                                              />
-                                            ) : (
-                                              <Input 
-                                                name={`row_${cf.key}`} 
-                                                type={cf.type === "NUMBER" ? "number" : "text"} 
-                                                required={cf.required} 
-                                                defaultValue={(cf.type === "PRICE" || isPriceLikeKey(cf.key)) ? formatIDR(val) : String(val ?? "")} 
-                                              />
-                                            )}
-                                          </div>
-                                        )
-                                      })}
-                                      {(() => {
-                                        const hasProductId = child.fields.some(cf => cf.key === "product_id")
-                                        return hasProductId ? (
-                                          <div className="col-span-full border-t pt-4 mt-4">
-                                            <QuotationItemSpecs 
-                                              dependsOnName="row_product_id" 
-                                              branchId={selectedBranchId || undefined} 
-                                              namePrefix="row_" 
-                                              defaultValues={d}
-                                            />
-                                          </div>
-                                        ) : null
-                                      })()}
-                                    </div>
-                                    <DialogFooter>
-                                      <Button type="submit">Update Item</Button>
-                                    </DialogFooter>
-                                  </form>
-                                </DialogContent>
-                              </Dialog>
-                            )}
+                             {isEditable && (canEditRowsByFieldKey[f.key] ?? true) && (
+                               <FormDialog
+                                 title={`Edit ${child.name}`}
+                                 className="sm:max-w-5xl max-h-[80vh] overflow-y-auto"
+                                 action={updateRow}
+                                 trigger={
+                                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                                     <Edit className="size-4" />
+                                   </Button>
+                                 }
+                               >
+                                 <input type="hidden" name="docTypeKey" value={docType.key} />
+                                 <input type="hidden" name="recordId" value={id} />
+                                 <input type="hidden" name="rowId" value={row.id} />
+                                 <input type="hidden" name="childDocTypeKey" value={child.key} />
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   {child.fields.map((cf) => {
+                                     const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
+                                     const val = d[cf.key]
+                                     
+                                     return (
+                                       <div key={cf.id} className="space-y-2">
+                                         <Label>{cf.label}{cf.required ? " *" : ""}</Label>
+                                         {cf.type === "DROPDOWN" ? (
+                                           <SearchableSelect 
+                                             name={`row_${cf.key}`} 
+                                             options={opt} 
+                                             required={cf.required} 
+                                             defaultValue={String(val ?? "")} 
+                                             emitChangeEvent={true}
+                                           />
+                                         ) : cf.type === "TEXTAREA" ? (
+                                           <textarea 
+                                             name={`row_${cf.key}`}
+                                             required={cf.required}
+                                             className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                             defaultValue={String(val ?? "")}
+                                           />
+                                         ) : cf.type === "PRICE" ? (
+                                           <Input 
+                                             name={`row_${cf.key}`} 
+                                             type="text"
+                                             required={cf.required} 
+                                             defaultValue={formatIDR(val)} 
+                                           />
+                                         ) : (
+                                           <Input 
+                                             name={`row_${cf.key}`} 
+                                             type={cf.type === "NUMBER" ? "number" : "text"} 
+                                             required={cf.required} 
+                                             defaultValue={String(val ?? "")} 
+                                           />
+                                         )}
+                                       </div>
+                                     )
+                                   })}
+                                   {(() => {
+                                     const hasProductId = child.fields.some(cf => cf.key === "product_id")
+                                     return hasProductId ? (
+                                       <div className="col-span-full border-t pt-4 mt-4">
+                                         <QuotationItemSpecs 
+                                           dependsOnName="row_product_id" 
+                                           branchId={selectedBranchId || undefined} 
+                                           namePrefix="row_" 
+                                           defaultValues={d}
+                                         />
+                                       </div>
+                                     ) : null
+                                   })()}
+                                 </div>
+                                 <DialogFooter>
+                                   <Button type="submit">Update Item</Button>
+                                 </DialogFooter>
+                               </FormDialog>
+                             )}
                             {isEditable && (canDeleteRowsByFieldKey[f.key] ?? true) && (
                               <form action={deleteRow}>
                                 <input type="hidden" name="docTypeKey" value={docType.key} />
