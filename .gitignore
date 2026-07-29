@@ -1,1 +1,2 @@
-Nothing needs to be added to the .gitignore file based on the provided file changes. The modified file 'src/app/admin/docs/[key]/[id]/page.tsx' is a source code file that should not be ignored.
+.next
+node_modules

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/riza/Documents/project/portalmetta/.next-internal/server/app/admin/page/actions.js%20%28server%20actions%20loader%29"],"sourcesContent":["export {$$RSC_SERVER_ACTION_1 as '00d499b4fcbd55fa1b7eb958c5da1b6f921ae2d34c'} from 'ACTIONS_MODULE0'\nexport {$$RSC_SERVER_ACTION_0 as '403cef642a57b0975b8254e008e61d34b710700710'} from 'ACTIONS_MODULE0'\n"],"names":[],"mappings":";AAAA"}}]
-}

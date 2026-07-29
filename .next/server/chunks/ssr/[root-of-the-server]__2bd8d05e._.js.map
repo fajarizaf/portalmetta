@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../src/app/customer/docs/%5Bkey%5D/debug/page.tsx"],"sourcesContent":["\nimport React from 'react'\n\nexport default function DebugPage() {\n  return <div>Debug Page</div>\n}\n"],"names":[],"mappings":"2ZAGe,SAAS,IACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,MAAA,UAAI,cACd"}

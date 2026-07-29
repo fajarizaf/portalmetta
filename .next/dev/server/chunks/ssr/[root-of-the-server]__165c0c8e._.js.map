@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 26, "column": 0}, "map": {"version":3,"sources":["file:///Users/riza/Documents/project/portalmetta/src/app/customer/support/page.tsx"],"sourcesContent":["import { redirect } from \"next/navigation\";\n\nexport default function SupportPage() {\n  redirect(\"/customer/docs/support_ticket\");\n}\n"],"names":[],"mappings":";;;;AAAA;AAAA;;AAEe,SAAS;IACtB,IAAA,iMAAQ,EAAC;AACX"}}]
-}

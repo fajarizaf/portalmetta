@@ -1,9 +1,0 @@
-{
-  "/admin/docs/[key]/[id]/page": "app/admin/docs/[key]/[id]/page.js",
-  "/admin/docs/[key]/page": "app/admin/docs/[key]/page.js",
-  "/admin/doctypes/[id]/page": "app/admin/doctypes/[id]/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/dynamic-options/route": "app/api/dynamic-options/route.js",
-  "/api/product-specs/route": "app/api/product-specs/route.js",
-  "/customer/page": "app/customer/page.js"
-}
