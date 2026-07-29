@@ -147,6 +147,7 @@ export function DirectOrderList({
                          </div>
                          <form action={submitRequestOrder} className="space-y-4">
                             <input type="hidden" name="productId" value={p.id} />
+                            {p.prices.length > 0 && (
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-medium text-slate-600">Price</Label>
                                 <select name="priceId" className="border-slate-200 text-sm rounded-lg border bg-slate-50/50 px-3 py-2.5 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary w-full transition-all">
@@ -155,6 +156,7 @@ export function DirectOrderList({
                                 ))}
                                 </select>
                             </div>
+                            )}
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-medium text-slate-600">Specifications</Label>
                                 <CustomerProductSpecs 
@@ -220,6 +222,7 @@ export function DirectOrderList({
                                     />
                                 </div>
 
+                                {p.prices.length > 0 && (
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-medium text-slate-600">Price</Label>
                                     <select 
@@ -234,6 +237,7 @@ export function DirectOrderList({
                                     ))}
                                     </select>
                                 </div>
+                                )}
 
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-medium text-slate-600">Specifications</Label>
