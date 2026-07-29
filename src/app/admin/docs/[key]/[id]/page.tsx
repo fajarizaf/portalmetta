@@ -1557,7 +1557,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                             />
                             {(() => {
                                 const isProduct = (typeof sourceObj.table === "string" && String(sourceObj.table).toLowerCase() === "product") || (typeof sourceObj.key === "string" && String(sourceObj.key).toLowerCase().includes("product")) || f.key === "product_id"
-                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" /> : null
+                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} /> : null
                             })()}
                           </div>
                         )
@@ -1569,7 +1569,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                             <SearchableSelect name={f.key} placeholder={f.readOnly ? "Otomatis" : "Select..."} options={options} defaultValue={val} disabled={isFieldReadOnly} required={f.required} emitChangeEvent={true} />
                             {(() => {
                                 const isProduct = f.key === "product_id"
-                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" /> : null
+                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} /> : null
                             })()}
                           </div>
                         )
@@ -1913,6 +1913,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                 dependsOnName="row_product_id" 
                                 branchId={selectedBranchId || undefined} 
                                 namePrefix="row_" 
+                                defaultProductId=""
                               />
                             </div>
                           ) : null
@@ -2046,6 +2047,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                     })}
                                    {(() => {
                                      const hasProductId = child.fields.some(cf => cf.key === "product_id")
+                                     const productIdVal = d["product_id"] as string | undefined
                                      return hasProductId ? (
                                        <div className="col-span-full border-t pt-4 mt-4">
                                          <QuotationItemSpecs 
@@ -2053,6 +2055,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                            branchId={selectedBranchId || undefined} 
                                            namePrefix="row_" 
                                            defaultValues={d}
+                                           defaultProductId={productIdVal}
                                          />
                                        </div>
                                      ) : null
