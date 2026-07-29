@@ -114,19 +114,34 @@ export default function QuotationItemSpecs({
   }, [branchId])
 
   React.useEffect(() => {
-    const scopeEl = actualContainerId ? document.getElementById(actualContainerId) : undefined
-    const el = scopeEl ? scopeEl.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`) : document.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`)
-    const initial = el?.value || defaultProductId || ""
-    if (initial) {
-      setProductId(initial)
-      fetchSpecs(initial)
+    const checkAndLoad = () => {
+      const scopeEl = actualContainerId ? document.getElementById(actualContainerId) : undefined
+      const el = scopeEl ? scopeEl.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`) : document.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`)
+      const initial = el?.value || defaultProductId || ""
+      if (initial) {
+        setProductId(initial)
+        fetchSpecs(initial)
+        return true
+      }
+      return false
     }
+    
+    // Try immediately
+    if (!checkAndLoad()) {
+      // If not found, retry after a short delay (in case of render timing)
+      const timer = setTimeout(() => {
+        checkAndLoad()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+    
     const handler = (e: Event) => {
       const ev = e as CustomEvent<{ name: string; value: string }>
       if (!ev.detail) return
       const { name, value } = ev.detail
       if (name === dependsOnName) {
-        const elLocal = scopeEl ? scopeEl.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`) : document.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`)
+        const scopeElLocal = actualContainerId ? document.getElementById(actualContainerId) : undefined
+        const elLocal = scopeElLocal ? scopeElLocal.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`) : document.querySelector<HTMLInputElement>(`input[name="${dependsOnName}"]`)
         const v = elLocal?.value || value || ""
         setProductId(v || undefined)
         if (v) fetchSpecs(v)
