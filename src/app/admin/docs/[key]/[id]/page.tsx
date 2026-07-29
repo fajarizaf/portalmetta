@@ -1876,10 +1876,10 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                           }
                           
                           return (
-                            <div key={cf.id} className="space-y-2">
-                              <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                              {cf.type === "DROPDOWN" ? (
-                                renderDropdown()
+                             <div key={cf.id} className="space-y-2">
+                                {(!hasFilter || cf.type !== "DROPDOWN") && <Label>{cf.label}{cf.required ? " *" : ""}</Label>}
+                                {cf.type === "DROPDOWN" ? (
+ 	                                 renderDropdown()
                               ) : cf.type === "TEXTAREA" ? (
                                 <textarea 
                                   name={`row_${cf.key}`}
@@ -1975,11 +1975,8 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                  <input type="hidden" name="rowId" value={row.id} />
                                  <input type="hidden" name="childDocTypeKey" value={child.key} />
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {child.fields.map((cf) => {
-                                      // Skip product_id field as it's rendered separately by QuotationItemSpecs
-                                      if (cf.key === "product_id") return null
-                                      
-                                      const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
+                                     {child.fields.map((cf) => {
+                                       const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
                                       const val = d[cf.key]
                                       const cfCfgE = (cf.config ?? {}) as Record<string, unknown>
                                       const srcE = cfCfgE["source"] as Record<string, unknown> | undefined
@@ -2020,9 +2017,9 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
 
                                       return (
                                         <div key={cf.id} className="space-y-2">
-                                          <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                                          {cf.type === "DROPDOWN" ? (
-                                            renderDropdownEdit()
+                                       {(!hasFilterE || cf.type !== "DROPDOWN") && <Label>{cf.label}{cf.required ? " *" : ""}</Label>}
+                                       {cf.type === "DROPDOWN" ? (
+	                                            renderDropdownEdit()
                                           ) : cf.type === "TEXTAREA" ? (
                                             <textarea 
                                               name={`row_${cf.key}`}
