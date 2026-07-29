@@ -274,7 +274,9 @@ async function run() {
   })
 
   const qiFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id" } } },
+    { key: "product_category", label: "Kategori Produk", type: "DROPDOWN", required: false, order: 0.5, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", where: { parentId: null } } } },
+    { key: "product_sub_category", label: "Sub Kategori Produk", type: "DROPDOWN", required: false, order: 0.7, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", filter: { dependsOn: "product_category", field: "parentId" } } } },
+    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id", filter: { dependsOn: "product_sub_category", field: "groupId" } } } },
     { key: "service_name", label: "Nama Layanan", type: "TEXT", required: false, order: 1.5 },
     { key: "qty", label: "Jumlah", type: "NUMBER", required: true, order: 2, config: { default: 1 } },
     { key: "nrc", label: "NRC (Setup Fee)", type: "NUMBER", required: false, order: 2.1 },
@@ -630,7 +632,9 @@ async function run() {
   })
 
   const rqiFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id" } } },
+    { key: "product_category", label: "Kategori Produk", type: "DROPDOWN", required: false, order: 0.5, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", where: { parentId: null } } } },
+    { key: "product_sub_category", label: "Sub Kategori Produk", type: "DROPDOWN", required: false, order: 0.7, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", filter: { dependsOn: "product_category", field: "parentId" } } } },
+    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id", filter: { dependsOn: "product_sub_category", field: "groupId" } } } },
     { key: "qty", label: "Jumlah", type: "NUMBER", required: true, order: 2 },
     { key: "price", label: "Harga Satuan", type: "NUMBER", required: true, order: 3 },
     { key: "discount_percent", label: "Diskon (%)", type: "NUMBER", required: false, order: 4 },
@@ -729,7 +733,9 @@ async function run() {
   })
 
   const woiFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id" } } },
+    { key: "product_category", label: "Kategori Produk", type: "DROPDOWN", required: false, order: 0.5, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", where: { parentId: null } } } },
+    { key: "product_sub_category", label: "Sub Kategori Produk", type: "DROPDOWN", required: false, order: 0.7, config: { source: { table: "ProductGroup", labelField: "name", valueField: "id", filter: { dependsOn: "product_category", field: "parentId" } } } },
+    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: { source: { table: "Product", labelField: "name", valueField: "id", filter: { dependsOn: "product_sub_category", field: "groupId" } } } },
     { key: "qty", label: "Jumlah", type: "NUMBER", required: true, order: 2 },
     { key: "price", label: "Harga Satuan", type: "NUMBER", required: true, order: 3 },
     { key: "discount_percent", label: "Diskon (%)", type: "NUMBER", required: false, order: 4 },

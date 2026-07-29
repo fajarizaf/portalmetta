@@ -1845,12 +1845,41 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                           const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
                           const cfCfg = (cf.config ?? {}) as Record<string, unknown>
                           const defaultValue = cfCfg.default !== undefined ? String(cfCfg.default) : ""
+                          const src = cfCfg["source"] as Record<string, unknown> | undefined
+                          const hasFilter = Boolean(src && src["filter"] != null)
+                          
+                          const renderDropdown = () => {
+                            if (hasFilter) {
+                              const raw = src?.["filter"] as unknown
+                              const filterRaw = (() => {
+                                if (typeof raw !== "string") return raw
+                                try { return JSON.parse(raw) } catch { return raw }
+                              })()
+                              const filters = Array.isArray(filterRaw)
+                                ? (filterRaw as Array<Record<string, unknown>>).map((x) => ({ dependsOn: typeof x["dependsOn"] === "string" ? (x["dependsOn"] as string) : "", field: typeof x["field"] === "string" ? (x["field"] as string) : "" })).filter((it) => it.dependsOn && it.field)
+                                : (() => {
+                                    const dependsOn = typeof (filterRaw as Record<string, unknown>)?.["dependsOn"] === "string" ? ((filterRaw as Record<string, unknown>)["dependsOn"] as string) : ""
+                                    const fieldSrc = typeof (filterRaw as Record<string, unknown>)?.["field"] === "string" ? ((filterRaw as Record<string, unknown>)["field"] as string) : ""
+                                    return (dependsOn && fieldSrc) ? [{ dependsOn, field: fieldSrc }] : []
+                                  })()
+                              const sourceObj = {
+                                mode: (src && typeof (src as any)["mode"] === "string") ? ((src as any)["mode"] as string) : undefined,
+                                key: (src && typeof src["key"] === "string") ? (src["key"] as string) : undefined,
+                                table: (src && typeof src["table"] === "string") ? (src["table"] as string) : undefined,
+                                labelField: (src && typeof src["labelField"] === "string") ? (src["labelField"] as string) : "name",
+                                valueField: (src && typeof src["valueField"] === "string") ? (src["valueField"] as string) : "id",
+                                filter: (filters.length > 1 ? filters : (filters[0] ?? undefined)) as any,
+                              }
+                              return <DependentDropdown name={`row_${cf.key}`} label={cf.label} required={cf.required} options={opt} source={sourceObj} branchId={selectedBranchId || undefined} defaultValue={defaultValue} />
+                            }
+                            return <SearchableSelect name={`row_${cf.key}`} options={opt} required={cf.required} defaultValue={defaultValue} emitChangeEvent={true} />
+                          }
                           
                           return (
                             <div key={cf.id} className="space-y-2">
                               <Label>{cf.label}{cf.required ? " *" : ""}</Label>
                               {cf.type === "DROPDOWN" ? (
-                                <SearchableSelect name={`row_${cf.key}`} options={opt} required={cf.required} defaultValue={defaultValue} emitChangeEvent={true} />
+                                renderDropdown()
                               ) : cf.type === "TEXTAREA" ? (
                                 <textarea 
                                   name={`row_${cf.key}`}
@@ -1944,47 +1973,77 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                  <input type="hidden" name="recordId" value={id} />
                                  <input type="hidden" name="rowId" value={row.id} />
                                  <input type="hidden" name="childDocTypeKey" value={child.key} />
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                   {child.fields.map((cf) => {
-                                     const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
-                                     const val = d[cf.key]
-                                     
-                                     return (
-                                       <div key={cf.id} className="space-y-2">
-                                         <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                                         {cf.type === "DROPDOWN" ? (
-                                           <SearchableSelect 
-                                             name={`row_${cf.key}`} 
-                                             options={opt} 
-                                             required={cf.required} 
-                                             defaultValue={String(val ?? "")} 
-                                             emitChangeEvent={true}
-                                           />
-                                         ) : cf.type === "TEXTAREA" ? (
-                                           <textarea 
-                                             name={`row_${cf.key}`}
-                                             required={cf.required}
-                                             className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                             defaultValue={String(val ?? "")}
-                                           />
-                                         ) : cf.type === "PRICE" ? (
-                                           <Input 
-                                             name={`row_${cf.key}`} 
-                                             type="text"
-                                             required={cf.required} 
-                                             defaultValue={formatIDR(val)} 
-                                           />
-                                         ) : (
-                                           <Input 
-                                             name={`row_${cf.key}`} 
-                                             type={cf.type === "NUMBER" ? "number" : "text"} 
-                                             required={cf.required} 
-                                             defaultValue={String(val ?? "")} 
-                                           />
-                                         )}
-                                       </div>
-                                     )
-                                   })}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {child.fields.map((cf) => {
+                                      const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
+                                      const val = d[cf.key]
+                                      const cfCfgE = (cf.config ?? {}) as Record<string, unknown>
+                                      const srcE = cfCfgE["source"] as Record<string, unknown> | undefined
+                                      const hasFilterE = Boolean(srcE && srcE["filter"] != null)
+
+                                      const renderDropdownEdit = () => {
+                                        if (hasFilterE) {
+                                          const raw = srcE?.["filter"] as unknown
+                                          const filterRaw = (() => {
+                                            if (typeof raw !== "string") return raw
+                                            try { return JSON.parse(raw) } catch { return raw }
+                                          })()
+                                          const filters = Array.isArray(filterRaw)
+                                            ? (filterRaw as Array<Record<string, unknown>>).map((x) => ({ dependsOn: typeof x["dependsOn"] === "string" ? (x["dependsOn"] as string) : "", field: typeof x["field"] === "string" ? (x["field"] as string) : "" })).filter((it) => it.dependsOn && it.field)
+                                            : (() => {
+                                                const dependsOn = typeof (filterRaw as Record<string, unknown>)?.["dependsOn"] === "string" ? ((filterRaw as Record<string, unknown>)["dependsOn"] as string) : ""
+                                                const fieldSrc = typeof (filterRaw as Record<string, unknown>)?.["field"] === "string" ? ((filterRaw as Record<string, unknown>)["field"] as string) : ""
+                                                return (dependsOn && fieldSrc) ? [{ dependsOn, field: fieldSrc }] : []
+                                              })()
+                                          const sourceObj = {
+                                            mode: (srcE && typeof (srcE as any)["mode"] === "string") ? ((srcE as any)["mode"] as string) : undefined,
+                                            key: (srcE && typeof srcE["key"] === "string") ? (srcE["key"] as string) : undefined,
+                                            table: (srcE && typeof srcE["table"] === "string") ? (srcE["table"] as string) : undefined,
+                                            labelField: (srcE && typeof srcE["labelField"] === "string") ? (srcE["labelField"] as string) : "name",
+                                            valueField: (srcE && typeof srcE["valueField"] === "string") ? (srcE["valueField"] as string) : "id",
+                                            filter: (filters.length > 1 ? filters : (filters[0] ?? undefined)) as any,
+                                          }
+                                          const initMap: Record<string, string> = {}
+                                          for (const it of filters) {
+                                            const rawV = d[it.dependsOn]
+                                            const v = typeof rawV === "string" ? rawV : String(rawV ?? "")
+                                            if (v) initMap[it.dependsOn] = v
+                                          }
+                                          return <DependentDropdown name={`row_${cf.key}`} label={cf.label} required={cf.required} options={opt} source={sourceObj} branchId={selectedBranchId || undefined} defaultValue={String(val ?? "")} initialDependsOnValues={initMap} />
+                                        }
+                                        return <SearchableSelect name={`row_${cf.key}`} options={opt} required={cf.required} defaultValue={String(val ?? "")} emitChangeEvent={true} />
+                                      }
+
+                                      return (
+                                        <div key={cf.id} className="space-y-2">
+                                          <Label>{cf.label}{cf.required ? " *" : ""}</Label>
+                                          {cf.type === "DROPDOWN" ? (
+                                            renderDropdownEdit()
+                                          ) : cf.type === "TEXTAREA" ? (
+                                            <textarea 
+                                              name={`row_${cf.key}`}
+                                              required={cf.required}
+                                              className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                              defaultValue={String(val ?? "")}
+                                            />
+                                          ) : cf.type === "PRICE" ? (
+                                            <Input 
+                                              name={`row_${cf.key}`} 
+                                              type="text"
+                                              required={cf.required} 
+                                              defaultValue={formatIDR(val)} 
+                                            />
+                                          ) : (
+                                            <Input 
+                                              name={`row_${cf.key}`} 
+                                              type={cf.type === "NUMBER" ? "number" : "text"} 
+                                              required={cf.required} 
+                                              defaultValue={String(val ?? "")} 
+                                            />
+                                          )}
+                                        </div>
+                                      )
+                                    })}
                                    {(() => {
                                      const hasProductId = child.fields.some(cf => cf.key === "product_id")
                                      return hasProductId ? (
