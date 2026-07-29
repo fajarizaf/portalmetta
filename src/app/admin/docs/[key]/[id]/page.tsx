@@ -1976,6 +1976,9 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                  <input type="hidden" name="childDocTypeKey" value={child.key} />
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {child.fields.map((cf) => {
+                                      // Skip product_id field as it's rendered separately by QuotationItemSpecs
+                                      if (cf.key === "product_id") return null
+                                      
                                       const opt = ((childOptionsByFieldKey[f.key] ?? {})[cf.key] ?? [])
                                       const val = d[cf.key]
                                       const cfCfgE = (cf.config ?? {}) as Record<string, unknown>
