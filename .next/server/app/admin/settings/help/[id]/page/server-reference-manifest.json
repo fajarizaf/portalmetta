@@ -1,0 +1,65 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/settings/help/[id]/page": {
+          "moduleId": 901847,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/settings/help/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/settings/help/[id]/page": {
+          "moduleId": 901847,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/settings/help/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4059d2ad9166414f94c35dbcf2d017e7fa94da6b72": {
+      "workers": {
+        "app/admin/settings/help/[id]/page": {
+          "moduleId": 901847,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/settings/help/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/settings/help/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/settings/help/[id]/page.tsx"
+    },
+    "4080fab00d0c0f08d878a7a6416aae40735b97c2d2": {
+      "workers": {
+        "app/admin/settings/help/[id]/page": {
+          "moduleId": 901847,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/settings/help/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/settings/help/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/settings/help/[id]/page.tsx"
+    }
+  },
+  "edge": {}
+}

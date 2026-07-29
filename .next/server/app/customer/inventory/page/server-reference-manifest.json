@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40b4a3d11249917b1d0dc77b7d10a7679976fe972d": {
+      "workers": {
+        "app/customer/inventory/page": {
+          "moduleId": 386785,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/customer/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/customer/inventory/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/customer/layout.tsx"
+    }
+  },
+  "edge": {}
+}

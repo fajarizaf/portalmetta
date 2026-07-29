@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../src/app/admin/settings/roles/page.tsx"],"sourcesContent":["import RolesPage from \"../../roles/page\";\n\nexport default RolesPage;"],"names":[],"mappings":"4aAAA,AAEe,EAFf,CAAA,CAAA,QAEe,OAAS"}

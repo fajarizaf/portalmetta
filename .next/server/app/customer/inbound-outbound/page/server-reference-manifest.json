@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40b4a3d11249917b1d0dc77b7d10a7679976fe972d": {
+      "workers": {
+        "app/customer/inbound-outbound/page": {
+          "moduleId": 986760,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/customer/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/customer/inbound-outbound/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/customer/layout.tsx"
+    }
+  },
+  "edge": {}
+}

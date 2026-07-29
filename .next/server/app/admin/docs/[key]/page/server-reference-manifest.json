@@ -1,0 +1,95 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "400b38d856458b18ea3cd581bc90208686242a3be1": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/docs/[key]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/docs/[key]/page.tsx"
+    },
+    "4031a52aa7eb2766f94c819d1e947952b9a4164910": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/docs/[key]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/docs/[key]/page.tsx"
+    },
+    "40cc438ffa6e0652b4cefcee0d6f911f3cc8d5d45e": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_3",
+          "filename": "src/app/admin/docs/[key]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_3",
+      "filename": "src/app/admin/docs/[key]/page.tsx"
+    },
+    "40f73a067d34efb9b8b2b17c989955375a73c48db1": {
+      "workers": {
+        "app/admin/docs/[key]/page": {
+          "moduleId": 525915,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_2",
+          "filename": "src/app/admin/docs/[key]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/docs/[key]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_2",
+      "filename": "src/app/admin/docs/[key]/page.tsx"
+    }
+  },
+  "edge": {}
+}

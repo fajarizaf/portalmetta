@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/riza/Documents/project/portalmetta/src/app/loading.tsx"],"sourcesContent":["export default function Loading() {\n  return (\n    <div className=\"fixed inset-0 z-50 grid place-content-center bg-background/60 backdrop-blur-sm\">\n      <div className=\"flex flex-col items-center gap-3\">\n        <div className=\"size-8 rounded-full border-2 border-primary/50 border-t-transparent animate-spin\" />\n        <div className=\"text-sm text-muted-foreground\">Loading...</div>\n      </div>\n    </div>\n  );\n}"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAI,WAAU;;8BACb,8OAAC;oBAAI,WAAU;;;;;;8BACf,8OAAC;oBAAI,WAAU;8BAAgC;;;;;;;;;;;;;;;;;AAIvD"}}]
+}

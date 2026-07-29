@@ -1,0 +1,80 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/doctypes/page": {
+          "moduleId": 58344,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/doctypes/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/doctypes/page": {
+          "moduleId": 58344,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/doctypes/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "00f5ec90e8baf8c7fb8330f328326398cb48f2b5a7": {
+      "workers": {
+        "app/admin/doctypes/page": {
+          "moduleId": 58344,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_2",
+          "filename": "src/app/admin/doctypes/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/doctypes/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_2",
+      "filename": "src/app/admin/doctypes/page.tsx"
+    },
+    "401a5f4fbb899ad823dac8b7ab02c52a9738d9a666": {
+      "workers": {
+        "app/admin/doctypes/page": {
+          "moduleId": 58344,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/doctypes/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/doctypes/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/doctypes/page.tsx"
+    },
+    "40cca321fe451e77ed1ca261eb6e27d2f74aa2ed5f": {
+      "workers": {
+        "app/admin/doctypes/page": {
+          "moduleId": 58344,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/doctypes/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/doctypes/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/doctypes/page.tsx"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,3 @@
+{
+  "/api/visits/qr/[token]/validate/route": "app/api/visits/qr/[token]/validate/route.js"
+}

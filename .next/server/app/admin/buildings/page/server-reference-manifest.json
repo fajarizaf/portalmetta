@@ -1,0 +1,65 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/buildings/page": {
+          "moduleId": 512628,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/buildings/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/buildings/page": {
+          "moduleId": 512628,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/buildings/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4079a2a52a1e3fbf4ec51ac15268fa8ca79b17528c": {
+      "workers": {
+        "app/admin/buildings/page": {
+          "moduleId": 512628,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/buildings/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/buildings/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/buildings/page.tsx"
+    },
+    "40a7a394d03241a2eafbb21ad0a5ba114c4fad27b6": {
+      "workers": {
+        "app/admin/buildings/page": {
+          "moduleId": 512628,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/buildings/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/buildings/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/buildings/page.tsx"
+    }
+  },
+  "edge": {}
+}

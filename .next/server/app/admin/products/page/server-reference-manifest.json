@@ -1,0 +1,230 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "40277fc858804a5029aa34faa2bdb07e1fbb59e06d": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_11",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_11",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "405a97c3da92201dab5dd6ecc683d7901eb075d835": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_3",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_3",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "406be2bfb8bcd8de5eb8bb02f98054a2ed9b97769f": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "4078b7665d713c37607aa0a12c70582a6dcee06de0": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_10",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_10",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "4086239e6a3daff0cd6ff66e23b19f6b082be1ce18": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_2",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_2",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40925902303dcf1431e36b9691e09d3ee59002d5ec": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_9",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_9",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40a76f620835d0e8918f7a7c8e19847e857d49321e": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_12",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_12",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40aa7e93dd58603409cfed2c3b38f786c17ef3ea1e": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_6",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_6",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40ac15eaca7dcb9138908508e946cd70eb340c0d11": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_4",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_4",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40b2e30272e321301911e52713c060b08983b13bba": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40c0c83360f1b201c5c22a58ded0217360b59ad45f": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_5",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_5",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40ced8643c4c40346b0b8453ced79a95fa4e7cceac": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_8",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_8",
+      "filename": "src/app/admin/products/page.tsx"
+    },
+    "40e7a4b509a92384f9109f66907bcaa8820613bede": {
+      "workers": {
+        "app/admin/products/page": {
+          "moduleId": 118577,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_7",
+          "filename": "src/app/admin/products/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/products/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_7",
+      "filename": "src/app/admin/products/page.tsx"
+    }
+  },
+  "edge": {}
+}

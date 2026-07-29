@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40e8b5586e31ab11a0acf324a73561549c3872121e": {
+      "workers": {
+        "app/forgot-password/page": {
+          "moduleId": 631740,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/forgot-password/page.tsx"
+        }
+      },
+      "layer": {
+        "app/forgot-password/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/forgot-password/page.tsx"
+    }
+  },
+  "edge": {}
+}

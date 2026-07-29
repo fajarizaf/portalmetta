@@ -1,0 +1,65 @@
+{
+  "node": {
+    "00d499b4fcbd55fa1b7eb958c5da1b6f921ae2d34c": {
+      "workers": {
+        "app/admin/rack-mapping/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/rack-mapping/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/admin/layout.tsx [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/rack-mapping/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rack-mapping/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "403cef642a57b0975b8254e008e61d34b710700710": {
+      "workers": {
+        "app/admin/rack-mapping/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/rack-mapping/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/admin/layout.tsx [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/rack-mapping/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rack-mapping/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "40984cdf3c505675c85f42b7df1661b398f921c976": {
+      "workers": {
+        "app/admin/rack-mapping/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/rack-mapping/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/admin/layout.tsx [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/rack-mapping/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateRackAssignment",
+          "filename": "src/app/admin/rack-mapping/actions.ts"
+        }
+      },
+      "layer": {
+        "app/admin/rack-mapping/page": "action-browser"
+      },
+      "exportedName": "updateRackAssignment",
+      "filename": "src/app/admin/rack-mapping/actions.ts"
+    },
+    "4017d07dfca2df10fec72d20c47a5a2b6a09c0e39c": {
+      "workers": {
+        "app/admin/rack-mapping/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/rack-mapping/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/admin/layout.tsx [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/rack-mapping/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteRack",
+          "filename": "src/app/admin/rack-mapping/actions.ts"
+        }
+      },
+      "layer": {
+        "app/admin/rack-mapping/page": "action-browser"
+      },
+      "exportedName": "deleteRack",
+      "filename": "src/app/admin/rack-mapping/actions.ts"
+    }
+  },
+  "edge": {}
+}

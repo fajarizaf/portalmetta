@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../src/app/admin/settings/admins/page.tsx"],"sourcesContent":["import AdminsPage from \"../../admins/page\";\n\nexport default AdminsPage;"],"names":[],"mappings":"4aAAA,AAEe,EAFf,CAAA,CAAA,QAEe,OAAU"}

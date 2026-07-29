@@ -1,0 +1,65 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/rooms/page": {
+          "moduleId": 759505,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rooms/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/rooms/page": {
+          "moduleId": 759505,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rooms/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "40102f92889f471e4bc8470df63aa2d29a2d450612": {
+      "workers": {
+        "app/admin/rooms/page": {
+          "moduleId": 759505,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/rooms/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rooms/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/rooms/page.tsx"
+    },
+    "4046eb64938aad88821e981e3a2ec2800866d77c27": {
+      "workers": {
+        "app/admin/rooms/page": {
+          "moduleId": 759505,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/rooms/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/rooms/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/rooms/page.tsx"
+    }
+  },
+  "edge": {}
+}

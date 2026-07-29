@@ -1,0 +1,95 @@
+{
+  "node": {
+    "0087b9e1a5cc796232f1d2d50e92dcb68121b4e485": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "4093380e4aa85db32af1459911d21e09b7f1c8d12b": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/layout.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/layout.tsx"
+    },
+    "403ccd4afbf70ca065c608d2d84fb57a6ae305e539": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "src/app/admin/customers/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "src/app/admin/customers/page.tsx"
+    },
+    "4094f5123233c8bd8434499603b01d4ceecb68dea3": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_2",
+          "filename": "src/app/admin/customers/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_2",
+      "filename": "src/app/admin/customers/page.tsx"
+    },
+    "40ac3f78fa15a8d355fe31838599d33b21b0ec2db8": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_3",
+          "filename": "src/app/admin/customers/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_3",
+      "filename": "src/app/admin/customers/page.tsx"
+    },
+    "40bdb60c93c38a9bb952e717b7d59fde6fcc34a548": {
+      "workers": {
+        "app/admin/customers/page": {
+          "moduleId": 600961,
+          "async": true,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/app/admin/customers/page.tsx"
+        }
+      },
+      "layer": {
+        "app/admin/customers/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/app/admin/customers/page.tsx"
+    }
+  },
+  "edge": {}
+}
