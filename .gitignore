@@ -1,2 +1,35 @@
-.next
-node_modules
+```ts
+// Next.js build outputs
+.next/
+out/
+
+// Environment variables
+.env.local
+.env.production
+.env.development
+
+// Dependencies
+node_modules/
+
+// IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+// OS generated files
+.DS_Store
+Thumbs.db
+
+// Logs
+*.log
+
+// Coverage reports
+coverage/
+htmlcov/
+
+// Build artifacts
+dist/
+build/
+target/
+```
