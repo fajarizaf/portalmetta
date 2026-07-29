@@ -2052,15 +2052,18 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                      const hasProductId = child.fields.some(cf => cf.key === "product_id")
                                      const productIdVal = d["product_id"] as string | undefined
                                      return hasProductId ? (
-                                       <div className="col-span-full border-t pt-4 mt-4">
-                                         <QuotationItemSpecs 
-                                           dependsOnName="row_product_id" 
-                                           branchId={selectedBranchId || undefined} 
-                                           namePrefix="row_" 
-                                           defaultValues={d}
-                                           defaultProductId={productIdVal}
-                                         />
-                                       </div>
+                                       <>
+                                         <input type="hidden" name={`row_product_id`} value={productIdVal || ""} />
+                                         <div className="col-span-full border-t pt-4 mt-4">
+                                           <QuotationItemSpecs 
+                                             dependsOnName="row_product_id" 
+                                             branchId={selectedBranchId || undefined} 
+                                             namePrefix="row_" 
+                                             defaultValues={d}
+                                             defaultProductId={productIdVal}
+                                           />
+                                         </div>
+                                       </>
                                      ) : null
                                    })()}
                                  </div>
