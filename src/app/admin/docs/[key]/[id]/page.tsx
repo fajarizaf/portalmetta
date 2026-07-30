@@ -32,6 +32,8 @@ import { getDocPreviewData } from "@/lib/doc-data"
 import { getSubscriptionBillingPreview } from "@/lib/invoice-generator"
 import { ImagePreview } from "@/components/image-preview"
 import { SubscriptionBillingActions } from "@/components/admin/subscription-billing-actions"
+import { SubscriptionDetailView } from "@/components/admin/subscription/subscription-detail-view"
+import { SalesOrderSubscriptionTab } from "@/components/admin/subscription/sales-order-subscription-tab"
 import * as React from "react"
 
 function formatIDR(value: unknown): string {
@@ -1294,6 +1296,41 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
     }
   }
 
+  const subData = (record.data ?? {}) as Record<string, any>
+  const customerId = String(subData.customer_id || subData.customer || "")
+  const salesOrderId = String(subData.sales_order_id || "")
+
+  const customerRecord = customerId ? await prisma.company.findUnique({ where: { id: customerId } }).catch(() => null) : null
+  const salesOrderRecord = salesOrderId ? await prisma.docRecord.findUnique({ where: { id: salesOrderId } }).catch(() => null) : null
+
+  if (key === "subscription_management") {
+    return (
+      <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/admin" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <Link href={`/admin/docs/${docType.key}`} className="hover:text-slate-900 transition-colors">
+              {docType.name}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-mono text-xs">{record.code ?? record.id.slice(0, 8)}</span>
+          </div>
+
+          <SubscriptionDetailView
+            subscriptionId={id}
+            subscriptionRecord={record}
+            customerRecord={customerRecord}
+            salesOrderRecord={salesOrderRecord}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <FormValidationProvider formId="edit-record-form">
     <DocCalculator fields={formulaFields} />
@@ -2111,6 +2148,10 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             )
           })}
         </div>
+
+        {key === "sales_order" && (
+          <SalesOrderSubscriptionTab salesOrderId={id} salesOrderRecord={record} />
+        )}
       </div>
 
       <div className="space-y-6">

@@ -585,6 +585,58 @@ async function run() {
     create: { docTypeId: subMgmt.id, roleId: customerRole.id, canCreate: false, canRead: true, canWrite: false, canDelete: false },
   })
 
+  // DocType: Billing Schedule
+  const billingScheduleDt = await prisma.docType.upsert({
+    where: { key: "billing_schedule" },
+    update: { branchId: null, icon: "Calendar" },
+    create: {
+      key: "billing_schedule",
+      name: "Billing Schedule",
+      description: "Jadwal penagihan otomatis subscription",
+      branchId: null,
+      icon: "Calendar",
+      config: {
+        naming: {
+          mode: "series",
+          defaultPattern: "SCH-#####"
+        }
+      } as any
+    },
+  })
+
+  const schFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "subscription_id", label: "Subscription", type: "TEXT", required: true, order: 1 },
+    { key: "sales_order_id", label: "Sales Order", type: "TEXT", required: true, order: 2 },
+    { key: "customer_id", label: "Customer", type: "DROPDOWN", required: true, order: 3, config: { source: { table: "Company", labelField: "name", valueField: "id" } } },
+    { key: "item_name", label: "Item Layanan", type: "TEXT", required: true, order: 4 },
+    { key: "charge_type", label: "Charge Type", type: "TEXT", required: true, order: 5 },
+    { key: "billing_period_start", label: "Period Start", type: "DATE", required: true, order: 6 },
+    { key: "billing_period_end", label: "Period End", type: "DATE", required: true, order: 7 },
+    { key: "due_date", label: "Due Date", type: "DATE", required: true, order: 8 },
+    { key: "amount", label: "Jumlah Tagihan", type: "PRICE", required: true, order: 9 },
+    { key: "status", label: "Status", type: "TEXT", required: true, order: 10 },
+  ]
+  for (const f of schFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: billingScheduleDt.id, key: f.key } },
+      update: { label: f.label, type: f.type, order: f.order, config: configValue },
+      create: { docTypeId: billingScheduleDt.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    })
+  }
+
+  await prisma.docPermission.upsert({
+    where: { docTypeId_roleId: { docTypeId: billingScheduleDt.id, roleId: adminRole.id } },
+    update: {},
+    create: { docTypeId: billingScheduleDt.id, roleId: adminRole.id, canCreate: true, canRead: true, canWrite: true, canDelete: true },
+  })
+  await prisma.docPermission.upsert({
+    where: { docTypeId_roleId: { docTypeId: billingScheduleDt.id, roleId: customerRole.id } },
+    update: {},
+    create: { docTypeId: billingScheduleDt.id, roleId: customerRole.id, canCreate: false, canRead: true, canWrite: false, canDelete: false },
+  })
+
+
   // DocType: Request (header)
   const request = await prisma.docType.upsert({
     where: { key: "request" },

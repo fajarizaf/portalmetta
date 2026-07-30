@@ -31,6 +31,16 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
     return
   }
 
+  // --- Auto-generate Subscription & Billing Schedule on Sales Order Events ---
+  if (docTypeKey === "sales_order" && ["on_approve", "on_submit", "after_insert"].includes(event)) {
+    try {
+      const { SubscriptionService } = await import("@/lib/services/subscription-service")
+      await SubscriptionService.createSubscriptionFromSalesOrder(rec.id)
+    } catch (e) {
+      console.error("[runDocEventHook] Error auto-creating Subscription & Billing Schedule:", e)
+    }
+  }
+
   function getRowValue(rowData: Record<string, unknown>, key: string): unknown {
     if (key in rowData) return rowData[key]
     const lower = key.toLowerCase()
@@ -518,181 +528,13 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
 
     // --- Subscription Management Hook for Sales Order ---
     if (docTypeKey === "sales_order") {
-      const data = (rec.data ?? {}) as Record<string, unknown>
-      console.log(`[runDocEventHook] SO Data:`, JSON.stringify(data))
-      const termOfPayment = String(data["term_of_payment"] || "One Time")
-      
-      // Get service names and check for recurring costs (MRC)
-      let serviceName = ""
-      let totalMrc = 0
-      let hasMrc = false
-      
+      console.log(`[runDocEventHook] SO Approved: ${rec.code} (${rec.id}). Creating Subscription & Billing Schedule via SubscriptionService...`)
       try {
-        const soItemDt = await prisma.docType.findUnique({ where: { key: "sales_order_item" } })
-        console.log(`[runDocEventHook] SO Item DocType: ${soItemDt?.id}`)
-        if (soItemDt) {
-          const items = await prisma.docRow.findMany({
-            where: { recordId: rec.id, childDocTypeId: soItemDt.id }
-          })
-          console.log(`[runDocEventHook] Found ${items.length} items for SO ${rec.id}`)
-          
-          const recurringItems = items.filter(it => {
-            const d = (it.data ?? {}) as Record<string, unknown>
-            const mrcValue = toNumber(d["mrc"])
-            console.log(`[runDocEventHook] Item ${it.id} MRC: ${mrcValue}`)
-            return mrcValue > 0
-          })
-          
-          // Additional check for total MRC from SO header
-          const headerData = (rec.data ?? {}) as Record<string, unknown>
-          const headerMrc = toNumber(headerData["subtotal_mrc"])
-          console.log(`[runDocEventHook] Header Subtotal MRC: ${headerMrc}`)
-          
-          if (recurringItems.length > 0 || headerMrc > 0) {
-            hasMrc = true
-            console.log(`[runDocEventHook] hasMrc = true (by items or header)`)
-            
-            // Fetch product names to ensure accurate Service Name
-            const productIds = recurringItems
-              .map(it => String(((it.data ?? {}) as any)["product_id"] || ""))
-              .filter(Boolean)
-            
-            const products = await prisma.product.findMany({
-              where: { id: { in: productIds } },
-              select: { id: true, name: true }
-            })
-            const productMap = new Map(products.map(p => [p.id, p.name]))
-
-            serviceName = recurringItems.map(it => {
-              const d = (it.data ?? {}) as Record<string, unknown>
-              const pid = String(d["product_id"] || "")
-              const pName = productMap.get(pid)
-              const sName = String(d["service_name"] || "")
-              const desc = String(d["description"] || "")
-              
-              // Priority: 1. Service Name field, 2. Description, 3. Product Name, 4. Fallback label
-              if (sName && sName.trim()) return sName.trim()
-              if (desc && desc.trim()) return desc.trim()
-              if (pName) return pName
-              return String(d["product_id_label"] || "Service")
-            }).join(", ")
-            
-            totalMrc = recurringItems.reduce((acc, it) => {
-              const d = (it.data ?? {}) as Record<string, unknown>
-              const qty = toNumber(d["qty"]) || 1
-              const mrc = toNumber(d["mrc"]) || 0
-              return acc + (qty * mrc)
-            }, 0)
-          }
-        }
+        const { SubscriptionService } = await import("@/lib/services/subscription-service")
+        const sub = await SubscriptionService.createSubscriptionFromSalesOrder(rec.id)
+        console.log(`[runDocEventHook] Subscription & Billing Schedule created successfully: ${sub?.code || sub?.id}`)
       } catch (e) {
-        console.error("[runDocEventHook] Error fetching SO items for subscription:", e)
-      }
-
-      console.log(`[runDocEventHook] Sales Order has MRC: ${hasMrc}`)
-
-      // Generate subscription if there is MRC, regardless of term_of_payment
-      if (hasMrc) {
-        console.log(`[runDocEventHook] SO ${rec.code} has MRC, checking subscription creation...`)
-        try {
-          const subDt = await prisma.docType.findUnique({ where: { key: "subscription_management" } })
-          if (subDt) {
-            // Check if already exists to avoid duplicates
-            console.log(`[runDocEventHook] Checking existing subscription for SO: ${rec.id}`)
-            let existing = await prisma.docRecord.findFirst({
-              where: {
-                docTypeId: subDt.id,
-                data: { path: "$.sales_order_id", equals: rec.id }
-              }
-            })
-
-            // Fallback for cases where JSON path query might fail or behave unexpectedly
-            if (!existing) {
-              const allSubs = await prisma.docRecord.findMany({
-                where: { docTypeId: subDt.id },
-                select: { id: true, data: true }
-              })
-              existing = allSubs.find(s => {
-                const d = (s.data ?? {}) as Record<string, unknown>
-                return d["sales_order_id"] === rec.id
-              }) as any
-            }
-            
-            console.log(`[runDocEventHook] Existing subscription for SO ${rec.id}: ${existing ? (existing as any).id : 'NONE'}`)
-
-            if (!existing) {
-              console.log(`[runDocEventHook] No existing subscription found for SO: ${rec.code}. Creating...`)
-              let code: string | undefined = undefined
-              try {
-                const namingCfg = (subDt.config ?? {}) as any
-                const pattern = namingCfg?.naming?.defaultPattern || "SUB-#####"
-                console.log(`[runDocEventHook] Using pattern: ${pattern}`)
-                
-                const m = /^(.*?)(#+)(.*)$/.exec(pattern)
-                const prefix = m ? m[1].replace(".YYYY.", new Date().getFullYear().toString()) : "SUB-"
-                const hashes = m ? m[2] : "#####"
-                const suffix = m ? m[3] : ""
-                const digits = hashes.length
-
-                // Use manual check instead of upsert to be safe
-                const branchIdForQuery = rec.branchId || null
-                
-                const existingCounter = await prisma.docNamingCounter.findFirst({
-                  where: { docTypeId: subDt.id, branchId: branchIdForQuery, series: pattern }
-                })
-
-                let counter
-                if (existingCounter) {
-                  counter = await prisma.docNamingCounter.update({
-                    where: { id: existingCounter.id },
-                    data: { seq: { increment: 1 } }
-                  })
-                } else {
-                  counter = await prisma.docNamingCounter.create({
-                    data: { docTypeId: subDt.id, branchId: branchIdForQuery, series: pattern, seq: 1 }
-                  })
-                }
-                code = `${prefix}${String(counter.seq).padStart(digits, "0")}${suffix}`
-                console.log(`[runDocEventHook] Generated Subscription Code: ${code}`)
-              } catch (e) {
-                console.error("[runDocEventHook] Error generating subscription code:", e)
-              }
-
-              const subData = {
-                sales_order_id: rec.id,
-                service_name: serviceName,
-                customer_id: data["customer_id"] || data["customer"],
-                start_date: data["commencement_date"] || new Date().toISOString().split("T")[0],
-                frequency: termOfPayment === "One Time" ? "Monthly" : termOfPayment,
-                status: "Deactive",
-                total_mrc: totalMrc,
-                next_billing_date: data["commencement_date"] || new Date().toISOString().split("T")[0]
-              }
-
-              console.log(`[runDocEventHook] Finalizing Subscription creation for SO: ${rec.code}`)
-              await prisma.docRecord.create({
-                data: {
-                  docTypeId: subDt.id,
-                  branchId: rec.branchId,
-                  code,
-                  status: "Deactive",
-                  docStatus: 0,
-                  data: subData as Prisma.InputJsonValue,
-                  createdById: rec.createdById,
-                  updatedById: rec.updatedById,
-                  assignedToId: rec.assignedToId
-                }
-              })
-              console.log(`[runDocEventHook] Subscription ${code} created successfully for SO: ${rec.code}`)
-            } else {
-              console.log(`[runDocEventHook] Subscription already exists for SO: ${rec.code}`)
-            }
-          } else {
-            console.error(`[runDocEventHook] DocType 'subscription_management' not found!`)
-          }
-        } catch (e) {
-          console.error("[runDocEventHook] Error in subscription creation:", e)
-        }
+        console.error("[runDocEventHook] Error creating Subscription & Billing Schedule:", e)
       }
     }
 
