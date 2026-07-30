@@ -655,48 +655,87 @@ export function renderFromTemplate(tpl: string, args: {
   out = out.replace(new RegExp("\\{\\{\\s*sales_manager_email\\s*\\}\\}", "g"), toString(salesManagerEmail ?? ""))
   out = out.replace(new RegExp("\\{\\{\\s*salesManager\\.name\\s*\\}\\}", "g"), toString(salesManagerName ?? ""))
   out = out.replace(new RegExp("\\{\\{\\s*salesManager\\.email\\s*\\}\\}", "g"), toString(salesManagerEmail ?? ""))
+  const resolvedCustName = customerCompanyName || labelFor((values as Record<string, unknown>)["customer_id"] ?? (values as Record<string, unknown>)["customerId"], dynamicOptions["customer_id"] ?? dynamicOptions["customerId"] ?? []) || toName || ""
+
+  if (resolvedCustName) {
+    out = out.replace(/\{\{\s*customer_id\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customer_id_label\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customerId\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customerId_label\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customer_name\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customerCompanyName\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customer_company_name\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customer\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*customer_label\s*\}\}/g, resolvedCustName)
+    out = out.replace(/\{\{\s*toName\s*\}\}/g, resolvedCustName)
+  }
+
+  // Replace all keys present in values (top-level fields)
+  for (const [vk, vv] of Object.entries(values)) {
+    if (vv === undefined || vv === null) continue
+    const escapedKey = vk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const isCustomerKey = vk === "customer_id" || vk === "customerId" || vk === "customer"
+    const strVal = isCustomerKey && resolvedCustName ? resolvedCustName : toString(vv)
+    const numVal = typeof vv === "number" ? vv : Number(vv ?? 0)
+    const currVal = formatIDR(numVal)
+
+    out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, "g"), strVal)
+    out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_label\\s*\\}\\}`, "g"), strVal)
+    out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_currency\\s*\\}\\}`, "g"), currVal)
+  }
+
   for (const f of fields) {
     const raw = values[f.key]
-    if (
-      f.key === "prorate_details" || f.key === "prorateDetails" ||
-      f.key === "subscription_id" || f.key === "subscription" || f.key === "subscriptionId" ||
-      f.key === "billing_period_start" || f.key === "billing_period_end" ||
-      f.key === "nrc_amount" || f.key === "mrc_amount"
-    ) {
-      const escapedKey = f.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, "g"), "")
-      out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_label\\s*\\}\\}`, "g"), "")
-      out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_currency\\s*\\}\\}`, "g"), "")
-      continue
-    }
-    const val = f.type === "DROPDOWN" ? labelFor(raw, dynamicOptions[f.key] ?? []) : f.type === "CHECKBOX" ? toString(Boolean(raw)) : toString(raw)
-    
-    // Support {{field_key}}, {{ field_key }}, {{field_key_label}}, etc.
+    const isCustomerKey = f.key === "customer_id" || f.key === "customerId" || f.key === "customer"
+    const val = isCustomerKey && resolvedCustName ? resolvedCustName : (f.type === "DROPDOWN" ? labelFor(raw, dynamicOptions[f.key] ?? []) : f.type === "CHECKBOX" ? toString(Boolean(raw)) : toString(raw))
     const escapedKey = f.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, "g"), toString(raw))
+    const displayVal = isCustomerKey && resolvedCustName ? resolvedCustName : toString(raw)
+    out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, "g"), displayVal)
     out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_label\\s*\\}\\}`, "g"), val)
     out = out.replace(new RegExp(`\\{\\{\\s*${escapedKey}_currency\\s*\\}\\}`, "g"), formatIDR(typeof raw === "number" ? raw : Number(raw ?? 0)))
   }
+
+  // Explicit aliases for invoice and metadata fields
+  out = out.replace(/\{\{\s*invoice_number\s*\}\}/g, toString(values["invoice_number"] || code || ""))
+  out = out.replace(/\{\{\s*code\s*\}\}/g, toString(code || ""))
+  out = out.replace(/\{\{\s*customer_id_label\s*\}\}/g, resolvedCustName || toString(values["customer_id"] || ""))
+  out = out.replace(/\{\{\s*subscription_id_label\s*\}\}/g, toString(values["subscription_id_label"] || values["subscription_id"] || ""))
+  out = out.replace(/\{\{\s*customerAddress\s*\}\}/g, toString(customerAddress ?? ""))
+  out = out.replace(/\{\{\s*customerEmail\s*\}\}/g, toString(customerEmail ?? ""))
+  out = out.replace(/\{\{\s*customerPhoneNumber\s*\}\}/g, toString(customerPhoneNumber ?? ""))
+  out = out.replace(/\{\{\s*fromCompanyName\s*\}\}/g, toString(fromCompanyName || "MettaDC Data Center"))
+  out = out.replace(/\{\{\s*fromCompanyLogo\s*\}\}/g, toString(companyLogoUrl || ""))
+  out = out.replace(/\{\{\s*fromCompanyAddress\s*\}\}/g, toString(fromCompanyAddress || ""))
+  out = out.replace(/\{\{\s*fromCompanyEmail\s*\}\}/g, toString(fromCompanyEmail || ""))
+  out = out.replace(/\{\{\s*fromCompanyPhone\s*\}\}/g, toString(fromCompanyPhone || ""))
+
+  // Row-level Mustache template processing
   out = out.replace(/\{\{#rows\}\}([\s\S]*?)\{\{\/rows\}\}/g, (_, inner: string) => {
     const parts: string[] = []
     for (const row of rows) {
       const d = row.data
       let p = inner
-      for (const cf of childFields) {
+      for (const cf of (childFields ?? [])) {
         const raw = d[cf.key]
         const val = cf.type === "DROPDOWN" ? labelFor(raw, childOptions[cf.key] ?? []) : cf.type === "CHECKBOX" ? toString(Boolean(raw)) : toString(raw)
-        p = p.replace(new RegExp(`\\{\\{row\\.${cf.key}\\}\\}`, "g"), toString(raw))
-        p = p.replace(new RegExp(`\\{\\{row\\.${cf.key}_label\\}\\}`, "g"), val)
-        p = p.replace(new RegExp(`\\{\\{row\\.${cf.key}_currency\\}\\}`, "g"), formatIDR(typeof raw === "number" ? raw : Number(raw ?? 0)))
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${cf.key}\\s*\\}\\}`, "g"), toString(raw))
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${cf.key}_label\\s*\\}\\}`, "g"), val)
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${cf.key}_currency\\s*\\}\\}`, "g"), formatIDR(typeof raw === "number" ? raw : Number(raw ?? 0)))
       }
       for (const [rk, rv] of Object.entries(d)) {
-        if (!rk.startsWith("spec_")) continue
-        const rawStr = Array.isArray(rv) ? (rv as unknown[]).map((x) => (typeof x === "string" ? x : String(x ?? ""))).join(", ") : toString(rv)
-        p = p.replace(new RegExp(`\\{\\{row\\.${rk}\\}\\}`, "g"), rawStr)
+        if (rv === undefined || rv === null) continue
+        const escapedRk = rk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        const strVal = toString(rv)
+        const numVal = typeof rv === "number" ? rv : Number(rv ?? 0)
+        const currVal = formatIDR(numVal)
+
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${escapedRk}\\s*\\}\\}`, "g"), strVal)
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${escapedRk}_label\\s*\\}\\}`, "g"), strVal)
+        p = p.replace(new RegExp(`\\{\\{\\s*row\\.${escapedRk}_currency\\s*\\}\\}`, "g"), currVal)
       }
       const specSum = specsSummary(d)
-      p = p.replace(/\{\{row\.specs\}\}/g, specSum)
-      p = p.replace(/\{\{row\.specs_summary\}\}/g, specSum)
+      p = p.replace(/\{\{\s*row\.specs\s*\}\}/g, specSum)
+      p = p.replace(/\{\{\s*row\.specs_summary\s*\}\}/g, specSum)
       parts.push(p)
     }
     return parts.join("")

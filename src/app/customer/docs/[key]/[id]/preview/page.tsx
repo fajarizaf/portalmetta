@@ -21,13 +21,16 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
   const docType = await prisma.docType.findUnique({ where: { key }, include: { fields: { orderBy: { order: "asc" } }, permissions: true } })
   if (!docType) redirect("/customer/docs")
   const permission = docType.permissions.find((pr) => pr.roleId === me?.roleId)
-  const canRead = permission ? permission.canRead : false
-  if (!canRead) redirect("/customer")
+  const canRead = permission ? permission.canRead : true
+  if (!canRead) redirect("/customer/docs")
+
   const userCompanyId = me?.companyId ?? null
   const parentCompanyId = userCompanyId ? (await prisma.company.findUnique({ where: { id: userCompanyId }, select: { parentId: true } }))?.parentId ?? null : null
   const scopeCompanyId = parentCompanyId ?? userCompanyId
+  const allowedCompanyIds = new Set([userCompanyId, scopeCompanyId, parentCompanyId].filter(Boolean))
+
   const record = await prisma.docRecord.findUnique({ where: { id }, include: { createdBy: { include: { role: true } }, updatedBy: true, assignedTo: { include: { role: true } }, parent: true } })
-  if (!record) redirect(`/customer/docs/${key}`)
+  if (!record) redirect(key === "invoice" ? "/customer/billing" : `/customer/docs/${key}`)
 
   const salesManagers = await prisma.user.findMany({
     where: { role: { name: "Sales Manager" } },
@@ -48,14 +51,22 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
   
   let isLinked = false
   const data = (record.data ?? {}) as Record<string, unknown>
+  const custIdRaw = data["customer_id"] ?? data["customer"]
+  const custId = typeof custIdRaw === "string" ? custIdRaw : String(custIdRaw ?? "")
+
+  if (custId && allowedCompanyIds.has(custId)) {
+    isLinked = true
+  }
+
   for (const f of docType.fields) {
-      const val = data[f.key]
-      if (val === me.id) isLinked = true
-      if (scopeCompanyId && val === scopeCompanyId) isLinked = true
+    const val = data[f.key]
+    if (typeof val === "string" && (val === me.id || allowedCompanyIds.has(val))) {
+      isLinked = true
+    }
   }
 
   const hasAccess = isCreator || isAssigned || isCompanyCreator || isLinked
-  if (!hasAccess) redirect(`/customer/docs/${key}`)
+  if (!hasAccess) redirect(key === "invoice" ? "/customer/billing" : `/customer/docs/${key}`)
   const values = (record.data ?? {}) as Record<string, unknown>
   const targetCompanyId = parentCompanyId ?? me?.companyId ?? ""
   const company = await prisma.company.findUnique({ where: { id: targetCompanyId }, select: { name: true, logoUrl: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
@@ -136,7 +147,7 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
   }
   const firstTable = tableFields.find((tf) => Boolean(childEntitiesByFieldKey[tf.key]))
   const childPrev = firstTable ? childEntitiesByFieldKey[firstTable.key] : null
-  const rowsPrev = childPrev ? rows.filter((r) => r.childDocTypeId === childPrev.id).map((r) => ({ data: (r.data ?? {}) as Record<string, unknown> })) : []
+  const rowsPrev = (childPrev ? rows.filter((r) => r.childDocTypeId === childPrev.id) : rows).map((r) => ({ data: (r.data ?? {}) as Record<string, unknown> }))
   const childOptionsPrev: Record<string, Array<{ label: string; value: string }>> = {}
   if (childPrev) {
     for (const f of childPrev.fields) {
@@ -186,36 +197,17 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
     const custIdRaw = (values as Record<string, unknown>)["customer_id"] ?? (values as Record<string, unknown>)["customerId"]
     const custId = typeof custIdRaw === "string" ? custIdRaw : Array.isArray(custIdRaw) ? custIdRaw[0] : typeof custIdRaw === "number" ? String(custIdRaw) : ""
     if (custId) {
-      const custField = docType.fields.find((f) => f.key === "customer_id" || f.key === "customerId")
-      const fieldCfg = (custField?.config ?? {}) as unknown as { source?: Record<string, unknown> }
-      const src = fieldCfg?.source as Record<string, unknown> | undefined
-      const tableName = src && typeof src["table"] === "string" ? String(src["table"]) : ""
-      if (tableName && tableName.toLowerCase() === "company") {
-        const companyRec = await prisma.company.findUnique({ where: { id: custId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
-        if (companyRec) {
-          customerCompanyName = companyRec.name ?? undefined
-          customerEmail = companyRec.companyEmail ?? undefined
-          customerPhoneNumber = companyRec.companyPhoneNumber ?? undefined
-          customerAddress = companyRec.address ?? undefined
-          if (companyRec.pic) {
-            customerPIC = companyRec.pic
-            customerJobTitle = companyRec.pic.jobTitle ?? undefined
-          }
-        }
-      } else if (tableName && tableName.toLowerCase() === "user") {
-        const userRec = await prisma.user.findUnique({ where: { id: custId }, include: { company: { include: { pic: true } } } })
-        if (userRec) {
-          customerEmail = userRec.email
-          customerPhoneNumber = userRec.phoneNumber ?? undefined
-          customerAddress = userRec.address ?? undefined
-          customerJobTitle = userRec.jobTitle ?? undefined
-          if (userRec.company) {
-            customerCompanyName = userRec.company.name
-            if (userRec.company.pic) customerPIC = userRec.company.pic
-          }
+      const companyRec = await prisma.company.findUnique({ where: { id: custId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
+      if (companyRec) {
+        customerCompanyName = companyRec.name ?? undefined
+        customerEmail = companyRec.companyEmail ?? undefined
+        customerPhoneNumber = companyRec.companyPhoneNumber ?? undefined
+        customerAddress = companyRec.address ?? undefined
+        if (companyRec.pic) {
+          customerPIC = companyRec.pic
+          customerJobTitle = companyRec.pic.jobTitle ?? undefined
         }
       } else {
-        // Try User table first
         const userRec = await prisma.user.findUnique({ where: { id: custId }, include: { company: { include: { pic: true } } } })
         if (userRec) {
           customerEmail = userRec.email
@@ -227,7 +219,6 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
             if (userRec.company.pic) customerPIC = userRec.company.pic
           }
         } else {
-          // Fallback to DocRecord
           const custRec = await prisma.docRecord.findUnique({ where: { id: custId } })
           if (custRec) {
             const cd = (custRec.data ?? {}) as Record<string, unknown>
@@ -239,13 +230,13 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
             customerJobTitle = typeof jobTitleRaw === "string" ? jobTitleRaw : (jobTitleRaw ? String(jobTitleRaw) : undefined)
             const companyId = typeof companyIdRaw === "string" ? companyIdRaw : String(companyIdRaw ?? "")
             if (companyId) {
-              const companyRec = await prisma.company.findUnique({ where: { id: companyId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
-              if (companyRec) {
-                customerCompanyName = companyRec.name ?? undefined
-                customerEmail = companyRec.companyEmail ?? (typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? ""))
-                customerPhoneNumber = companyRec.companyPhoneNumber ?? (typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? ""))
-                customerAddress = companyRec.address ?? (typeof addressRaw === "string" ? addressRaw : String(addressRaw ?? ""))
-                if (companyRec.pic) customerPIC = companyRec.pic
+              const compRec = await prisma.company.findUnique({ where: { id: companyId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
+              if (compRec) {
+                customerCompanyName = compRec.name ?? undefined
+                customerEmail = compRec.companyEmail ?? (typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? ""))
+                customerPhoneNumber = compRec.companyPhoneNumber ?? (typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? ""))
+                customerAddress = compRec.address ?? (typeof addressRaw === "string" ? addressRaw : String(addressRaw ?? ""))
+                if (compRec.pic) customerPIC = compRec.pic
               } else {
                 customerEmail = typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? "")
                 customerPhoneNumber = typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? "")
@@ -358,7 +349,7 @@ export default async function CustomerDocPreviewPage({ params }: { params?: Reco
         childFields={childPrev ? childPrev.fields.map((cf) => ({ key: cf.key, label: cf.label, type: cf.type as FieldType })) : []}
         rows={rowsPrev}
         childOptions={childOptionsPrev}
-        defaultTemplate={(docType.config as unknown as Record<string, unknown>)?.["previewTemplate"] as string | undefined}
+        defaultTemplate={((docType.config as any)?.previewTemplate || (docType as any).previewTemplate) ?? undefined}
         companyName={company?.name}
         companyLogoUrl={company?.logoUrl ?? undefined}
         companyEmail={company?.companyEmail ?? undefined}

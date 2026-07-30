@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CustomerSidebar } from "@/components/customer/customer-sidebar"
+import { FileText } from "lucide-react"
 
 function statusBadgeVariant(name: string): "default" | "secondary" | "destructive" | "outline" {
   const s = String(name || "").toLowerCase()
@@ -252,6 +253,12 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={statusBadgeVariant(invoice.status || "")}>{invoice.status || "-"}</Badge>
+            <Button size="sm" variant="outline" className="gap-1.5" asChild>
+              <Link href={`/customer/docs/invoice/${invoice.id}/preview`}>
+                <FileText className="h-4 w-4" />
+                Preview Dokumen
+              </Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href="/customer/billing">Kembali</Link>
             </Button>

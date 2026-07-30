@@ -6,7 +6,9 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { CustomerSidebar } from "@/components/customer/customer-sidebar"
+import { FileText } from "lucide-react"
 
 function statusBadgeVariant(name: string): "default" | "secondary" | "destructive" | "outline" {
   const s = String(name || "").toLowerCase()
@@ -128,11 +130,12 @@ export default async function CustomerBillingPage() {
           <CardContent className="p-0">
             <div className="grid grid-cols-12 gap-3 px-6 py-3 bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
               <div className="col-span-1">No.</div>
-              <div className="col-span-4">Invoice</div>
+              <div className="col-span-3">Invoice</div>
               <div className="col-span-2">Invoice Date</div>
               <div className="col-span-2">Due Date</div>
               <div className="col-span-2">Total Amount</div>
               <div className="col-span-1">Status</div>
+              <div className="col-span-1 text-right">PDF</div>
             </div>
 
             {invoicesFiltered.length > 0 ? (
@@ -143,16 +146,15 @@ export default async function CustomerBillingPage() {
                   const dueDate = formatDateOnly(d["due_date"])
                   const total = formatIDR(d["total_amount"])
                   return (
-                    <Link
+                    <div
                       key={inv.id}
-                      href={`/customer/billing/${inv.id}`}
                       className="grid grid-cols-12 gap-3 px-6 py-4 items-center hover:bg-slate-50 transition-colors"
                     >
                       <div className="col-span-1 text-sm text-slate-500">{idx + 1}</div>
-                      <div className="col-span-4">
-                        <div className="text-sm font-semibold text-slate-900 hover:underline">
+                      <div className="col-span-3">
+                        <Link href={`/customer/billing/${inv.id}`} className="text-sm font-semibold text-slate-900 hover:underline">
                           {inv.code || inv.id}
-                        </div>
+                        </Link>
                         <div className="text-[11px] text-slate-500">{inv.createdAt.toLocaleDateString("id-ID")}</div>
                       </div>
                       <div className="col-span-2 text-sm text-slate-700">{invoiceDate}</div>
@@ -163,7 +165,15 @@ export default async function CustomerBillingPage() {
                           {inv.status || "-"}
                         </Badge>
                       </div>
-                    </Link>
+                      <div className="col-span-1 text-right">
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                          <Link href={`/customer/docs/invoice/${inv.id}/preview`}>
+                            <FileText className="h-3.5 w-3.5 text-primary" />
+                            Preview
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
                   )
                 })}
               </div>

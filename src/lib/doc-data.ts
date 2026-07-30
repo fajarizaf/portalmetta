@@ -360,33 +360,15 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
     const custIdRaw = values["customer_id"] ?? values["customerId"]
     const custId = typeof custIdRaw === "string" ? custIdRaw : Array.isArray(custIdRaw) ? custIdRaw[0] : typeof custIdRaw === "number" ? String(custIdRaw) : ""
     if (custId) {
-      const custField = docType.fields.find((f) => f.key === "customer_id" || f.key === "customerId")
-      const fieldCfg = (custField?.config ?? {}) as unknown as { source?: Record<string, unknown> }
-      const src = fieldCfg?.source as Record<string, unknown> | undefined
-      const tableName = src && typeof src["table"] === "string" ? String(src["table"]) : ""
-      if (tableName && tableName.toLowerCase() === "company") {
-        const companyRec = await prisma.company.findUnique({ where: { id: custId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
-        if (companyRec) {
-          customerCompanyName = companyRec.name ?? undefined
-          customerEmail = companyRec.companyEmail ?? undefined
-          customerPhoneNumber = companyRec.companyPhoneNumber ?? undefined
-          customerAddress = companyRec.address ?? undefined
-          if (companyRec.pic) {
-            customerPIC = companyRec.pic
-            customerJobTitle = companyRec.pic.jobTitle ?? undefined
-          }
-        }
-      } else if (tableName && tableName.toLowerCase() === "user") {
-        const userRec = await prisma.user.findUnique({ where: { id: custId }, include: { company: { include: { pic: true } } } })
-        if (userRec) {
-          customerEmail = userRec.email
-          customerPhoneNumber = userRec.phoneNumber ?? undefined
-          customerAddress = userRec.address ?? undefined
-          customerJobTitle = userRec.jobTitle ?? undefined
-          if (userRec.company) {
-            customerCompanyName = userRec.company.name
-            if (userRec.company.pic) customerPIC = userRec.company.pic
-          }
+      const companyRec = await prisma.company.findUnique({ where: { id: custId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
+      if (companyRec) {
+        customerCompanyName = companyRec.name ?? undefined
+        customerEmail = companyRec.companyEmail ?? undefined
+        customerPhoneNumber = companyRec.companyPhoneNumber ?? undefined
+        customerAddress = companyRec.address ?? undefined
+        if (companyRec.pic) {
+          customerPIC = companyRec.pic
+          customerJobTitle = companyRec.pic.jobTitle ?? undefined
         }
       } else {
         const userRec = await prisma.user.findUnique({ where: { id: custId }, include: { company: { include: { pic: true } } } })
@@ -411,13 +393,13 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
             customerJobTitle = typeof jobTitleRaw === "string" ? jobTitleRaw : (jobTitleRaw ? String(jobTitleRaw) : undefined)
             const companyId = typeof companyIdRaw === "string" ? companyIdRaw : String(companyIdRaw ?? "")
             if (companyId) {
-              const companyRec = await prisma.company.findUnique({ where: { id: companyId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
-              if (companyRec) {
-                customerCompanyName = companyRec.name ?? undefined
-                customerEmail = companyRec.companyEmail ?? (typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? ""))
-                customerPhoneNumber = companyRec.companyPhoneNumber ?? (typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? ""))
-                customerAddress = companyRec.address ?? (typeof addressRaw === "string" ? addressRaw : String(addressRaw ?? ""))
-                if (companyRec.pic) customerPIC = companyRec.pic
+              const compRec = await prisma.company.findUnique({ where: { id: companyId }, select: { name: true, address: true, companyEmail: true, companyPhoneNumber: true, pic: true } })
+              if (compRec) {
+                customerCompanyName = compRec.name ?? undefined
+                customerEmail = compRec.companyEmail ?? (typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? ""))
+                customerPhoneNumber = compRec.companyPhoneNumber ?? (typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? ""))
+                customerAddress = compRec.address ?? (typeof addressRaw === "string" ? addressRaw : String(addressRaw ?? ""))
+                if (compRec.pic) customerPIC = compRec.pic
               } else {
                 customerEmail = typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? "")
                 customerPhoneNumber = typeof phoneRaw === "string" ? phoneRaw : String(phoneRaw ?? "")
