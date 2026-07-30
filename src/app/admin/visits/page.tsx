@@ -96,11 +96,11 @@ export default async function AdminVisitsPage() {
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 <QrCode className="h-7 w-7 text-slate-700" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Visitor Visits</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">Visitor Visits</h1>
                 <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                   <Users className="h-3.5 w-3.5" />
                   <span>{totalCount} total</span>
@@ -123,7 +123,7 @@ export default async function AdminVisitsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center">
@@ -140,7 +140,7 @@ export default async function AdminVisitsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -157,7 +157,7 @@ export default async function AdminVisitsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center">
@@ -223,7 +223,7 @@ export default async function AdminVisitsPage() {
               return (
                 <div
                   key={r.id}
-                  className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
+                  className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 transition-all duration-200"
                 >
                   <div className="p-4 flex items-start gap-4">
                     <div className="flex-1 min-w-0">

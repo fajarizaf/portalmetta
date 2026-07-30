@@ -118,7 +118,7 @@ export default async function RackMappingPage({
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 <LayoutGrid className="h-7 w-7 text-slate-700" />
               </div>
               <div>

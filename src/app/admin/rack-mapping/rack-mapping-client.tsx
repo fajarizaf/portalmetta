@@ -200,7 +200,7 @@ export default function RackMappingClient({
                 <DialogTrigger asChild>
                   <button 
                     className={cn(
-                      "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center h-32 space-y-2 shadow-sm",
+                      "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center h-32 space-y-2",
                       statusColors[status] || "bg-slate-50 border-slate-200"
                     )}
                   >

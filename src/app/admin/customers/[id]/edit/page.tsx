@@ -284,7 +284,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 <User className="h-8 w-8 text-slate-700" />
               </div>
               <div>
@@ -321,7 +321,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Top Summary Card */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
               <span className="text-2xl font-semibold tracking-tight text-slate-700">
@@ -379,7 +379,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
           </TabsList>
 
             <TabsContent value="profile">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Detailed Information</h3>
                 <form action={updateCustomer} className="space-y-8">
                     <input type="hidden" name="id" value={customer.id} />
@@ -507,7 +507,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
             </TabsContent>
 
             <TabsContent value="activity">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Recent Documents & Requests</h3>
                 </div>
@@ -545,7 +545,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
             </TabsContent>
 
             <TabsContent value="subscriptions">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Active Service Subscriptions</h3>
                 </div>
@@ -599,7 +599,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
             </TabsContent>
 
             <TabsContent value="racks">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Racks</h3>
                 </div>
@@ -651,7 +651,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
             </TabsContent>
 
             <TabsContent value="inventory">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                  <div>
                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Inventory (Current Stock)</h3>
                  </div>
@@ -744,7 +744,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
              </TabsContent>
 
              <TabsContent value="quotations">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                  <div>
                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Quotations</h3>
                  </div>
@@ -798,7 +798,7 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
              </TabsContent>
 
              <TabsContent value="sales_orders">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                  <div>
                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Sales Orders</h3>
                  </div>

@@ -23,14 +23,14 @@ export default async function AdminSettingsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Settings</h1>
-        <p className="text-sm text-slate-500">Platform configuration and administration tools.</p>
+        <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">Settings</h1>
+        <p className="text-xs sm:text-sm text-slate-500">Platform configuration and administration tools.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {menus.map((menu) => (
           <Link key={menu.href} href={menu.href}>
-            <Card className="group h-full border border-slate-200/80 bg-white hover:shadow-lg hover:shadow-slate-900/5 hover:border-slate-300 transition-all duration-200 cursor-pointer">
+            <Card className="group h-full border border-slate-200/80 bg-white hover:border-slate-300 transition-all duration-200 cursor-pointer">
               <CardContent className="p-5 flex items-start gap-4">
                 <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
                   <menu.icon className="h-5 w-5 text-slate-500 group-hover:text-white transition-colors" />

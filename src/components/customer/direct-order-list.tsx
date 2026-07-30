@@ -101,7 +101,7 @@ export function DirectOrderList({
           <div className="text-sm font-medium text-slate-700">Select subcategory</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {immediateSubs.map((sg) => (
-              <Link key={sg.id} href={`/customer/order/${sg.id}`} className="group flex items-center gap-3 border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 bg-white">
+              <Link key={sg.id} href={`/customer/order/${sg.id}`} className="group flex items-center gap-3 border border-slate-200 rounded-xl p-4 hover:border-primary/40 transition-all duration-200 bg-white">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 group-hover:bg-primary/5 transition-colors">
                   <svg className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                 </div>
@@ -140,7 +140,7 @@ export function DirectOrderList({
                   
                   if (!isDirect) {
                     return (
-                      <div key={p.id} className="group border border-slate-200 rounded-2xl p-5 space-y-5 bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300 transition-all duration-200">
+                      <div key={p.id} className="group border border-slate-200 rounded-2xl p-5 space-y-5 bg-white hover:border-slate-300 transition-all duration-200">
                          <div className="space-y-1.5">
                             <div className="text-base font-semibold text-slate-900">{p.name}</div>
                             <div className="text-xs text-slate-500">{p.group?.name ?? "-"} • {p.classification}</div>
@@ -178,7 +178,7 @@ export function DirectOrderList({
                   const price = p.prices.find(pr => pr.id === priceId)
                   
                   return (
-                    <div key={p.id} className={`group border rounded-2xl p-5 space-y-4 bg-white transition-all duration-200 ${isSelected ? "border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10" : "border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"}`}>
+                    <div key={p.id} className={`group border rounded-2xl p-5 space-y-4 bg-white transition-all duration-200 ${isSelected ? "border-primary/40 ring-1 ring-primary/10" : "border-slate-200 hover:border-slate-300"}`}>
                         <div className="flex items-start gap-3.5">
                             <div className="pt-0.5">
                                 <Checkbox 
@@ -262,7 +262,7 @@ export function DirectOrderList({
           {selectedCount > 0 && (
              <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
                  {showGlobalContractFields && (
-                     <div className="bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-sm space-y-3 mb-3">
+                     <div className="bg-white/95 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 w-full max-w-sm space-y-3 mb-3">
                         <h3 className="font-semibold text-sm text-slate-900">Contract Details</h3>
                         <div className="space-y-1.5">
                             <Label className="text-xs font-medium text-slate-600">Commencement Date</Label>
@@ -298,7 +298,7 @@ export function DirectOrderList({
                         </div>
                      </div>
                  )}
-                 <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-slate-900/20 flex items-center gap-5 border border-slate-700/50">
+                 <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl flex items-center gap-5 border border-slate-700/50">
                     <div className="flex items-center gap-2.5">
                       <div className="relative">
                         <ShoppingCart className="w-5 h-5" />

@@ -21,7 +21,7 @@ export default async function CustomerOrderPage() {
   if (!me) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Product Order</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold">Product Order</h1>
         <p>Please login to make an order.</p>
       </div>
     )
@@ -141,7 +141,7 @@ export default async function CustomerOrderPage() {
 
       {/* Main Content - Order Groups */}
       <div className="lg:col-span-6 space-y-6">
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 bg-white">
             <CardHeader className="pb-5">
                <CardTitle className="text-lg font-semibold text-slate-900 tracking-tight">Product Order</CardTitle>
                <p className="text-sm text-slate-500 mt-1">Choose the service category you want to order.</p>
@@ -169,7 +169,7 @@ export default async function CustomerOrderPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {groups.map((g) => (
-                        <Link key={g.id} href={`/customer/order/${g.id}`} className="group relative flex items-center gap-4 border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 bg-white">
+                        <Link key={g.id} href={`/customer/order/${g.id}`} className="group relative flex items-center gap-4 border border-slate-200 rounded-xl p-4 hover:border-primary/40 transition-all duration-200 bg-white">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 group-hover:bg-primary/5 transition-colors">
                                 <svg className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                             </div>
@@ -191,7 +191,7 @@ export default async function CustomerOrderPage() {
       {/* Right Sidebar */}
       <div className="lg:col-span-3 space-y-6">
          {/* Billing & Support Summary Card */}
-         <Card className="border-0 shadow-sm bg-white">
+         <Card className="border-0 bg-white">
             <CardHeader className="pb-4">
                <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Billing & Support</span>

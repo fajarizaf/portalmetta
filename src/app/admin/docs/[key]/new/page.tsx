@@ -708,7 +708,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 {docType.icon ? (
                   <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
                 ) : (
@@ -749,7 +749,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
           {suggestedRackId && <input type="hidden" name="id_rack" value={suggestedRackId} />}
 
           {/* Form fields card */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           {docType.fields.map((f) => {
             const valFromParams = sp[f.key]
@@ -988,7 +988,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
         </div>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm sticky bottom-4">
+        <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 p-4 sticky bottom-4">
           <div className="text-xs text-slate-500">
             <span className="font-mono">{docType.key}</span>
             <span className="mx-2">·</span>

@@ -106,7 +106,7 @@ export function VisitorQRCard({
         </div>
 
         {qrDataUrl ? (
-          <div className="relative p-4 bg-white rounded-xl shadow-lg border-2 border-dashed border-slate-200">
+          <div className="relative p-4 bg-white rounded-xl border-2 border-dashed border-slate-200">
             <img
               src={qrDataUrl}
               alt="QR Code Visitor Pass"

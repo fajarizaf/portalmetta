@@ -342,7 +342,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {company.branches.length > 0 ? (
                   company.branches.map((b) => (
-                    <div key={b.id} className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 transition-all duration-200">
+                    <div key={b.id} className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all duration-200">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
                           <LayoutGrid className="h-5 w-5" />

@@ -106,8 +106,8 @@ export default async function CompaniesPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Company Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Daftar semua perusahaan mitra dan sub-perusahaan.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Company Management</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Daftar semua perusahaan mitra dan sub-perusahaan.</p>
         </div>
         <div className="flex items-center gap-3">
           <form className="relative flex-1 sm:w-80">
@@ -168,7 +168,7 @@ export default async function CompaniesPage({
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="rounded-xl border border-slate-200/80 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -235,7 +235,7 @@ export default async function CompaniesPage({
                       </span>
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100" asChild>
                           <Link href={`/admin/companies/${c.id}`} title={`Detail ${c.name}`}>
                             <ExternalLink className="h-3.5 w-3.5" />

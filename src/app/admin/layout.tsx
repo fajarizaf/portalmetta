@@ -132,7 +132,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         {/* Premium Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-          <div className="flex h-14 items-center gap-3 px-4">
+          <div className="flex h-14 items-center gap-1 sm:gap-3 px-3 sm:px-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-colors -ml-1" />
               <div className="w-px h-5 bg-slate-200" />
@@ -188,7 +188,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </button>
 
                 {/* Dropdown */}
-                <div className="invisible group-hover:invisible opacity-0 group-hover:opacity-100 absolute right-0 mt-1 w-80 bg-white rounded-xl border border-slate-200/60 shadow-xl shadow-slate-900/5 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+                <div className="invisible group-hover:invisible opacity-0 group-hover:opacity-100 absolute right-0 mt-1 w-80 bg-white rounded-xl border border-slate-200/60 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-xs font-semibold text-slate-900">Notifications</p>
                   </div>
@@ -223,7 +223,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </header>
 
-        <main className="p-6 bg-[#f8fafc] min-h-[calc(100vh-3.5rem)] flex-1">
+        <main className="p-4 sm:p-6 bg-[#f8fafc] min-h-[calc(100vh-3.5rem)] flex-1">
           <ToastHost />
           {children}
         </main>

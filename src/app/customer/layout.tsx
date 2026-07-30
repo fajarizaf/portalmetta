@@ -61,8 +61,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
       <NavigationLoadingOverlay />
 
       {/* Top Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 ">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           {/* Logo + Branch */}
           <div className="flex items-center gap-5">
             {company && (
@@ -75,8 +75,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
               </Link>
             )}
 
-            {branches.length > 0 && (
-              <div className="w-52 border-l border-slate-200 pl-5">
+              {branches.length > 0 && (
+              <div className="w-auto sm:w-52 border-l border-slate-200 pl-3 sm:pl-5">
                 <BranchSelector branches={branches} selectedBranchId={selectedBranchId ?? undefined} action={setCustomerBranch} />
               </div>
             )}
@@ -108,8 +108,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
       </header>
 
       {/* Secondary Navigation */}
-      <div className="sticky top-16 z-40 bg-white/70 backdrop-blur-lg border-b border-slate-200/50">
-        <div className="max-w-[1400px] mx-auto px-6 h-12 flex items-center justify-between">
+      <div className="sticky top-14 sm:top-16 z-40 bg-white/70 backdrop-blur-lg border-b border-slate-200/50">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
           <CustomerNav />
 
           <div className="relative w-56 hidden md:block">
@@ -123,7 +123,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
       </div>
 
       {/* Main Content */}
-      <main className="max-w-[1400px] mx-auto px-6 py-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <ToastHost />
         {children}
       </main>

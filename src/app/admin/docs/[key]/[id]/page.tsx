@@ -1357,7 +1357,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 {docType.icon ? (
                   <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
                 ) : (
@@ -1458,7 +1458,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             <input type="hidden" name="docTypeKey" value={docType.key} />
             <input type="hidden" name="id" value={id} />
 
-            <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               {nonTableFields.map((f) => {
                 if (f.key === "branch_id") return <input key={f.id} type="hidden" name="branch_id" value={selectedBranchId || ""} />
@@ -1650,7 +1650,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
         </form>
 
         {key === "subscription_management" && Object.keys(linkedGroups).length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Related Documents</h3>
             <div className="space-y-4">
               {Object.entries(linkedGroups).map(([groupName, items]) => (
@@ -2153,7 +2153,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
 
       <div className="space-y-6">
         {key !== "subscription_management" && Object.keys(linkedGroups).length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Related Documents</h3>
             <div className="space-y-4">
               {Object.entries(linkedGroups).map(([groupName, items]) => (
@@ -2183,7 +2183,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
         )}
 
         {assignmentEnabled && (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Assignment</h3>
             <AssignmentSelector 
               users={assignmentUsers} 
@@ -2201,20 +2201,20 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             billingPreview ? (
               <SubscriptionBillingActions subscriptionId={id} preview={billingPreview} />
             ) : (
-              <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-slate-200/80 p-5">
                 <h3 className="text-sm font-semibold mb-2">Billing Preview</h3>
                 <p className="text-xs text-muted-foreground">Billing preview belum tersedia untuk subscription ini.</p>
               </div>
             )
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5">
               <h3 className="text-sm font-semibold mb-2">Billing Preview</h3>
               <p className="text-xs text-muted-foreground">Hanya role Finances yang dapat melihat billing preview dan melakukan generate invoice.</p>
             </div>
           )
         ) : null}
 
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Activity Timeline</h3>
           <div className="space-y-4">
             {activity.map((a, i) => (

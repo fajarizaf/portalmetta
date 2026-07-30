@@ -180,14 +180,14 @@ export default async function AdminHome() {
   return (
     <div className="space-y-8">
       {/* Welcome */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Welcome back, {session?.user?.name}. Here&apos;s your system overview.
           </p>
         </div>
-        <span className="text-xs text-slate-400 font-medium">
+        <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
           {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
         </span>
       </div>
@@ -198,7 +198,7 @@ export default async function AdminHome() {
           <Link
             key={i}
             href={stat.link}
-            className="group relative bg-white rounded-2xl border border-slate-200/80 p-5 hover:shadow-xl hover:shadow-slate-900/5 hover:border-slate-300 transition-all duration-300"
+            className="group relative bg-white rounded-2xl border border-slate-200/80 p-5 hover:border-slate-300 transition-all duration-300"
           >
             <div className="flex items-start justify-between">
               <div className="space-y-2">
@@ -220,7 +220,7 @@ export default async function AdminHome() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-7">
         {/* Recent Activity */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
@@ -288,7 +288,7 @@ export default async function AdminHome() {
 
         {/* Pending Tasks */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
@@ -339,7 +339,7 @@ export default async function AdminHome() {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-semibold text-slate-900">Quick Links</h2>
             </div>

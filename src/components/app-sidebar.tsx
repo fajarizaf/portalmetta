@@ -115,7 +115,7 @@ export function AppSidebar({
                             className={cn(
                               "h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-200",
                               isActive
-                                ? "bg-slate-900 text-white shadow-sm"
+                                ? "bg-slate-900 text-white"
                                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             )}
                           >

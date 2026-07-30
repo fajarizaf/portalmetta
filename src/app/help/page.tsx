@@ -88,7 +88,7 @@ export default async function HelpPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-sm">
+      <Card className="border-none">
         <CardHeader className="pb-2 border-b">
           <CardTitle className="text-base">Pusat Bantuan</CardTitle>
         </CardHeader>

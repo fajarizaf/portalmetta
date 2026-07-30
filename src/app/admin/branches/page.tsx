@@ -65,7 +65,7 @@ export default async function BranchesPage() {
   if (!perm.has("BRANCH_MANAGEMENT")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Branch Management</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold">Branch Management</h1>
         <p>Anda tidak memiliki permission untuk mengakses halaman ini.</p>
       </div>
     );

@@ -57,7 +57,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Tidak dapat membuka invoice</CardTitle>
             </CardHeader>
@@ -85,7 +85,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Tidak dapat membuka invoice</CardTitle>
             </CardHeader>
@@ -119,7 +119,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Tidak dapat membuka invoice</CardTitle>
             </CardHeader>
@@ -148,7 +148,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Invoice tidak ditemukan</CardTitle>
             </CardHeader>
@@ -174,7 +174,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Invoice belum dapat diakses</CardTitle>
             </CardHeader>
@@ -216,7 +216,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <Link href="/customer/billing">Kembali</Link>
             </Button>
           </div>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Tidak memiliki akses</CardTitle>
             </CardHeader>
@@ -266,7 +266,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-sm">Invoice Date</CardTitle>
             </CardHeader>
@@ -274,7 +274,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <div className="text-base font-semibold">{invoiceDate}</div>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-sm">Due Date</CardTitle>
             </CardHeader>
@@ -282,7 +282,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
               <div className="text-base font-semibold">{dueDate}</div>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-sm">Total Amount</CardTitle>
             </CardHeader>
@@ -292,7 +292,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
           </Card>
         </div>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none">
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-base font-semibold text-primary uppercase tracking-wide">Invoice Items</CardTitle>
           </CardHeader>
@@ -332,7 +332,7 @@ export default async function CustomerBillingDetailPage({ params }: { params: { 
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none">
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-base font-semibold text-primary uppercase tracking-wide">Ringkasan</CardTitle>
           </CardHeader>

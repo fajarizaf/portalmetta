@@ -100,27 +100,27 @@ export default function CustomerLoginForm() {
       </div>
 
       {/* Right: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-white">
         <div className="w-full max-w-sm">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex justify-center mb-8">
+          <div className="lg:hidden flex justify-center mb-6 sm:mb-8">
             <Image
               src="/logo-metta-transparent.png"
               alt="Company Logo"
               width={200}
               height={60}
-              className="h-12 w-auto object-contain"
+              className="h-10 sm:h-12 w-auto object-contain"
               priority
             />
           </div>
 
-          <div className="space-y-2 mb-8">
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Welcome back</h2>
-            <p className="text-sm text-slate-500">Sign in to access your services</p>
+          <div className="space-y-1.5 sm:space-y-2 mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Welcome back</h2>
+            <p className="text-xs sm:text-sm text-slate-500">Sign in to access your services</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2">
+            <div className="mb-4 sm:mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-xs sm:text-sm text-red-600 flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                 <span className="text-red-600 text-xs font-bold">!</span>
               </div>
@@ -128,7 +128,7 @@ export default function CustomerLoginForm() {
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="space-y-4 sm:space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-[13px] font-medium text-slate-700">Email</Label>
               <div className="relative">
@@ -138,7 +138,7 @@ export default function CustomerLoginForm() {
                   type="email"
                   placeholder="name@company.com"
                   {...form.register("email")}
-                  className="h-11 pl-10 bg-slate-50 border-slate-200 focus:bg-white focus:ring-1 focus:ring-slate-300 transition-all rounded-lg"
+                  className="h-11 pl-10 bg-slate-50 border-slate-200 focus:bg-white focus:ring-1 focus:ring-slate-300 transition-all rounded-lg text-[16px] sm:text-sm"
                 />
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function CustomerLoginForm() {
                   type="password"
                   placeholder="Enter your password"
                   {...form.register("password")}
-                  className="h-11 pl-10 bg-slate-50 border-slate-200 focus:bg-white focus:ring-1 focus:ring-slate-300 transition-all rounded-lg"
+                  className="h-11 pl-10 bg-slate-50 border-slate-200 focus:bg-white focus:ring-1 focus:ring-slate-300 transition-all rounded-lg text-[16px] sm:text-sm"
                 />
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function CustomerLoginForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition-all duration-200 text-sm sm:text-base"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -178,7 +178,7 @@ export default function CustomerLoginForm() {
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-xs text-slate-400">
+          <p className="mt-6 sm:mt-8 text-center text-xs text-slate-400">
             Protected by enterprise-grade security
           </p>
         </div>

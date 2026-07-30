@@ -322,9 +322,9 @@ export default async function LocationManagementPage({ searchParams }: { searchP
   return (
     <div className="space-y-10" key={tab}>
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">Location Management</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold">Location Management</h1>
         {selectedBranch && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Menampilkan data untuk branch: <span className="font-semibold text-primary">{selectedBranch.name}</span>
           </p>
         )}

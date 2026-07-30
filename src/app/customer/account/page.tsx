@@ -92,12 +92,12 @@ export default async function CustomerAccountPage() {
 
       <div className="lg:col-span-9 space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">My Account</h1>
-          <p className="text-sm text-muted-foreground">Kelola informasi akun dan keamanan.</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">My Account</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Kelola informasi akun dan keamanan.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Informasi Akun</CardTitle>
             </CardHeader>
@@ -121,7 +121,7 @@ export default async function CustomerAccountPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Ganti Password</CardTitle>
             </CardHeader>
@@ -144,7 +144,7 @@ export default async function CustomerAccountPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm lg:col-span-2">
+          <Card className="border-none lg:col-span-2">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Pengaturan Penagihan</CardTitle>
             </CardHeader>

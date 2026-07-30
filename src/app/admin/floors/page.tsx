@@ -44,7 +44,7 @@ export default async function FloorsPage() {
   if (!perm.has("FLOOR_MANAGEMENT")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Floor Management</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold">Floor Management</h1>
         <p>Anda tidak memiliki permission untuk mengakses halaman ini.</p>
       </div>
     );

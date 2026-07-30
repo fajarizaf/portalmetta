@@ -26,7 +26,7 @@ export default async function MyRacksPage() {
   if (!user || !user.company) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Rack Management</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold">Rack Management</h1>
         <p>Company information not found. Please contact administrator.</p>
       </div>
     )

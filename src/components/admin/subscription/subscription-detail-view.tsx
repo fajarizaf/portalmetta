@@ -157,7 +157,7 @@ export function SubscriptionDetailView({
   return (
     <div className="space-y-6">
       {/* Header Actions & Title */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-slate-900 font-mono">
@@ -227,7 +227,7 @@ export function SubscriptionDetailView({
 
       {/* Summary Metrics Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80">
           <CardContent className="p-4">
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Contract Value</p>
             <p className="text-lg font-bold text-slate-900 mt-1">{formatIDR(metrics?.totalContractValue)}</p>
@@ -235,7 +235,7 @@ export function SubscriptionDetailView({
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80">
           <CardContent className="p-4">
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Recurring (MRC)</p>
             <p className="text-lg font-bold text-blue-600 mt-1">{formatIDR(metrics?.totalMrc)} / bln</p>
@@ -243,7 +243,7 @@ export function SubscriptionDetailView({
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80">
           <CardContent className="p-4">
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Invoiced / Paid</p>
             <p className="text-lg font-bold text-emerald-600 mt-1">{formatIDR(metrics?.totalInvoiced)}</p>
@@ -251,7 +251,7 @@ export function SubscriptionDetailView({
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80">
           <CardContent className="p-4">
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Outstanding / Next Bill</p>
             <p className="text-lg font-bold text-amber-600 mt-1">{formatIDR(metrics?.outstanding)}</p>
@@ -287,7 +287,7 @@ export function SubscriptionDetailView({
 
         {/* Tab 1: Overview */}
         <TabsContent value="overview" className="mt-4 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-6">
             <h3 className="text-sm font-semibold text-slate-900 border-b pb-3 mb-4">Informasi Kontrak Subscription</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-xs">
               <div>
@@ -343,7 +343,7 @@ export function SubscriptionDetailView({
 
         {/* Tab 2: Billing Schedule */}
         <TabsContent value="schedule" className="mt-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
             <div className="p-4 bg-slate-50 border-b flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Jadwal Penagihan (Billing Schedule)</h3>
@@ -430,7 +430,7 @@ export function SubscriptionDetailView({
 
         {/* Tab 3: Invoice */}
         <TabsContent value="invoice" className="mt-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
             <div className="p-4 bg-slate-50 border-b">
               <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Riwayat Invoice Subscription</h3>
             </div>
@@ -512,7 +512,7 @@ export function SubscriptionDetailView({
 
         {/* Tab 4: Payment */}
         <TabsContent value="payment" className="mt-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-6">
             <h3 className="text-sm font-semibold text-slate-900 border-b pb-3 mb-4">Riwayat Pembayaran (Payment Logs)</h3>
             <div className="space-y-3">
               {invoices.filter((i) => i.status === "Paid" || (i.data as any)?.paid_at).length === 0 ? (
@@ -545,7 +545,7 @@ export function SubscriptionDetailView({
 
         {/* Tab 5: Activity */}
         <TabsContent value="activity" className="mt-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-6">
             <h3 className="text-sm font-semibold text-slate-900 border-b pb-3 mb-4">Activity & Audit Timeline</h3>
             <div className="space-y-4">
               {activityTimeline.map((item, idx) => (

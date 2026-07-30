@@ -753,7 +753,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
       </div>
       
       <FormValidationProvider formId={formId}>
-      <form id={formId} action={createRecord} className="space-y-8 bg-white p-6 rounded-lg shadow-sm border">
+      <form id={formId} action={createRecord} className="space-y-8 bg-white p-6 rounded-lg border">
         <input type="hidden" name="docTypeKey" value={key} />
         <input type="hidden" name="parentId" value={parentId} />
         <input type="hidden" name="parentDocType" value={parentDocTypeKey} />

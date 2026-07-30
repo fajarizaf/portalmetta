@@ -98,8 +98,8 @@ export default async function RolesPage() {
   if (!perm.has("ROLE_MANAGEMENT")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Role Management</h1>
-        <p>Anda tidak memiliki permission untuk mengakses halaman ini.</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">Role Management</h1>
+        <p className="text-xs sm:text-sm">Anda tidak memiliki permission untuk mengakses halaman ini.</p>
       </div>
     );
   }

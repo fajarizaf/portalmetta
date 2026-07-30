@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ShoppingCart, LifeBuoy, HelpCircle, LogOut, CreditCard, LayoutGrid, User } from "lucide-react"
+import { Home, ShoppingCart, LifeBuoy, HelpCircle, LogOut, CreditCard, LayoutGrid, User, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function CustomerNav() {
@@ -19,6 +19,12 @@ export function CustomerNav() {
       href: "/customer/my-racks",
       label: "Rack Management",
       icon: LayoutGrid,
+      exact: false,
+    },
+    {
+      href: "/customer/services",
+      label: "Layanan",
+      icon: Package,
       exact: false,
     },
     {
@@ -61,7 +67,7 @@ export function CustomerNav() {
   }
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none [-webkit-overflow-scrolling:touch]">
       {navItems.map((item) => {
         const active = isActive(item.href, item.exact)
         return (
@@ -71,7 +77,7 @@ export function CustomerNav() {
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200",
               active
-                ? "bg-slate-900 text-white shadow-sm"
+                ? "bg-slate-900 text-white"
                 : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/80"
             )}
           >

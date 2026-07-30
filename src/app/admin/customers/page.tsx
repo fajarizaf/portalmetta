@@ -253,8 +253,8 @@ export default async function CustomersPage(props: {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Customer Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Kelola data customer dan akses platform.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Customer Management</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Kelola data customer dan akses platform.</p>
         </div>
         <div className="flex items-center gap-3">
           <CustomerSearch />
@@ -367,7 +367,7 @@ export default async function CustomersPage(props: {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="rounded-xl border border-slate-200/80 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -426,7 +426,7 @@ export default async function CustomersPage(props: {
                       </div>
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100" asChild>
                           <Link href={`/admin/customers/${c.id}/edit`} prefetch={false} title={`Edit ${c.name}`}>
                             <Pencil className="h-3.5 w-3.5" />

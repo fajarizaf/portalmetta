@@ -234,11 +234,11 @@ export default async function ProductsPage() {
   const docTypeInfos = allDocTypes.map((d) => ({ key: d.key, name: d.name, fields: d.fields.map((f) => ({ key: f.key, label: f.label })) }))
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Product Management</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold">Product Management</h1>
       {selectedBranchId ? (
-        <p className="text-sm text-muted-foreground">Branch aktif: {branches.find((b) => b.id === selectedBranchId)?.name ?? "(tidak ditemukan)"}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Branch aktif: {branches.find((b) => b.id === selectedBranchId)?.name ?? "(tidak ditemukan)"}</p>
       ) : (
-        <p className="text-sm text-muted-foreground">Tidak ada branch yang tersedia.</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Tidak ada branch yang tersedia.</p>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">

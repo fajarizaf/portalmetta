@@ -658,7 +658,7 @@ export default async function DocsByTypePage({
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
                 {docType.icon ? (
                   <IconDisplay name={docType.icon} className="h-7 w-7 text-slate-700" />
                 ) : (
@@ -739,8 +739,8 @@ export default async function DocsByTypePage({
                   <div
                     className={cn(
                       "relative bg-white rounded-xl border p-4 transition-all duration-200",
-                      "border-slate-200/80 hover:border-slate-300 hover:shadow-sm",
-                      isActive && "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+"border-slate-200/80 hover:border-slate-300",
+                       isActive && "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -775,7 +775,7 @@ export default async function DocsByTypePage({
 
         {/* Search & Filter Bar */}
         {canRead && (
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/80">
             <div className="p-3 flex items-center gap-2 flex-wrap">
               <form className="flex-1 min-w-[200px] relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -961,7 +961,7 @@ export default async function DocsByTypePage({
                 return (
                   <div
                     key={r.id}
-                    className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
+                    className="group bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 transition-all duration-200"
                   >
                     <div className="p-4 flex items-center gap-4">
                       {/* Checkbox for bulk select */}

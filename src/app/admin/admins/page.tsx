@@ -150,8 +150,8 @@ export default async function AdminsPage({ searchParams }: { searchParams?: Reco
   if (!perm.has("ADMIN_PANEL_ACCESS")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Admin Management</h1>
-        <p>Anda tidak memiliki permission untuk mengakses halaman ini.</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">Admin Management</h1>
+        <p className="text-xs sm:text-sm">Anda tidak memiliki permission untuk mengakses halaman ini.</p>
       </div>
     );
   }

@@ -47,8 +47,8 @@ export function InboundOutboundClient({ goodsInType, goodsInDocs, goodsOutType, 
 
        <Tabs defaultValue="inbound" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6 h-auto p-1 bg-slate-100 rounded-lg">
-          <TabsTrigger value="inbound" className="py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">Inbound Items</TabsTrigger>
-          <TabsTrigger value="outbound" className="py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">Outbound Items</TabsTrigger>
+          <TabsTrigger value="inbound" className="py-2.5 data-[state=active]:bg-white rounded-md transition-all">Inbound Items</TabsTrigger>
+          <TabsTrigger value="outbound" className="py-2.5 data-[state=active]:bg-white rounded-md transition-all">Outbound Items</TabsTrigger>
         </TabsList>
         
         <TabsContent value="inbound" className="mt-0">
@@ -74,7 +74,7 @@ function DocList({ docType, docs, title }: { docType: DocType, docs: DocRecord[]
   const listFields = (docType.config?.listFields as string[]) || ["request_date", "status"]
 
   return (
-    <Card className="border-none shadow-sm">
+    <Card className="border-none">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
         <div className="flex items-center gap-2">

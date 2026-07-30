@@ -177,14 +177,14 @@ export default async function CustomerHome() {
         </div>
 
         {/* Active Services */}
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Active Services</h2>
               <p className="text-xs text-slate-500 mt-0.5">Your current data center subscriptions</p>
             </div>
             <Link
-              href="/customer/billing"
+              href="/customer/services"
               className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1"
             >
               View all
@@ -241,9 +241,9 @@ export default async function CustomerHome() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Link
               href="/customer/my-racks"
-              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md hover:border-slate-300/60 transition-all duration-300"
+              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:border-slate-300/60 transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center mb-3 shadow-lg shadow-slate-900/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <LayoutGrid className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wide">Rack</h3>
@@ -252,9 +252,9 @@ export default async function CustomerHome() {
 
             <Link
               href="/customer/docs/visitor_request/create"
-              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md hover:border-slate-300/60 transition-all duration-300"
+              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:border-slate-300/60 transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <User className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wide">Visitor</h3>
@@ -263,9 +263,9 @@ export default async function CustomerHome() {
 
             <Link
               href="/customer/order/cmkkwfq8400015grnyatwxk86"
-              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md hover:border-slate-300/60 transition-all duration-300"
+              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:border-slate-300/60 transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wide">Smart Hands</h3>
@@ -274,9 +274,9 @@ export default async function CustomerHome() {
 
             <Link
               href="/customer/docs/request"
-              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md hover:border-slate-300/60 transition-all duration-300"
+              className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:border-slate-300/60 transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wide">Requests</h3>
@@ -299,7 +299,7 @@ export default async function CustomerHome() {
           </div>
 
           {recentRequests.length > 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100">
+            <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden divide-y divide-slate-100">
               {recentRequests.map((req) => {
                 const isCompleted = ['Completed', 'Approved', 'Selesai', 'Disetujui'].includes(req.status || '');
                 const isRejected = ['Rejected', 'Cancelled', 'Ditolak', 'Dibatalkan'].includes(req.status || '');
@@ -348,7 +348,7 @@ export default async function CustomerHome() {
               })}
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] p-8 text-center">
+            <div className="bg-white rounded-xl border border-slate-200/60 p-8 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
                 <FileText className="w-5 h-5 text-slate-400" />
               </div>
@@ -362,7 +362,7 @@ export default async function CustomerHome() {
       {/* Right Sidebar */}
       <div className="lg:col-span-3 space-y-6">
         {/* Billing Summary */}
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">Billing & Support</h3>
@@ -428,7 +428,7 @@ export default async function CustomerHome() {
         </div>
 
         {/* Quick Links */}
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <h3 className="text-sm font-semibold text-slate-900">Quick Links</h3>
           </div>

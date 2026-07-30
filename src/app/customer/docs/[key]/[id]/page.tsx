@@ -900,7 +900,7 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
 
             {isCrossConnect && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4 p-4 rounded-xl bg-primary/[0.03] border border-primary/10 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
+                <div className="space-y-4 p-4 rounded-xl bg-primary/[0.03] border border-primary/10 relative overflow-hidden group transition-all duration-300">
                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Package className="w-12 h-12 text-primary" />
                   </div>
@@ -913,7 +913,7 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
                   </div>
                 </div>
 
-                <div className="space-y-4 p-4 rounded-xl bg-orange-500/[0.03] border border-orange-500/10 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
+                <div className="space-y-4 p-4 rounded-xl bg-orange-500/[0.03] border border-orange-500/10 relative overflow-hidden group transition-all duration-300">
                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Send className="w-12 h-12 text-orange-500" />
                   </div>
@@ -981,7 +981,7 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
                                                         <span>•</span>
                                                         <span>{date}</span>
                                                     </div>
-                                                    <div className={cn("p-3 rounded-2xl text-sm shadow-sm border", 
+                                                    <div className={cn("p-3 rounded-2xl text-sm border", 
                                                         isMe ? "bg-primary text-primary-foreground rounded-tr-none border-primary" : "bg-white text-foreground rounded-tl-none border-slate-200")}>
                                                         <div className="whitespace-pre-wrap">{message}</div>
                                                         {attachment && (
@@ -1006,7 +1006,7 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
 
                             {/* Integrated Reply Form (Sync with Admin Style) */}
                             {!isReadOnly && (
-                                <div className="bg-white p-4 rounded-xl border border-dashed shadow-sm">
+                                <div className="bg-white p-4 rounded-xl border border-dashed">
                                     <div className="text-sm font-semibold mb-4 flex items-center gap-2">
                                         <Send className="size-4 text-primary" />
                                                 Reply Ticket

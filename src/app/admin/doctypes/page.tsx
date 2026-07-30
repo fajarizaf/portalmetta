@@ -75,8 +75,8 @@ export default async function DocTypesPage() {
   if (!perm.has("ADMIN_PANEL_ACCESS") && !perm.has("DOCTYPE_MANAGEMENT")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">DocType</h1>
-        <p>Anda tidak memiliki akses.</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">DocType</h1>
+        <p className="text-xs sm:text-sm">Anda tidak memiliki akses.</p>
       </div>
     )
   }
@@ -177,8 +177,8 @@ export default async function DocTypesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">DocType</h1>
-        <Link href="/admin">Kembali</Link>
+        <h1 className="text-xl sm:text-2xl font-semibold">DocType</h1>
+        <Link href="/admin" className="text-xs sm:text-sm">Kembali</Link>
       </div>
 
       <form action={createDocType} className="space-y-3">

@@ -184,7 +184,7 @@ export function WorkflowStateTracker({
   const totalSteps = effectiveStates.length
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden space-y-0">
+    <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden space-y-0">
       {/* Header Section */}
       <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
         <div className="flex items-center gap-3">
@@ -245,7 +245,7 @@ export function WorkflowStateTracker({
                       isNegative
                         ? "bg-red-100 text-red-700 border-red-300 ring-2 ring-red-100"
                         : isCurrent
-                          ? "bg-indigo-600 text-white border-indigo-600 ring-4 ring-indigo-50 shadow-sm"
+                          ? "bg-indigo-600 text-white border-indigo-600 ring-4 ring-indigo-50"
                           : isPassed
                             ? "bg-emerald-500 text-white border-emerald-500"
                             : "bg-slate-100 text-slate-400 border-slate-200"

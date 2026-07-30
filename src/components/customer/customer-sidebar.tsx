@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { ChevronDown, FileText, CreditCard, User, ArrowRightLeft, LayoutGrid } from "lucide-react"
+import { ChevronDown, FileText, CreditCard, User, ArrowRightLeft, LayoutGrid, Package } from "lucide-react"
 
 export async function CustomerSidebar({ roleId }: { roleId: string }) {
   const docTypesAll = await prisma.docType.findMany({
@@ -32,10 +32,19 @@ export async function CustomerSidebar({ roleId }: { roleId: string }) {
   return (
     <div className="lg:col-span-3 space-y-6">
       {/* Main Navigation */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
         <div className="p-3">
           <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Navigation</p>
           <nav className="space-y-0.5">
+            <Link
+              href="/customer/services"
+              className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all duration-200"
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
+                <Package className="w-4 h-4" />
+              </div>
+              <span>Layanan</span>
+            </Link>
             <Link
               href="/customer/my-racks"
               className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all duration-200"
@@ -82,7 +91,7 @@ export async function CustomerSidebar({ roleId }: { roleId: string }) {
       </div>
 
       {/* Documents Section */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
         <div className="p-3">
           <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Documents</p>
           <div className="space-y-0.5">

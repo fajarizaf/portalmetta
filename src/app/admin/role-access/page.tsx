@@ -39,7 +39,7 @@ export default async function RoleAccessPage({ searchParams }: { searchParams?: 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {roles.map((r) => (
           <Link key={r.id} href={`/admin/role-access/${r.id}`}>
-            <div className="group flex items-center gap-3 border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 transition-all duration-200 bg-white cursor-pointer">
+            <div className="group flex items-center gap-3 border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition-all duration-200 bg-white cursor-pointer">
               <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
                 <KeyRound className="h-5 w-5 text-slate-500 group-hover:text-white transition-colors" />
               </div>

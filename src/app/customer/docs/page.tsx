@@ -10,8 +10,8 @@ export default async function CustomerDocsHome() {
   if (!me) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Dokumen</h1>
-        <p className="text-sm text-muted-foreground">Silakan login untuk melihat dokumen.</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">Dokumen</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Silakan login untuk melihat dokumen.</p>
       </div>
     )
   }
@@ -26,7 +26,7 @@ export default async function CustomerDocsHome() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Dokumen</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold">Dokumen</h1>
           <div className="text-xs text-muted-foreground">Pilih jenis dokumen untuk melihat daftar</div>
         </div>
       </div>

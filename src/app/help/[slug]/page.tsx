@@ -55,7 +55,7 @@ export default async function HelpArticlePage({ params }: { params: { slug?: str
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-3">
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">Topik</CardTitle>
             </CardHeader>
@@ -78,7 +78,7 @@ export default async function HelpArticlePage({ params }: { params: { slug?: str
         </div>
 
         <div className="lg:col-span-9">
-          <Card className="border-none shadow-sm">
+          <Card className="border-none">
             <CardHeader className="pb-2 border-b">
               <CardTitle className="text-base">{article?.title ?? "Tidak ditemukan"}</CardTitle>
             </CardHeader>

@@ -14,8 +14,8 @@ export default async function DocsIndexPage() {
   if (!perm.has("ADMIN_PANEL_ACCESS") && !perm.has("DOCUMENTS_MANAGEMENT")) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Dokumen</h1>
-        <p>Anda tidak memiliki akses.</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">Dokumen</h1>
+        <p className="text-xs sm:text-sm">Anda tidak memiliki akses.</p>
       </div>
     )
   }
@@ -41,7 +41,7 @@ export default async function DocsIndexPage() {
   const children = doctypes.filter((d) => childKeys.has(d.key))
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Dokumen</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold">Dokumen</h1>
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="text-sm font-semibold">DocType (Parent)</div>

@@ -83,7 +83,7 @@ export function SalesOrderSubscriptionTab({
   return (
     <div className="space-y-4 my-6">
       {/* Top Action Header Bar for Sales Order */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white rounded-xl border border-slate-200/80 gap-3">
         <div>
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Modul Subscription & Billing</h3>
           <p className="text-[11px] text-slate-500">Kelola pembuatan Subscription, Billing Schedule, dan Invoice untuk Sales Order ini</p>
@@ -130,7 +130,7 @@ export function SalesOrderSubscriptionTab({
 
         {/* Tab 1: Subscriptions */}
         <TabsContent value="subscription" className="mt-3">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 border-b text-slate-600 font-semibold uppercase tracking-wider">
                 <tr>
@@ -188,7 +188,7 @@ export function SalesOrderSubscriptionTab({
 
         {/* Tab 2: Invoices */}
         <TabsContent value="invoice" className="mt-3">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 border-b text-slate-600 font-semibold uppercase tracking-wider">
                 <tr>
@@ -245,7 +245,7 @@ export function SalesOrderSubscriptionTab({
 
         {/* Tab 3: Billing Summary */}
         <TabsContent value="billing" className="mt-3">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 border-b text-slate-600 font-semibold uppercase tracking-wider">
                 <tr>
