@@ -1,10 +1,13 @@
-
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 import type { FieldType } from "@/generated/prisma/enums"
+import { CustomerSidebar } from "@/components/customer/customer-sidebar"
 import { DirectOrderList } from "@/components/customer/direct-order-list"
+import { ArrowLeft, Package, ShoppingBag } from "lucide-react"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -12,13 +15,22 @@ export const revalidate = 0
 export default async function OrderByGroupPage(props: { params: Promise<{ groupId?: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions)
+  const email = session?.user?.email ?? ""
+
+  const me = email ? await prisma.user.findUnique({
+    where: { email },
+    include: { role: { include: { permissions: { include: { permission: true } } } } }
+  }) : null
+
+  if (!me) redirect("/customer")
+
   const cookieStore = await cookies()
   const cookieGroupId = cookieStore.get("currentGroupId")?.value
   const groupId = params?.groupId ?? cookieGroupId
-  const me = session?.user ?? null
-  const userRecord = await prisma.user.findUnique({ 
-    where: { email: me?.email ?? "" }, 
-    include: { role: true } 
+
+  const userRecord = await prisma.user.findUnique({
+    where: { email: me.email },
+    include: { role: true }
   })
   const rawCompanyId = userRecord?.companyId ?? undefined
   const parentCompanyId = rawCompanyId ? (await prisma.company.findUnique({ where: { id: rawCompanyId }, select: { parentId: true } }))?.parentId ?? undefined : undefined
@@ -134,8 +146,6 @@ export default async function OrderByGroupPage(props: { params: Promise<{ groupI
           if (targetDT) {
             const labelField = src && typeof src["labelField"] === "string" ? (src["labelField"] as string) : "name"
             const valueField = src && typeof src["valueField"] === "string" ? (src["valueField"] as string) : "id"
-            // Use the selectedBranchId (from cookies/selector) instead of selectedBranchIdFinal (which is tied to the product group)
-            // This allows customers to see their racks in the branch they have currently selected in the UI.
             const rows = await prisma.docRecord.findMany({ where: { docTypeId: targetDT.id, ...(selectedBranchId ? { branchId: selectedBranchId } : {}) }, orderBy: { createdAt: "desc" } })
             const filtersArr = Array.isArray((src as Record<string, unknown>)["filters"]) ? ((src as Record<string, unknown>)["filters"] as Array<Record<string, unknown>>) : []
             const filteredRows = rows.filter((r) => {
@@ -221,7 +231,7 @@ export default async function OrderByGroupPage(props: { params: Promise<{ groupI
                 }
                 if (!label) label = String(r["id"] ?? "")
               }
-              const value = typeof valueRaw === "string" ? valueRaw : String(r["id"]) 
+              const value = typeof valueRaw === "string" ? valueRaw : String(r["id"])
               return { label, value }
             })
           }
@@ -268,16 +278,64 @@ export default async function OrderByGroupPage(props: { params: Promise<{ groupI
     specDynamicOptions.set(p.id, per)
   }
 
-  // Convert Map to plain object for Client Component
   const specDynamicOptionsObj = Object.fromEntries(specDynamicOptions)
 
+  const productCount = subs.reduce((acc, s) => acc + s.items.length, 0)
+  const priceRange = (() => {
+    let min = Infinity, max = 0
+    for (const s of subs) {
+      for (const p of s.items) {
+        for (const pr of p.prices) {
+          if (pr.basePrice) {
+            if (pr.basePrice < min) min = pr.basePrice
+            if (pr.basePrice > max) max = pr.basePrice
+          }
+        }
+      }
+    }
+    if (min === Infinity) return null
+    return { min, max }
+  })()
+
   return (
-    <DirectOrderList
-      displayGroupName={displayGroupName}
-      immediateSubs={immediateSubs}
-      subs={subs}
-      specDynamicOptions={specDynamicOptionsObj}
-      branchId={selectedBranchIdFinal}
-    />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <CustomerSidebar roleId={me.roleId} />
+
+      <div className="lg:col-span-9 space-y-6">
+        {/* Page Header */}
+        <div className="bg-white rounded-xl border border-slate-200/60 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/customer/order"
+                className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold tracking-tight text-slate-900">{displayGroupName}</h1>
+                  <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{productCount} produk</span>
+                </div>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Pilih layanan yang ingin anda pesan dari kategori {displayGroupName}.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Product Listing */}
+        <DirectOrderList
+          displayGroupName={displayGroupName}
+          immediateSubs={immediateSubs}
+          subs={subs}
+          specDynamicOptions={specDynamicOptionsObj}
+          branchId={selectedBranchIdFinal}
+          hideHeader
+        />
+      </div>
+    </div>
   )
 }

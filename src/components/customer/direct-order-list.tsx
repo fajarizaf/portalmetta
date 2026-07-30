@@ -29,6 +29,7 @@ interface DirectOrderListProps {
   subs: Array<{ id: string; name: string; items: Product[] }>
   specDynamicOptions: Record<string, Record<string, SpecOption[]>>
   branchId?: string
+  hideHeader?: boolean
 }
 
 export function DirectOrderList({
@@ -36,7 +37,8 @@ export function DirectOrderList({
   immediateSubs,
   subs,
   specDynamicOptions,
-  branchId
+  branchId,
+  hideHeader,
 }: DirectOrderListProps) {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
   const [quantities, setQuantities] = React.useState<Record<string, number>>({})
@@ -78,23 +80,26 @@ export function DirectOrderList({
   return (
     <div className="space-y-6 pb-32">
       <GroupParamSync />
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Product Order</h1>
-          <p className="text-sm text-slate-500 mt-1">Browse and select services to request.</p>
-        </div>
-        <Link href="/customer/order">
-          <Button variant="outline" size="sm" className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Categories
-          </Button>
-        </Link>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-slate-500">Category:</span>
-        <span className="text-sm font-semibold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-md">{displayGroupName}</span>
-      </div>
+      {!hideHeader && (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Product Order</h1>
+              <p className="text-sm text-slate-500 mt-1">Browse and select services to request.</p>
+            </div>
+            <Link href="/customer/order">
+              <Button variant="outline" size="sm" className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Categories
+              </Button>
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">Category:</span>
+            <span className="text-sm font-semibold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-md">{displayGroupName}</span>
+          </div>
+        </>
+      )}
 
       {immediateSubs.length > 0 ? (
         <div className="space-y-4">
