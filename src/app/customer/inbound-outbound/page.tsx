@@ -85,6 +85,89 @@ export default async function InboundOutboundPage() {
   const goodsIn = await getDocs("goods_in_request", me, scopeCompanyId, userCompanyId)
   const goodsOut = await getDocs("goods_out_request", me, scopeCompanyId, userCompanyId)
 
+  // Fetch inventory items for stock balance
+  const goodsInItemType = await prisma.docType.findUnique({ where: { key: "goods_in_item" } })
+  const goodsOutItemType = await prisma.docType.findUnique({ where: { key: "goods_out_item" } })
+
+  let goodsInItems: any[] = []
+  if (goodsInItemType) {
+    goodsInItems = await prisma.docRow.findMany({
+      where: {
+        childDocTypeId: goodsInItemType.id,
+        record: {
+          createdById: me.id,
+          OR: [
+            { status: { equals: "Completed" } },
+            { status: { contains: "Complete" } },
+            { status: { contains: "COMPLETED" } },
+          ],
+        },
+      },
+      include: { record: true },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  let goodsOutItems: any[] = []
+  if (goodsOutItemType) {
+    goodsOutItems = await prisma.docRow.findMany({
+      where: {
+        childDocTypeId: goodsOutItemType.id,
+        record: {
+          createdById: me.id,
+          OR: [
+            { status: { equals: "Completed" } },
+            { status: { contains: "Complete" } },
+            { status: { contains: "COMPLETED" } },
+          ],
+        },
+      },
+      include: { record: true },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  const allItems = [...goodsInItems, ...goodsOutItems]
+  const buildingIds = new Set<string>()
+  const floorIds = new Set<string>()
+  const roomIds = new Set<string>()
+  const customerIds = new Set<string>()
+  const productIds = new Set<string>()
+
+  for (const item of allItems) {
+    const d = (item.data ?? {}) as Record<string, any>
+    if (d.building_id) buildingIds.add(d.building_id)
+    if (d.floor_id) floorIds.add(d.floor_id)
+    if (d.room_id) roomIds.add(d.room_id)
+    if (d.owner_customer_id) customerIds.add(d.owner_customer_id)
+    if (d.product_id) productIds.add(d.product_id)
+  }
+
+  const [buildings, floors, roomRecords, customers, products] = await Promise.all([
+    buildingIds.size > 0 ? prisma.building.findMany({ where: { id: { in: Array.from(buildingIds) } } }) : [],
+    floorIds.size > 0 ? prisma.floor.findMany({ where: { id: { in: Array.from(floorIds) } } }) : [],
+    roomIds.size > 0 ? prisma.room.findMany({ where: { id: { in: Array.from(roomIds) } } }) : [],
+    customerIds.size > 0 ? prisma.company.findMany({ where: { id: { in: Array.from(customerIds) } } }) : [],
+    productIds.size > 0 ? prisma.product.findMany({ where: { id: { in: Array.from(productIds) } } }) : [],
+  ])
+
+  const buildingMap: Record<string, string> = Object.fromEntries(buildings.map(b => [b.id, b.name]))
+  const floorMap: Record<string, string> = Object.fromEntries(floors.map(f => [f.id, f.name]))
+  const roomMap: Record<string, string> = Object.fromEntries(roomRecords.map(r => [r.id, r.name]))
+  const customerMap: Record<string, string> = Object.fromEntries(customers.map(c => [c.id, c.name]))
+  const productMap: Record<string, string> = Object.fromEntries(products.map(p => [p.id, p.name]))
+
+  const serializeItems = (items: any[]) => items.map((item) => ({
+    id: item.id,
+    createdAt: item.createdAt.toISOString(),
+    data: item.data,
+    record: {
+      code: item.record.code,
+      createdAt: item.record.createdAt.toISOString(),
+      data: item.record.data,
+    },
+  }))
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <CustomerSidebar roleId={me.roleId} />
@@ -93,7 +176,14 @@ export default async function InboundOutboundPage() {
             goodsInType={goodsIn.type} 
             goodsInDocs={goodsIn.docs} 
             goodsOutType={goodsOut.type} 
-            goodsOutDocs={goodsOut.docs} 
+            goodsOutDocs={goodsOut.docs}
+            goodsInItems={serializeItems(goodsInItems)}
+            goodsOutItems={serializeItems(goodsOutItems)}
+            buildingMap={buildingMap}
+            floorMap={floorMap}
+            roomMap={roomMap}
+            customerMap={customerMap}
+            productMap={productMap}
          />
       </div>
     </div>
