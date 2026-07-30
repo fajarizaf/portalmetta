@@ -780,24 +780,24 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
                   )}
                   {(() => {
                       const isProduct = (typeof sourceObj.table === "string" && String(sourceObj.table).toLowerCase() === "product") || (typeof sourceObj.key === "string" && String(sourceObj.key).toLowerCase().includes("product")) || f.key === "product_id"
-                      return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" /> : null
-                  })()}
-              </div>
-          )
-        }
-
-        return (
-            <div key={f.id} className="space-y-2">
-                <Label>{f.label}{f.required ? " *" : ""}</Label>
-                {isFieldReadOnly ? (
-                    <Input value={options.find(o => o.value === val)?.label ?? val} disabled />
-                ) : (
-                    <SearchableSelect name={f.key} defaultValue={val} options={options} placeholder="Select..." required={f.required} emitChangeEvent={true} />
-                )}
-                {(() => {
-                    const isProduct = f.key === "product_id"
-                    return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" /> : null
+                    return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} defaultValues={values} /> : null
                 })()}
+            </div>
+        )
+    }
+
+    return (
+        <div key={f.id} className="space-y-2">
+            <Label>{f.label}{f.required ? " *" : ""}</Label>
+            {isFieldReadOnly ? (
+                <Input value={options.find(o => o.value === val)?.label ?? val} disabled />
+            ) : (
+                <SearchableSelect name={f.key} defaultValue={val} options={options} placeholder="Select..." required={f.required} emitChangeEvent={true} />
+            )}
+            {(() => {
+                const isProduct = f.key === "product_id"
+                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} defaultValues={values} /> : null
+            })()}
             </div>
         )
     }

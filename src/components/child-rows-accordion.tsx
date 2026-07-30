@@ -218,7 +218,7 @@ export default function ChildRowsAccordion({
                               containerId={containerId}
                             />
                             {isProduct ? (
-                              <QuotationItemSpecs dependsOnName={fieldName} branchId={branchId} namePrefix={nameBase} containerId={containerId} />
+                              <QuotationItemSpecs dependsOnName={fieldName} branchId={branchId} namePrefix={nameBase} containerId={containerId} defaultProductId={typeof preset === "string" ? preset : undefined} defaultValues={rowValuesMap[rid]} />
                             ) : null}
                           </div>
                         )
@@ -229,7 +229,7 @@ export default function ChildRowsAccordion({
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
                           <SearchableSelect name={fieldName} placeholder="-" options={opt} defaultValue={typeof preset === "string" ? preset : undefined} emitChangeEvent={true} containerId={containerId} />
                           {isProduct ? (
-                            <QuotationItemSpecs dependsOnName={fieldName} branchId={branchId} namePrefix={nameBase} containerId={containerId} />
+                            <QuotationItemSpecs dependsOnName={fieldName} branchId={branchId} namePrefix={nameBase} containerId={containerId} defaultProductId={typeof preset === "string" ? preset : undefined} defaultValues={rowValuesMap[rid]} />
                           ) : null}
                         </div>
                       )

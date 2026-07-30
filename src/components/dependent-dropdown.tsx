@@ -93,7 +93,7 @@ export default function DependentDropdown({
         }
         
         if (!hasFilter && mode !== "static_dep") {
-          setOpts([])
+          setOpts(options ?? [])
           setLoaded(true)
           return
         }
@@ -101,6 +101,12 @@ export default function DependentDropdown({
         const res = await fetch(`/api/dynamic-options?${params.toString()}`)
         if (!res.ok) return
         const data = (await res.json()) as Option[]
+        
+        // Ensure current defaultValue is always available in options
+        if (defaultValue && !data.some(o => o.value === defaultValue)) {
+          const existing = (options ?? []).find(o => o.value === defaultValue)
+          if (existing) data.unshift(existing)
+        }
         
         setOpts(data)
         setLoaded(true)
@@ -198,8 +204,7 @@ export default function DependentDropdown({
     <div className="space-y-2">
       <Label>{label}{required ? " *" : ""}</Label>
       {(() => {
-        // If has filter, only show loaded opts (don't fallback to options which may be unfiltered)
-        const showOpts = filtersArr.length > 0 ? (loaded ? opts : []) : (loaded ? opts : (options ?? []))
+        const showOpts = loaded ? opts : (options ?? [])
         return <SearchableSelect name={name} placeholder={placeholder} options={showOpts} defaultValue={defaultValue} emitChangeEvent={true} disabled={disabled} required={required} containerId={containerId} form={form} />
       })()}
     </div>

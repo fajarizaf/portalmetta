@@ -1557,7 +1557,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                             />
                             {(() => {
                                 const isProduct = (typeof sourceObj.table === "string" && String(sourceObj.table).toLowerCase() === "product") || (typeof sourceObj.key === "string" && String(sourceObj.key).toLowerCase().includes("product")) || f.key === "product_id"
-                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} /> : null
+                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} defaultValues={values} /> : null
                             })()}
                           </div>
                         )
@@ -1569,7 +1569,7 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                             <SearchableSelect name={f.key} placeholder={f.readOnly ? "Otomatis" : "Select..."} options={options} defaultValue={val} disabled={isFieldReadOnly} required={f.required} emitChangeEvent={true} />
                             {(() => {
                                 const isProduct = f.key === "product_id"
-                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} /> : null
+                                return isProduct ? <QuotationItemSpecs dependsOnName={f.key} branchId={selectedBranchId || undefined} namePrefix="" defaultProductId={val} defaultValues={values} /> : null
                             })()}
                           </div>
                         )
@@ -2008,7 +2008,11 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
                                           for (const it of filters) {
                                             const rawV = d[it.dependsOn]
                                             const v = typeof rawV === "string" ? rawV : String(rawV ?? "")
-                                            if (v) initMap[it.dependsOn] = v
+                                            if (v) {
+                                              initMap[it.dependsOn] = v
+                                            } else if (selectedBranchId && it.field === "branchId") {
+                                              initMap[it.dependsOn] = selectedBranchId
+                                            }
                                           }
                                           return <DependentDropdown name={`row_${cf.key}`} label={cf.label} required={cf.required} options={opt} source={sourceObj} branchId={selectedBranchId || undefined} defaultValue={String(val ?? "")} initialDependsOnValues={initMap} />
                                         }
