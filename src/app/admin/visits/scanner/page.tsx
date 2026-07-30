@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Camera, CameraOff, LogIn, LogOut, QrCode, ArrowLeft, History } from "lucide-react"
+import { Camera, CameraOff, LogIn, LogOut, QrCode, ArrowLeft, History, CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 interface ScanResult {
@@ -312,318 +312,273 @@ export default function ScannerPage() {
   const visitorInfo = rec ? getVisitorInfo({ ...rec.data, visitors: visitorsList }) : null
 
   return (
-    <div className="space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className={`rounded-md shadow-lg px-4 py-3 text-sm text-white ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-            {toast.message}
+    <div className="min-h-screen bg-[#F8FAFC] -m-4 sm:-m-6 p-4 sm:p-6 font-sans selection:bg-emerald-100 selection:text-emerald-900">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Toast */}
+        {toast && (
+          <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className={`rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-5 py-3 text-sm font-medium text-white flex items-center gap-2 backdrop-blur-md ${toast.type === "success" ? "bg-emerald-600/90" : "bg-red-600/90"}`}>
+              {toast.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+              {toast.message}
+            </div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-slate-200/60">
+          <div className="space-y-1">
+            <Link href="/admin/visits" className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors mb-2 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md w-fit">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Visits
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">QR Scanner</h1>
+            <p className="text-sm text-slate-500">Scan digital passes for instant check-in and authentication.</p>
+          </div>
+          <div className="flex gap-2">
+            {!scanning ? (
+              <Button onClick={startScanner} className="h-10 px-5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm shadow-md shadow-slate-900/10 transition-all">
+                <Camera className="w-4 h-4 mr-2" />
+                Start Scanner
+              </Button>
+            ) : (
+              <Button onClick={stopScanner} variant="destructive" className="h-10 px-5 rounded-md text-sm shadow-md shadow-red-900/10 transition-all">
+                <CameraOff className="w-4 h-4 mr-2" />
+                Stop Scanner
+              </Button>
+            )}
           </div>
         </div>
-      )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/visits">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">QR Scanner</h1>
-            <p className="text-sm text-muted-foreground">Scan visitor QR codes for check-in/check-out</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {!scanning ? (
-            <Button onClick={startScanner}>
-              <Camera className="w-4 h-4 mr-2" />
-              Start Scanner
-            </Button>
-          ) : (
-            <Button onClick={stopScanner} variant="destructive">
-              <CameraOff className="w-4 h-4 mr-2" />
-              Stop Scanner
-            </Button>
-          )}
-        </div>
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Scanner & Result Area (Left Col) */}
+          <div className="lg:col-span-8 space-y-5">
+            
+            {/* Scanner Window */}
+            <div className="relative overflow-hidden rounded-md bg-slate-900 shadow-xl shadow-slate-900/10 ring-1 ring-white/10 aspect-[4/3] sm:aspect-[16/9] flex items-center justify-center">
+              <div id="qr-reader" ref={containerRef} className="w-full h-full [&>video]:object-cover" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Scanner Area */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="relative bg-black aspect-square max-h-[500px] flex items-center justify-center">
-                <div id="qr-reader" ref={containerRef} className="w-full h-full" />
-
-                {scanning && (
-                  <>
-                    {/* Corner markers */}
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="absolute top-8 left-8 w-16 h-16 border-t-4 border-l-4 border-green-400 rounded-tl-lg" />
-                      <div className="absolute top-8 right-8 w-16 h-16 border-t-4 border-r-4 border-green-400 rounded-tr-lg" />
-                      <div className="absolute bottom-8 left-8 w-16 h-16 border-b-4 border-l-4 border-green-400 rounded-bl-lg" />
-                      <div className="absolute bottom-8 right-8 w-16 h-16 border-b-4 border-r-4 border-green-400 rounded-br-lg" />
-                    </div>
-
-                    {/* Animated scanning line */}
-                    <div className="absolute inset-x-8 top-8 bottom-8 pointer-events-none overflow-hidden">
-                      <div className="w-full h-0.5 bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)] animate-[scan_2s_ease-in-out_infinite]" />
-                    </div>
-                  </>
-                )}
-
-                {!scanning && !cameraError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60">
-                    <QrCode className="w-16 h-16 mb-4" />
-                    <p className="text-lg font-medium">Click &quot;Start Scanner&quot; to begin</p>
-                  </div>
-                )}
-
-                {cameraError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60">
-                    <CameraOff className="w-16 h-16 mb-4" />
-                    <p className="text-lg font-medium text-red-400">Camera Error</p>
-                    <p className="text-sm mt-2 max-w-xs text-center">{cameraError}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Scan Result Panel */}
-          {rec && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <QrCode className="w-5 h-5" />
-                  Scan Result
-                  {scanResult?.valid ? (
-                    <Badge className="bg-green-100 text-green-800">Valid</Badge>
-                  ) : (
-                    <Badge variant="destructive">Invalid</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {visitorInfo && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Visitor Name</p>
-                      <p className="font-medium">{visitorInfo.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">NIK</p>
-                      <p className="font-medium">{visitorInfo.nik}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p className="font-medium">{visitorInfo.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Visit Date</p>
-                      <p className="font-medium">{String(rec.data["visit_date"] || "-")}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Purpose</p>
-                      <p className="font-medium">{String(rec.data["purpose"] || "-")}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">QR Status</p>
-                      <p className="font-medium">
-                        {rec.qrStatus === "checked_in" ? (
-                          <Badge className="bg-green-100 text-green-800">Checked In</Badge>
-                        ) : rec.qrStatus === "checked_out" ? (
-                          <Badge className="bg-gray-100 text-gray-600">Checked Out</Badge>
-                        ) : (
-                          <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                        )}
-                      </p>
-                    </div>
-                    {rec.checkInTime && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Check-In Time</p>
-                        <p className="font-medium">{new Date(rec.checkInTime).toLocaleString("id-ID")}</p>
-                      </div>
-                    )}
-                    {rec.checkOutTime && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Check-Out Time</p>
-                        <p className="font-medium">{new Date(rec.checkOutTime).toLocaleString("id-ID")}</p>
-                      </div>
-                    )}
-                    {visitorInfo?.email && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Email</p>
-                        <p className="font-medium">{visitorInfo.email}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* KTP Preview */}
-                {visitorInfo?.ktpFile && (
-                  <div className="border rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-2">KTP Upload</p>
-                    <div className="flex items-start gap-3">
-                      {/* Inline image preview */}
-                      <div className="flex-shrink-0">
-                        <img
-                          src={visitorInfo.ktpFile}
-                          alt="KTP"
-                          className="w-32 h-20 object-cover rounded border bg-muted"
-                          onError={(e) => {
-                            // Fallback if image fails to load
-                            const target = e.currentTarget
-                            target.style.display = "none"
-                            const parent = target.parentElement
-                            if (parent && !parent.querySelector(".ktp-fallback")) {
-                              const fallback = document.createElement("div")
-                              fallback.className = "ktp-fallback w-32 h-20 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground"
-                              fallback.textContent = "No preview"
-                              parent.appendChild(fallback)
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={visitorInfo.ktpFile}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary underline break-all"
-                        >
-                          📎 Open in new tab
-                        </a>
-                        <p className="text-xs text-muted-foreground mt-1 break-all">{visitorInfo.ktpFile}</p>
+              {scanning && (
+                <>
+                  <div className="absolute inset-0 pointer-events-none border-[8px] border-black/40 mix-blend-overlay" />
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 sm:w-72 sm:h-72">
+                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg" />
+                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-lg" />
+                      
+                      <div className="absolute inset-x-2 top-2 bottom-2 overflow-hidden pointer-events-none">
+                        <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-[scan_2.5s_ease-in-out_infinite]" />
                       </div>
                     </div>
                   </div>
-                )}
+                </>
+              )}
 
-                {/* Visitor List */}
-                {(() => {
-                  const visitors = Array.isArray(rec.data["visitors"]) ? (rec.data["visitors"] as Array<Record<string, unknown>>) : []
-                  if (visitors.length === 0) return null
-                  return (
-                    <div className="border rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-muted-foreground font-medium">Daftar Visitor ({visitors.length})</p>
-                      </div>
-                      <div className="space-y-2">
-                        {visitors.map((v, i) => (
-                          <div key={i} className="border-l-2 border-primary pl-3 py-1">
-                            <p className="font-medium text-sm">{i + 1}. {String(v["visitor_name"] || "-")}</p>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-1">
-                              <span>NIK: {String(v["nik"] || "-")}</span>
-                              <span>HP: {String(v["phone_number"] || "-")}</span>
-                              {Boolean(v["email"]) && <span>Email: {String(v["email"])}</span>}
-                              {Boolean(v["notes"]) && <span className="col-span-2">Notes: {String(v["notes"])}</span>}
-                            </div>
-                            {typeof v["ktp_file"] === "string" && v["ktp_file"] && (
-                              <div className="mt-1 flex items-center gap-2">
-                                <img
-                                  src={String(v["ktp_file"])}
-                                  alt={`KTP ${String(v["visitor_name"] || "")}`}
-                                  className="w-16 h-10 object-cover rounded border bg-muted flex-shrink-0"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none"
-                                  }}
-                                />
-                                <a
-                                  href={String(v["ktp_file"])}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary underline truncate"
-                                >
-                                  📎 KTP
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })()}
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
-                  {rec.qrStatus !== "checked_in" && rec.qrStatus !== "checked_out" && (
-                    <Button onClick={handleCheckIn} disabled={processing} className="bg-green-600 hover:bg-green-700">
-                      <LogIn className="w-4 h-4 mr-2" />
-                      {processing ? "Processing..." : "Check In"}
-                    </Button>
-                  )}
-                  {rec.qrStatus === "checked_in" && (
-                    <Button onClick={handleCheckOut} disabled={processing} variant="outline">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      {processing ? "Processing..." : "Check Out"}
-                    </Button>
-                  )}
-                  {rec.qrStatus === "checked_out" && (
-                    <Badge className="bg-gray-100 text-gray-600 text-sm px-3 py-1">
-                      Visit Completed
-                    </Badge>
-                  )}
+              {!scanning && !cameraError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-400">
+                  <div className="w-16 h-16 rounded-md bg-white/5 flex items-center justify-center mb-4">
+                    <QrCode className="w-7 h-7 text-white/40" />
+                  </div>
+                  <p className="text-base font-medium text-white/80 tracking-wide">Ready to Scan</p>
+                  <p className="text-xs mt-1 text-white/40">Activate the camera to begin reading passes</p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
 
-          {scanResult && !scanResult.valid && (
-            <Card className="border-red-200">
-              <CardContent className="p-4">
-                <p className="text-red-600 font-medium">{scanResult.error}</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              {cameraError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-red-400/80 p-5 text-center">
+                  <div className="w-16 h-16 rounded-lg bg-red-500/10 flex items-center justify-center mb-4">
+                    <CameraOff className="w-7 h-7 text-red-400" />
+                  </div>
+                  <p className="text-base font-medium text-red-300">Camera Unavailable</p>
+                  <p className="text-xs mt-1 max-w-sm text-red-400/60 leading-relaxed">{cameraError}</p>
+                </div>
+              )}
+            </div>
 
-        {/* History Panel */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <History className="w-4 h-4" />
-                Scan History (Today)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {scanHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No scans yet today</p>
-              ) : (
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {scanHistory.map((entry, i) => (
-                    <div key={i} className="border rounded-lg p-3 text-sm space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs">{entry.recordCode}</span>
-                        <Badge variant={entry.action === "checkin" ? "default" : entry.action === "checkout" ? "secondary" : "outline"} className="text-[10px]">
-                          {entry.action}
-                        </Badge>
+            {/* Scan Result Card */}
+            {rec && (
+              <div className="animate-in slide-in-from-bottom-8 fade-in duration-500">
+                <div className="bg-white rounded-md p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100">
+                  <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-md flex items-center justify-center ${scanResult?.valid ? "bg-emerald-50" : "bg-red-50"}`}>
+                        <QrCode className={`w-6 h-6 ${scanResult?.valid ? "text-emerald-600" : "text-red-600"}`} />
                       </div>
-                      <p className="text-xs">{entry.visitorName}</p>
-                      <p className={`text-xs ${entry.result === "Success" || entry.result === "QR Valid" ? "text-green-600" : "text-red-600"}`}>
-                        {entry.result}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">{entry.timestamp}</p>
+                      <div>
+                        <h2 className="text-xl font-bold tracking-tight text-slate-900">Scan Result</h2>
+                        <p className="text-xs font-medium text-slate-500 mt-0.5 uppercase tracking-wider">{rec.code || rec.id.slice(0,8)}</p>
+                      </div>
+                    </div>
+                    {scanResult?.valid ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium ring-1 ring-inset ring-emerald-600/20">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Valid
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium ring-1 ring-inset ring-red-600/20">
+                        <AlertCircle className="w-3.5 h-3.5" /> Invalid
+                      </span>
+                    )}
+                  </div>
+
+                  {visitorInfo && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-5">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Primary Visitor</p>
+                        <p className="text-sm font-semibold text-slate-900">{visitorInfo.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">NIK / ID Number</p>
+                        <p className="text-sm font-medium text-slate-700 font-mono">{visitorInfo.nik}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Phone</p>
+                        <p className="text-sm font-medium text-slate-700">{visitorInfo.phone}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scheduled Date</p>
+                        <p className="text-sm font-medium text-slate-700">{String(rec.data["visit_date"] || "-")}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Purpose</p>
+                        <p className="text-sm font-medium text-slate-700 line-clamp-2">{String(rec.data["purpose"] || "-")}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Status</p>
+                        <div>
+                          {rec.qrStatus === "checked_in" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold ring-1 ring-inset ring-emerald-600/20">
+                              Checked In
+                            </span>
+                          ) : rec.qrStatus === "checked_out" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold ring-1 ring-inset ring-slate-400/20">
+                              Checked Out
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-semibold ring-1 ring-inset ring-amber-600/20">
+                              Awaiting Check-in
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-3">
+                    {rec.qrStatus !== "checked_in" && rec.qrStatus !== "checked_out" && (
+                      <Button onClick={handleCheckIn} disabled={processing} className="h-10 px-6 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-md shadow-emerald-600/20 transition-all w-full sm:w-auto">
+                        <LogIn className="w-4 h-4 mr-2" />
+                        {processing ? "Processing..." : "Confirm Check In"}
+                      </Button>
+                    )}
+                    {rec.qrStatus === "checked_in" && (
+                      <Button onClick={handleCheckOut} disabled={processing} className="h-10 px-6 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm shadow-md shadow-slate-900/20 transition-all w-full sm:w-auto">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        {processing ? "Processing..." : "Complete Check Out"}
+                      </Button>
+                    )}
+                    {rec.qrStatus === "checked_out" && (
+                      <div className="flex items-center justify-center h-10 px-6 rounded-md bg-slate-50 text-slate-500 font-medium text-sm border border-slate-200 w-full sm:w-auto">
+                        Visit Completed
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {scanResult && !scanResult.valid && (
+              <div className="bg-red-50 rounded-md p-6 border border-red-100 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-red-900 font-semibold text-base">Scan Failed</h3>
+                  <p className="text-red-700 text-sm mt-0.5">{scanResult.error}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* History Panel (Right Col) */}
+          <div className="lg:col-span-4 space-y-5">
+            <div className="bg-white rounded-lg p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 sticky top-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-9 h-9 rounded-md bg-slate-50 flex items-center justify-center border border-slate-100">
+                  <History className="w-4 h-4 text-slate-500" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Scan Activity</h3>
+                  <p className="text-[10px] text-slate-400 font-medium tracking-wider">TODAY'S LOG</p>
+                </div>
+              </div>
+
+              {scanHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="w-12 h-12 rounded-md bg-slate-50 flex items-center justify-center mb-3">
+                    <History className="w-5 h-5 text-slate-300" />
+                  </div>
+                  <p className="text-slate-500 text-sm font-medium">No activity yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Recent scans will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-5 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  {scanHistory.map((entry, i) => (
+                    <div key={i} className="flex gap-3 relative group">
+                      {/* Timeline line */}
+                      {i !== scanHistory.length - 1 && (
+                        <div className="absolute left-[9px] top-6 bottom-[-20px] w-px bg-slate-100 group-hover:bg-slate-200 transition-colors" />
+                      )}
+                      
+                      {/* Status Dot */}
+                      <div className="relative mt-0.5">
+                        <div className={`w-[18px] h-[18px] rounded-full border-4 border-white flex items-center justify-center ${entry.action === "checkin" ? "bg-emerald-500" : entry.action === "checkout" ? "bg-slate-800" : "bg-red-400"} shadow-sm z-10`}>
+                          <div className="w-1 h-1 rounded-full bg-white" />
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 pb-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[11px] font-semibold text-slate-900">{entry.action.toUpperCase()}</p>
+                          <span className="text-[9px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full">{entry.timestamp.split(" ")[1]}</span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-700">{entry.visitorName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] font-mono font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">{entry.recordCode}</span>
+                          <span className={`text-[10px] font-medium ${entry.result === "Success" || entry.result === "QR Valid" ? "text-emerald-600" : "text-red-600"}`}>
+                            {entry.result}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Custom animation keyframes */}
-      <style jsx>{`
-        @keyframes scan {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(calc(100% - 2px)); }
-        }
-      `}</style>
+        <style jsx>{`
+          @keyframes scan {
+            0% { transform: translateY(-50%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(150%); opacity: 0; }
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+          }
+        `}</style>
+      </div>
     </div>
   )
 }
