@@ -528,7 +528,7 @@ async function run() {
   const subFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
     { key: "sales_order_id", label: "Sales Order", type: "DROPDOWN", required: false, order: 1, config: { source: { table: "DocRecord", docTypeKey: "sales_order", labelField: "code", valueField: "id" } } },
     { key: "contract_duration", label: "Durasi Kontrak (Bulan)", type: "NUMBER", required: false, order: 1.2 },
-    { key: "service_name", label: "Nama Layanan", type: "TEXT", required: false, order: 1.5 },
+    { key: "service_name", label: "Nama Layanan", type: "DROPDOWN", required: false, order: 1.5, config: { source: { table: "Product", labelField: "name", valueField: "name" } } },
     { key: "customer_id", label: "Customer", type: "DROPDOWN", required: true, order: 2, config: { source: { table: "Company", labelField: "name", valueField: "id" } } },
     { key: "start_date", label: "Start Date", type: "DATE", required: true, order: 3 },
     { key: "end_date", label: "End Date", type: "DATE", required: false, order: 4 },
@@ -563,6 +563,7 @@ async function run() {
         default: "Deactive"
       } 
     },
+    { key: "total_nrc", label: "Total NRC (Setup Fee)", type: "PRICE", required: false, order: 6.5 },
     { key: "total_mrc", label: "Total MRC", type: "PRICE", required: true, order: 7 },
     { key: "next_billing_date", label: "Next Billing Date", type: "DATE", required: false, order: 8 },
   ]
@@ -1357,6 +1358,204 @@ async function run() {
 
   // Update existing Floor records that may lack a name
   await prisma.$executeRawUnsafe('UPDATE `Floor` SET `name` = CONCAT("Lantai ", `level`) WHERE `name` = "Lantai" OR `name` = ""');
+
+  // --- AUTO-GENERATED MISSING DOCTYPES ---
+  const cocDoc = await prisma.docType.upsert({
+    where: { key: "coc" },
+    update: { name: "Certificate of Completion", description: "Dokumen Berita Acara Serah Terima / COC" },
+    create: { key: "coc", name: "Certificate of Completion", description: "Dokumen Berita Acara Serah Terima / COC", branchId: branch.id },
+  });
+
+  const cocDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "coc_date", label: "COC Date", type: "DATE", required: true, order: 1, config: {"defaultNow":true,"defaultDateCreated":false}  },
+    { key: "rfs_date", label: "RFS Date", type: "DATE", required: true, order: 2, config: {"defaultNow":true,"defaultDateCreated":false}  },
+    { key: "billing_date", label: "Billing Date", type: "DATE", required: true, order: 3, config: {"defaultNow":true,"defaultDateCreated":false}  },
+    { key: "customer_id", label: "Customer", type: "DROPDOWN", required: true, order: 4, config: {"source":{"table":"Company","labelField":"name","valueField":"id"}}  },
+    { key: "notes", label: "Catatan", type: "TEXTAREA", required: false, order: 5 },
+    { key: "sow", label: "Scope Of Work", type: "TEXTAREA", required: true, order: 5 },
+    { key: "items", label: "Items", type: "TABLE", required: false, order: 6 },
+  ];
+
+  for (const f of cocDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: cocDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: cocDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const cocItemDoc = await prisma.docType.upsert({
+    where: { key: "coc_item" },
+    update: { name: "COC Item", description: "Item COC" },
+    create: { key: "coc_item", name: "COC Item", description: "Item COC", branchId: branch.id },
+  });
+
+  const cocItemDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "product_id", label: "Produk", type: "DROPDOWN", required: true, order: 1, config: {"source":{"table":"Product","labelField":"name","valueField":"id"}}  },
+    { key: "product_category", label: "Product Category", type: "DROPDOWN", required: true, order: 1, config: {"source":{"table":"ProductGroup","labelField":"name","valueField":"id"}}  },
+    { key: "qty", label: "Jumlah", type: "NUMBER", required: true, order: 2 },
+    { key: "product_sub_category", label: "Product Sub Category", type: "DROPDOWN", required: false, order: 2, config: {"source":{"table":"ProductGroup","filter":{"field":"parentId","dependsOn":"product_category"},"labelField":"name","valueField":"id"}}  },
+  ];
+
+  for (const f of cocItemDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: cocItemDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: cocItemDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const crossConnectDoc = await prisma.docType.upsert({
+    where: { key: "cross_connect" },
+    update: { name: "Cross Connect", description: "" },
+    create: { key: "cross_connect", name: "Cross Connect", description: "", branchId: branch.id },
+  });
+
+  const crossConnectDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "branch_id", label: "Branch", type: "DROPDOWN", required: true, order: 10, config: {"source":{"table":"Branch","labelField":"name","valueField":"id"}}  },
+    { key: "activation_date", label: "Activation Date", type: "DATE", required: true, order: 20 },
+    { key: "cross_connect_type", label: "Cross Connect Type", type: "DROPDOWN", required: true, order: 30, config: {"options":[{"label":"Fiber Optic","value":"Fiber Optic"},{"label":"UTP","value":"UTP"}]}  },
+    { key: "request_type", label: "Request Type", type: "DROPDOWN", required: true, order: 40, config: {"options":[{"label":"New","value":"New"},{"label":"Terminate","value":"Terminate"}]}  },
+    { key: "status", label: "Status", type: "DROPDOWN", required: true, order: 45, config: {"options":[{"label":"Active","value":"Active"},{"label":"Inactive","value":"Inactive"}]}  },
+    { key: "__header_source", label: "SOURCE", type: "TEXT", required: false, order: 50 },
+    { key: "source_rack_id", label: "Rack ID", type: "DROPDOWN", required: true, order: 60, config: {"source":{"key":"master_rack","filter":{"field":"branch_id","dependsOn":"branch_id"},"labelField":"rack_name","valueField":"id"}}  },
+    { key: "source_material", label: "Material", type: "DROPDOWN", required: true, order: 70, config: {"source":{"mode":"inventory","filter":{"field":"branch_id","dependsOn":"branch_id"}}}  },
+    { key: "source_connector_type", label: "Connector Type", type: "DROPDOWN", required: true, order: 80, config: {"source":{"mode":"static_dep","filter":{"field":"cross_connect_type","dependsOn":"cross_connect_type"}}}  },
+    { key: "__header_destination", label: "DESTINATION", type: "TEXT", required: false, order: 90 },
+    { key: "destination", label: "Destination", type: "DROPDOWN", required: true, order: 100, config: {"options":[{"label":"APJII","value":"APJII"},{"label":"Open IXP","value":"Open IXP"}]}  },
+    { key: "destination_rack_id", label: "Rack ID", type: "TEXT", required: true, order: 110 },
+    { key: "destination_connector_type", label: "Connector Type", type: "DROPDOWN", required: true, order: 120, config: {"source":{"mode":"static_dep","filter":{"field":"cross_connect_type","dependsOn":"cross_connect_type"}}}  },
+  ];
+
+  for (const f of crossConnectDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: crossConnectDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: crossConnectDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const helpPageDoc = await prisma.docType.upsert({
+    where: { key: "help_page" },
+    update: { name: "Help Page", description: "Konten halaman bantuan" },
+    create: { key: "help_page", name: "Help Page", description: "Konten halaman bantuan", branchId: branch.id },
+  });
+
+  const helpPageDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+  ];
+
+  for (const f of helpPageDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: helpPageDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: helpPageDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const invoiceDoc = await prisma.docType.upsert({
+    where: { key: "invoice" },
+    update: { name: "Invoices", description: "Invoice billing untuk tagihan recurring" },
+    create: { key: "invoice", name: "Invoices", description: "Invoice billing untuk tagihan recurring", branchId: branch.id },
+  });
+
+  const invoiceDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "subscription_id", label: "Subscription", type: "DROPDOWN", required: true, order: 2, config: {"source":{"key":"subscription_management","labelField":"service_name","valueField":"service_name"}}  },
+    { key: "customer_id", label: "Customer", type: "DROPDOWN", required: true, order: 3, config: {"source":{"table":"Company","labelField":"name","valueField":"id"}}  },
+    { key: "invoice_date", label: "Invoice Date", type: "DATE", required: true, order: 4 },
+    { key: "due_date", label: "Due Date", type: "DATE", required: true, order: 5 },
+    { key: "billing_period_start", label: "Period Start", type: "DATE", required: false, order: 6 },
+    { key: "billing_period_end", label: "Period End", type: "DATE", required: false, order: 7 },
+    { key: "subtotal", label: "Subtotal", type: "PRICE", required: true, order: 8 },
+    { key: "tax", label: "Tax (11%)", type: "PRICE", required: false, order: 9 },
+    { key: "total_amount", label: "Total Amount", type: "PRICE", required: true, order: 10 },
+    { key: "prorate_details", label: "Prorate Details", type: "TEXTAREA", required: false, order: 11 },
+    { key: "nrc_amount", label: "NRC (Setup Fee)", type: "PRICE", required: false, order: 12 },
+    { key: "mrc_amount", label: "MRC (Recurring)", type: "PRICE", required: false, order: 13 },
+    { key: "status", label: "Status", type: "DROPDOWN", required: true, order: 14, config: {"options":[{"label":"Draft","value":"Draft"},{"label":"Sent","value":"Sent"},{"label":"Paid","value":"Paid"},{"label":"Overdue","value":"Overdue"},{"label":"Cancelled","value":"Cancelled"}]}  },
+  ];
+
+  for (const f of invoiceDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: invoiceDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: invoiceDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const masterRackDoc = await prisma.docType.upsert({
+    where: { key: "master_rack" },
+    update: { name: "Master Rack", description: "Data master rack yang terdaftar di data center" },
+    create: { key: "master_rack", name: "Master Rack", description: "Data master rack yang terdaftar di data center", branchId: branch.id },
+  });
+
+  const masterRackDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "branch_id", label: "Branch", type: "DROPDOWN", required: true, order: 10, config: {"source":{"table":"Branch","labelField":"name","valueField":"id"}}  },
+    { key: "building_id", label: "Building", type: "DROPDOWN", required: true, order: 20, config: {"source":{"table":"Building","filter":{"field":"branchId","dependsOn":"branch_id"},"labelField":"name","valueField":"id"}}  },
+    { key: "floor_id", label: "Floor", type: "DROPDOWN", required: true, order: 30, config: {"source":{"table":"Floor","filter":{"field":"buildingId","dependsOn":"building_id"},"labelField":"level","valueField":"id"}}  },
+    { key: "room_id", label: "Room", type: "DROPDOWN", required: true, order: 40, config: {"source":{"table":"Room","filter":{"field":"floorId","dependsOn":"floor_id"},"labelField":"name","valueField":"id"}}  },
+    { key: "rack_id", label: "ID Rack", type: "TEXT", required: true, order: 50 },
+    { key: "rack_name", label: "Nama Rack", type: "TEXT", required: true, order: 51 },
+    { key: "company_id", label: "Assigned Company", type: "DROPDOWN", required: false, order: 70, config: {"source":{"table":"Company","labelField":"name","valueField":"id"}}  },
+    { key: "patch_panels", label: "Patch Panels", type: "TABLE", required: false, order: 80 },
+    { key: "hardware", label: "Hardware", type: "TABLE", required: false, order: 90 },
+  ];
+
+  for (const f of masterRackDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: masterRackDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: masterRackDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const rackHardwareDoc = await prisma.docType.upsert({
+    where: { key: "rack_hardware" },
+    update: { name: "Rack Hardware", description: "" },
+    create: { key: "rack_hardware", name: "Rack Hardware", description: "", branchId: branch.id },
+  });
+
+  const rackHardwareDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "name", label: "Nama Hardware", type: "TEXT", required: true, order: 10 },
+    { key: "description", label: "Deskripsi", type: "TEXTAREA", required: false, order: 20 },
+    { key: "serial_number", label: "Serial Number", type: "TEXT", required: true, order: 30 },
+    { key: "electricity", label: "Kebutuhan Listrik (Watt)", type: "NUMBER", required: false, order: 40 },
+    { key: "weight", label: "Berat (kg)", type: "NUMBER", required: false, order: 50 },
+  ];
+
+  for (const f of rackHardwareDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: rackHardwareDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: rackHardwareDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
+  const rackPatchPanelDoc = await prisma.docType.upsert({
+    where: { key: "rack_patch_panel" },
+    update: { name: "Rack Patch Panel", description: "" },
+    create: { key: "rack_patch_panel", name: "Rack Patch Panel", description: "", branchId: branch.id },
+  });
+
+  const rackPatchPanelDocFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
+    { key: "patch_panel_number", label: "Patch Panel Number", type: "TEXT", required: true, order: 10 },
+  ];
+
+  for (const f of rackPatchPanelDocFields) {
+    const configValue: Prisma.InputJsonValue | undefined = f.config ? (f.config as unknown as Prisma.InputJsonValue) : undefined;
+    await prisma.docField.upsert({
+      where: { docTypeId_key: { docTypeId: rackPatchPanelDoc.id, key: f.key } },
+      update: { label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+      create: { docTypeId: rackPatchPanelDoc.id, key: f.key, label: f.label, type: f.type, required: !!f.required, order: f.order, config: configValue },
+    });
+  }
+
 }
 
 run()

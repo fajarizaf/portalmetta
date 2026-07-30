@@ -40,6 +40,7 @@ export default async function AdminVisitsPage() {
     where: { docTypeId: dt.id },
     orderBy: { updatedAt: "desc" },
     take: 500,
+    include: { rows: true }
   })
 
   // Filter records whose visit_date is within range
@@ -71,13 +72,13 @@ export default async function AdminVisitsPage() {
     const sizeClasses = size === "md" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[11px]"
     if (s === "checked_in") return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60", sizeClasses)}><CheckCircle2 className="h-3 w-3" />Checked In</span>
     if (s === "checked_out") return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-slate-50 text-slate-600 border-slate-200/60", sizeClasses)}><Clock className="h-3 w-3" />Checked Out</span>
-    return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-amber-50 text-amber-700 border-amber-200/60", sizeClasses)}><Clock className="h-3 w-3" />Pending</span>
+    return <span className={cn("inline-flex items-center gap-1 rounded-md font-medium border bg-amber-50 text-amber-700 border-amber-200/60", sizeClasses)}><Clock className="h-3 w-3" />Awaiting Check-in</span>
   }
 
   function docStatusBadge(status: string) {
     const s = status?.toLowerCase() || ""
-    if (s.includes("approve")) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60"><CheckCircle2 className="h-3 w-3" />{status}</span>
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">{status}</span>
+    if (s.includes("approve")) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60"><CheckCircle2 className="h-3 w-3" />Req: {status}</span>
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">Req: {status}</span>
   }
 
   return (
@@ -188,20 +189,18 @@ export default async function AdminVisitsPage() {
               </p>
             </div>
           ) : (
-            filtered.map((r) => {
+            filtered.map((r: any) => {
               const data = (r.data ?? {}) as Record<string, unknown>
-              const visitors = Array.isArray(data["visitors"])
-                ? (data["visitors"] as Array<Record<string, unknown>>)
-                : []
-              const firstVisitor = visitors[0]
-              const visitorName = firstVisitor
-                ? String(firstVisitor["visitor_name"] || "N/A")
+              const rows = Array.isArray(r.rows) ? r.rows : []
+              const firstVisitorRow = rows.length > 0 ? (rows[0].data ?? {}) as Record<string, unknown> : null
+              const visitorName = firstVisitorRow
+                ? String(firstVisitorRow["visitor_name"] || "N/A")
                 : "N/A"
-              const visitorNik = firstVisitor
-                ? String(firstVisitor["nik"] || "-")
+              const visitorNik = firstVisitorRow
+                ? String(firstVisitorRow["nik"] || "-")
                 : "-"
-              const visitorPhone = firstVisitor
-                ? String(firstVisitor["phone_number"] || "-")
+              const visitorPhone = firstVisitorRow
+                ? String(firstVisitorRow["phone_number"] || "-")
                 : "-"
               const purpose = String(data["purpose"] || "-")
               const visitDate = String(data["visit_date"] || "-")
@@ -237,10 +236,10 @@ export default async function AdminVisitsPage() {
                         </Link>
                         {docStatusBadge(r.status ?? "Draft")}
                         {qrStatusBadge(data["qr_status"])}
-                        {visitors.length > 1 && (
+                        {rows.length > 0 && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
                             <Users className="h-3 w-3" />
-                            {visitors.length} visitors
+                            {rows.length} visitor{rows.length > 1 ? "s" : ""}
                           </span>
                         )}
                       </div>
@@ -250,8 +249,8 @@ export default async function AdminVisitsPage() {
                         <div className="flex items-center gap-1.5 text-sm min-w-0">
                           <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span className="text-slate-900 font-medium truncate">{visitorName}</span>
-                          {visitors.length > 1 && (
-                            <span className="text-slate-400 text-xs shrink-0">+{visitors.length - 1} more</span>
+                          {rows.length > 1 && (
+                            <span className="text-slate-400 text-xs shrink-0">+{rows.length - 1} more</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 text-sm min-w-0">
