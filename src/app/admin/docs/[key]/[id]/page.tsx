@@ -34,6 +34,7 @@ import { ImagePreview } from "@/components/image-preview"
 import { SubscriptionBillingActions } from "@/components/admin/subscription-billing-actions"
 import { SubscriptionDetailView } from "@/components/admin/subscription/subscription-detail-view"
 import { SalesOrderSubscriptionTab } from "@/components/admin/subscription/sales-order-subscription-tab"
+import { WorkflowStateTracker } from "@/components/admin/workflow-state-tracker"
 import * as React from "react"
 
 function formatIDR(value: unknown): string {
@@ -899,10 +900,11 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           }) : recs) as any[]
           dynamicOptions[f.key] = filtered.map((r: any) => {
             const rowAny = r as any
-            const labelRaw = rowAny[labelField]
-            const valueRaw = rowAny[valueField]
-            const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? rowAny.id)
-            const value = typeof valueRaw === "string" ? valueRaw : String(valueRaw ?? rowAny.id)
+            const d = (r.data ?? {}) as Record<string, unknown>
+            const labelRaw = r.code || d[labelField] || d["code"] || d["name"] || d["title"] || rowAny[labelField] || rowAny.id
+            const valueRaw = valueField === "id" ? r.id : (d[valueField] ?? rowAny[valueField] ?? r.id)
+            const label = typeof labelRaw === "string" && labelRaw ? labelRaw : String(r.code || rowAny.id)
+            const value = typeof valueRaw === "string" && valueRaw ? valueRaw : String(rowAny.id)
             return { label, value }
           })
         }
@@ -1079,10 +1081,10 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
             }) : recs
             childOptionsByFieldKey[tf.key][f.key] = filtered.map((r) => {
               const d = (r.data ?? {}) as Record<string, unknown>
-              const labelRaw = d[labelField]
-              const valueRaw = d[valueField]
-              const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r.id)
-              const value = typeof valueRaw === "string" ? valueRaw : r.id
+              const labelRaw = r.code || d[labelField] || d["code"] || d["name"] || d["title"] || r.id
+              const valueRaw = valueField === "id" ? r.id : (d[valueField] ?? r.id)
+              const label = typeof labelRaw === "string" && labelRaw ? labelRaw : String(r.code || r.id)
+              const value = typeof valueRaw === "string" && valueRaw ? valueRaw : r.id
               return { label, value }
             })
           }
@@ -1210,18 +1212,18 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
     : 0
   const invoiceTotal = docType.key === "invoice" ? invoiceSubtotal + invoiceTaxVal : 0
 
-  let wfRecord: { config?: unknown; isActive?: boolean } | null = null
+  let wfRecord: { name?: string; config?: unknown; isActive?: boolean; branchId?: string | null; branch?: { name: string } | null } | null = null
   try {
     if (record.branchId) {
-      const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: record.branchId } } })
+      const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: record.branchId } }, include: { branch: true } })
       wfRecord = cand ?? null
     }
     if (!wfRecord && docType.branchId) {
-      const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: docType.branchId } } })
+      const cand = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: docType.branchId } }, include: { branch: true } })
       wfRecord = cand ?? null
     }
-    if (!wfRecord) wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null, isActive: true } })
-    if (!wfRecord) wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null } })
+    if (!wfRecord) wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null, isActive: true }, include: { branch: true } })
+    if (!wfRecord) wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null }, include: { branch: true } })
   } catch {}
   const wfCfg = wfRecord?.config
     ? ((wfRecord.config as unknown) as {
@@ -1437,25 +1439,20 @@ export default async function DocEditPage({ params }: { params?: Record<string, 
           </div>
         </div>
 
-        <div className="space-y-2">
-          {canWriteEffective && nextTransitions.length > 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200/80 p-3 flex items-center gap-3 flex-wrap shadow-sm">
-              <span className="text-xs font-medium text-slate-500">Workflow:</span>
-              <div className="flex flex-wrap gap-2">
-                {nextTransitions.map((t, i) => (
-                  <WorkflowSubmitter
-                    key={`${t.from}-${t.to}-${i}`}
-                    targetStatus={t.to}
-                    formId="edit-record-form"
-                    variant={statusBadgeVariant(t.to)}
-                  >
-                    Move to {t.to}
-                  </WorkflowSubmitter>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <WorkflowStateTracker
+          workflowName={wfRecord?.name ?? `${docType.name} Workflow`}
+          isBranchSpecific={Boolean(wfRecord?.branchId)}
+          branchName={wfRecord?.branch?.name}
+          currentStatus={currentStatus}
+          effectiveDocStatus={effectiveDocStatus}
+          states={wfCfg.states ?? []}
+          transitions={wfCfg.transitions ?? []}
+          userRole={roleName}
+          canWriteEffective={canWriteEffective}
+          formId="edit-record-form"
+          activities={activity}
+          hideUnauthorizedActions={true}
+        />
 
         <form action={updateRecord} id="edit-record-form" className="space-y-6">
             <input type="hidden" name="docTypeKey" value={docType.key} />

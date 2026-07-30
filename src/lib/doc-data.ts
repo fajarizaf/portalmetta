@@ -84,10 +84,10 @@ export async function getDocPreviewData(key: string, id: string, userId: string)
           }) : recs
           dynamicOptions[f.key] = filtered.map((r) => {
             const d = (r.data ?? {}) as Record<string, unknown>
-            const labelRaw = d[labelField]
-            const valueRaw = d[valueField]
-            const label = typeof labelRaw === "string" ? labelRaw : String(labelRaw ?? r.id)
-            const value = typeof valueRaw === "string" ? valueRaw : r.id
+            const labelRaw = r.code || d[labelField] || d["code"] || d["name"] || d["title"] || r.id
+            const valueRaw = valueField === "id" ? r.id : (d[valueField] ?? r.id)
+            const label = typeof labelRaw === "string" && labelRaw ? labelRaw : String(r.code || r.id)
+            const value = typeof valueRaw === "string" && valueRaw ? valueRaw : r.id
             return { label, value }
           })
         }

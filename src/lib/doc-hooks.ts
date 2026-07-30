@@ -41,6 +41,15 @@ export async function runDocEventHook(event: DocEventName, docTypeKey: string, r
     }
   }
 
+  if (docTypeKey === "subscription_management" && ["after_insert", "before_save", "validate", "on_submit"].includes(event)) {
+    try {
+      const { BillingScheduleService } = await import("@/lib/services/billing-schedule-service")
+      await BillingScheduleService.generateSchedulesForSubscription(rec.id)
+    } catch (e) {
+      console.error("[runDocEventHook] Error auto-generating Billing Schedules for Subscription:", e)
+    }
+  }
+
   function getRowValue(rowData: Record<string, unknown>, key: string): unknown {
     if (key in rowData) return rowData[key]
     const lower = key.toLowerCase()

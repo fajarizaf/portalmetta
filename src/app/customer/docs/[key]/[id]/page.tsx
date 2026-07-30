@@ -22,6 +22,7 @@ import { ValidatedButton } from "@/components/validated-button"
 import QuotationItemSpecs from "@/components/quotation-item-specs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { VisitorQRCard } from "@/components/visitor-qr-card"
+import { WorkflowStateTracker } from "@/components/admin/workflow-state-tracker"
 import fs from "fs/promises"
 import path from "path"
 import * as React from "react"
@@ -587,24 +588,32 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
   }
 
   // Workflow info
-  let wfRecord: { config?: unknown; isActive?: boolean } | null = null
+  let wfRecord: { name?: string; config?: unknown; isActive?: boolean; branchId?: string | null; branch?: { name: string } | null } | null = null
   try {
     if (record.branchId) {
-      const cand1 = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: record.branchId } } })
+      const cand1 = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: record.branchId } }, include: { branch: true } })
       if (cand1 && cand1.isActive) wfRecord = cand1
     }
     if (!wfRecord && docType.branchId) {
-      const cand2 = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: docType.branchId } } })
+      const cand2 = await prisma.docWorkflow.findUnique({ where: { docTypeId_branchId: { docTypeId: docType.id, branchId: docType.branchId } }, include: { branch: true } })
       if (cand2 && cand2.isActive) wfRecord = cand2
     }
     if (!wfRecord) {
-      wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null, isActive: true } })
+      wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, branchId: null, isActive: true }, include: { branch: true } })
     }
-    // Fallback: If still no workflow found, take the first active one available for this DocType
     if (!wfRecord) {
-      wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, isActive: true } })
+      wfRecord = await prisma.docWorkflow.findFirst({ where: { docTypeId: docType.id, isActive: true }, include: { branch: true } })
     }
   } catch (e) { console.error("Workflow lookup error:", e) }
+
+  const activity: Array<{ at: Date; text: string }> = []
+  activity.push({ at: record.createdAt, text: `Dokumen dibuat oleh ${record.createdBy?.name ?? record.createdBy?.email ?? "-"}` })
+  const stored = (() => { const d = (record.data ?? {}) as Record<string, unknown>; const arr = d["__activity"]; return Array.isArray(arr) ? (arr as Array<{ at: string; text: string }>) : [] })()
+  for (const e of stored) { activity.push({ at: new Date(e.at), text: e.text }) }
+  if (record.updatedAt && record.updatedAt.getTime() !== record.createdAt.getTime()) {
+    activity.push({ at: record.updatedAt, text: `Dokumen diubah oleh ${record.updatedBy?.name ?? record.updatedBy?.email ?? "-"}` })
+  }
+  activity.sort((a, b) => b.at.getTime() - a.at.getTime())
   
   const wfCfg = wfRecord?.config ? ((wfRecord.config as unknown) as { states?: Array<{ name: string }>; transitions?: Array<{ from: string; to: string; roles: string[]; condition?: string }> }) : { states: [], transitions: [] }
   const stateNames = (wfCfg.states ?? []).map((s) => s.name)
@@ -858,6 +867,23 @@ export default async function CustomerDocDetailPage({ params }: { params?: Recor
           />
         </div>
       )}
+
+      <div className="mb-8">
+        <WorkflowStateTracker
+          workflowName={wfRecord?.name ?? `${docType.name} Workflow`}
+          isBranchSpecific={Boolean(wfRecord?.branchId)}
+          branchName={wfRecord?.branch?.name}
+          currentStatus={current}
+          effectiveDocStatus={record.docStatus}
+          states={wfCfg.states ?? []}
+          transitions={wfCfg.transitions ?? []}
+          userRole={roleName}
+          canWriteEffective={canWrite}
+          formId="customer-edit-form"
+          activities={activity}
+          hideUnauthorizedActions={true}
+        />
+      </div>
 
       <form action={updateRecord} id="customer-edit-form" className="space-y-8">
         <input type="hidden" name="docTypeKey" value={key} />

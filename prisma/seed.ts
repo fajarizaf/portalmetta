@@ -526,7 +526,8 @@ async function run() {
   })
 
   const subFields: Array<{ key: string; label: string; type: FieldType; required?: boolean; order: number; config?: Record<string, unknown> }> = [
-    { key: "sales_order_id", label: "Sales Order", type: "TEXT", required: true, order: 1 },
+    { key: "sales_order_id", label: "Sales Order", type: "DROPDOWN", required: false, order: 1, config: { source: { table: "DocRecord", docTypeKey: "sales_order", labelField: "code", valueField: "id" } } },
+    { key: "contract_duration", label: "Durasi Kontrak (Bulan)", type: "NUMBER", required: false, order: 1.2 },
     { key: "service_name", label: "Nama Layanan", type: "TEXT", required: false, order: 1.5 },
     { key: "customer_id", label: "Customer", type: "DROPDOWN", required: true, order: 2, config: { source: { table: "Company", labelField: "name", valueField: "id" } } },
     { key: "start_date", label: "Start Date", type: "DATE", required: true, order: 3 },
