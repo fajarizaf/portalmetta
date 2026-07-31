@@ -50,7 +50,7 @@ export default async function InventoryManagementPage() {
         childDocTypeId: goodsInItemType.id,
         record: { status: completedStatus, ...branchWhere },
       },
-      include: { record: true },
+      include: { record: { include: { createdBy: { include: { company: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.docRow.findMany({
@@ -58,7 +58,7 @@ export default async function InventoryManagementPage() {
         childDocTypeId: goodsOutItemType.id,
         record: { status: completedStatus, ...branchWhere },
       },
-      include: { record: true },
+      include: { record: { include: { createdBy: { include: { company: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.branch.findMany({ orderBy: { name: "asc" } }),

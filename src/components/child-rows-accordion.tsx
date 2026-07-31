@@ -85,6 +85,64 @@ export default function ChildRowsAccordion({
     setRows((prev) => prev.filter((r) => r !== id))
   }
 
+  const updateRowField = (rid: number, fieldKey: string, val: string, containerId?: string) => {
+    setNewRowsData((prev) => {
+      const prevRow = prev[rid] || {}
+      const updated = { ...prevRow, [fieldKey]: val }
+
+      const opts = optionsMap[fieldKey] || []
+      const selectedOpt = opts.find((o) => o.value === val || o.original?.id === val || o.original?.name === val)
+
+      if (fieldKey === "item_name") {
+        if (selectedOpt && selectedOpt.original) {
+          updated["_is_stock_item"] = "true"
+        } else {
+          updated["_is_stock_item"] = ""
+        }
+      }
+
+      if (selectedOpt && selectedOpt.original) {
+        const orig = selectedOpt.original
+        updated["_is_stock_item"] = "true"
+        if (orig.brand) {
+          const brandOpts = optionsMap["brand"] || []
+          const matchedBrand = brandOpts.find(
+            (bo) => bo.value.toLowerCase() === String(orig.brand).toLowerCase() || bo.label.toLowerCase() === String(orig.brand).toLowerCase()
+          )
+          updated["brand"] = matchedBrand ? matchedBrand.value : orig.brand
+        }
+        if (orig.serial != null) updated["serial_number"] = orig.serial
+        if (orig.desc != null) updated["description"] = orig.desc
+        if (orig.type_of_material) {
+          const matOpts = optionsMap["type_of_material"] || []
+          const matchedMat = matOpts.find(
+            (mo) => mo.value.toLowerCase() === String(orig.type_of_material).toLowerCase() || mo.label.toLowerCase() === String(orig.type_of_material).toLowerCase()
+          )
+          updated["type_of_material"] = matchedMat ? matchedMat.value : orig.type_of_material
+        }
+        if (orig.building_id) updated["building_id"] = orig.building_id
+        if (orig.floor_id) updated["floor_id"] = orig.floor_id
+        if (orig.room_id) updated["room_id"] = orig.room_id
+        if (orig.qty != null) updated["quantity"] = "1"
+        if (orig.owner_customer_id) updated["owner_customer_id"] = orig.owner_customer_id
+
+        setTimeout(() => {
+          if (orig.building_id) {
+            window.dispatchEvent(new CustomEvent("docFieldChange", { detail: { name: `row_${rid}_building_id`, value: orig.building_id, containerId } }))
+          }
+          if (orig.floor_id) {
+            window.dispatchEvent(new CustomEvent("docFieldChange", { detail: { name: `row_${rid}_floor_id`, value: orig.floor_id, containerId } }))
+          }
+          if (orig.room_id) {
+            window.dispatchEvent(new CustomEvent("docFieldChange", { detail: { name: `row_${rid}_room_id`, value: orig.room_id, containerId } }))
+          }
+        }, 0)
+      }
+
+      return { ...prev, [rid]: updated }
+    })
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
@@ -122,13 +180,17 @@ export default function ChildRowsAccordion({
                     const fieldName = `${nameBase}${cf.key}`
                     const preset = (rowValuesMap[rid] ?? newRowsData[rid] ?? {})[cf.key]
                     const isDisabled = cf.readOnly || disabledFields.includes(cf.key)
+                    const isStockItemSelected = (rowValuesMap[rid] ?? newRowsData[rid] ?? {})["_is_stock_item"] === "true"
+                    const autoFilledKeys = ["brand", "serial_number", "description", "type_of_material", "building_id", "floor_id", "room_id", "owner_customer_id"]
+                    const isAutoFilledField = isStockItemSelected && autoFilledKeys.includes(cf.key)
+                    const isFieldDisabled = isDisabled || isAutoFilledField
 
                     if (cf.type === ("TEXT" as FieldType)) {
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <Input name={fieldName} defaultValue={typeof preset === "string" ? preset : undefined} disabled={isDisabled} />
-                          {isDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
+                          <Input name={fieldName} value={typeof preset === "string" ? preset : ""} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} disabled={isFieldDisabled} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
                         </div>
                       )
                     }
@@ -136,8 +198,8 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <textarea name={fieldName} className="border rounded p-2 w-full min-h-24 text-sm" defaultValue={typeof preset === "string" ? preset : undefined} disabled={isDisabled} />
-                          {isDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
+                          <textarea name={fieldName} className="border rounded p-2 w-full min-h-24 text-sm disabled:bg-muted disabled:cursor-not-allowed" value={typeof preset === "string" ? preset : ""} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} disabled={isFieldDisabled} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
                         </div>
                       )
                     }
@@ -145,7 +207,8 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <Input name={fieldName} type="text" placeholder="IDR 0" disabled={cf.readOnly} defaultValue={typeof preset === "string" ? preset : undefined} />
+                          <Input name={fieldName} type="text" placeholder="IDR 0" disabled={isFieldDisabled} value={typeof preset === "string" ? preset : ""} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
                         </div>
                       )
                     }
@@ -155,7 +218,8 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <Input name={fieldName} type="number" disabled={cf.readOnly} defaultValue={typeof preset === "string" ? preset : dv} />
+                          <Input name={fieldName} type="number" disabled={isFieldDisabled} value={typeof preset === "string" ? preset : (dv ?? "")} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : (dv ?? "")} />}
                         </div>
                       )
                     }
@@ -194,7 +258,7 @@ export default function ChildRowsAccordion({
                         const isProduct = (typeof src?.["table"] === "string" && String(src?.["table"]).toLowerCase() === "product") || (typeof src?.["key"] === "string" && String(src?.["key"]).toLowerCase().includes("product"))
                         const initMap: Record<string, string> = {}
                         for (const it of filters) {
-                          const raw = (rowValuesMap[rid] ?? {})[it.dependsOn]
+                          const raw = (rowValuesMap[rid] ?? newRowsData[rid] ?? {})[it.dependsOn]
                           const v = typeof raw === "string" ? raw : String(raw ?? "")
                           if (v) {
                             initMap[it.dependsOn] = v
@@ -214,7 +278,10 @@ export default function ChildRowsAccordion({
                               branchId={branchId}
                               initialDependsOnValues={initMap}
                               initialDependsOnValue={undefined}
+                              value={typeof preset === "string" ? preset : undefined}
                               defaultValue={typeof preset === "string" ? preset : undefined}
+                              onValueChange={(v) => updateRowField(rid, cf.key, v, containerId)}
+                              disabled={isFieldDisabled}
                               containerId={containerId}
                             />
                             {isProduct ? (
@@ -227,7 +294,7 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <SearchableSelect name={fieldName} placeholder="-" options={opt} defaultValue={typeof preset === "string" ? preset : undefined} emitChangeEvent={true} containerId={containerId} />
+                          <SearchableSelect name={fieldName} placeholder="-" options={opt} value={typeof preset === "string" ? preset : undefined} defaultValue={typeof preset === "string" ? preset : undefined} onValueChange={(v) => updateRowField(rid, cf.key, v, containerId)} emitChangeEvent={true} disabled={isFieldDisabled} containerId={containerId} />
                           {isProduct ? (
                             <QuotationItemSpecs dependsOnName={fieldName} branchId={branchId} namePrefix={nameBase} containerId={containerId} defaultProductId={typeof preset === "string" ? preset : undefined} defaultValues={rowValuesMap[rid]} />
                           ) : null}
@@ -237,8 +304,9 @@ export default function ChildRowsAccordion({
                     if (cf.type === ("CHECKBOX" as FieldType)) {
                       return (
                         <div key={cf.id} className="flex items-center gap-2">
-                          <input type="checkbox" name={fieldName} defaultChecked={preset === "true" || preset === "on"} />
+                          <input type="checkbox" name={fieldName} checked={preset === "true" || preset === "on" || preset === "1"} onChange={(e) => updateRowField(rid, cf.key, e.target.checked ? "true" : "false", containerId)} disabled={isFieldDisabled} />
                           <Label>{cf.label}</Label>
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={preset === "true" || preset === "on" || preset === "1" ? "true" : "false"} />}
                         </div>
                       )
                     }
@@ -246,7 +314,8 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <Input name={fieldName} type="date" defaultValue={typeof preset === "string" ? preset : undefined} />
+                          <Input name={fieldName} type="date" value={typeof preset === "string" ? preset : ""} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} disabled={isFieldDisabled} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
                         </div>
                       )
                     }
@@ -254,7 +323,8 @@ export default function ChildRowsAccordion({
                       return (
                         <div key={cf.id} className="space-y-2">
                           <Label>{cf.label}{cf.required ? " *" : ""}</Label>
-                          <Input name={fieldName} type="datetime-local" defaultValue={typeof preset === "string" ? preset : undefined} />
+                          <Input name={fieldName} type="datetime-local" value={typeof preset === "string" ? preset : ""} onChange={(e) => updateRowField(rid, cf.key, e.target.value, containerId)} disabled={isFieldDisabled} />
+                          {isFieldDisabled && <input type="hidden" name={fieldName} value={typeof preset === "string" ? preset : ""} />}
                         </div>
                       )
                     }

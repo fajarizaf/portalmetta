@@ -13,7 +13,9 @@ export default function DependentDropdown({
   label,
   required,
   placeholder = "-",
+  value,
   defaultValue,
+  onValueChange,
   options,
   source,
   branchId,
@@ -27,7 +29,9 @@ export default function DependentDropdown({
   label: string
   required?: boolean
   placeholder?: string
+  value?: string
   defaultValue?: string
+  onValueChange?: (v: string) => void
   options?: Option[]
   source?: { mode?: string; key?: string; table?: string; labelField?: string; valueField?: string; filter?: SourceFilter }
   branchId?: string
@@ -202,10 +206,24 @@ export default function DependentDropdown({
 
   return (
     <div className="space-y-2">
-      <Label>{label}{required ? " *" : ""}</Label>
+      {label ? <Label>{label}{required ? " *" : ""}</Label> : null}
       {(() => {
         const showOpts = loaded ? opts : (options ?? [])
-        return <SearchableSelect name={name} placeholder={placeholder} options={showOpts} defaultValue={defaultValue} emitChangeEvent={true} disabled={disabled} required={required} containerId={containerId} form={form} />
+        return (
+          <SearchableSelect
+            name={name}
+            placeholder={placeholder}
+            options={showOpts}
+            value={value}
+            defaultValue={defaultValue}
+            onValueChange={onValueChange}
+            emitChangeEvent={true}
+            disabled={disabled}
+            required={required}
+            containerId={containerId}
+            form={form}
+          />
+        )
       })()}
     </div>
   )

@@ -363,7 +363,7 @@ async function createRecord(formData: FormData) {
             current[fieldKey] = valStr ? Number(valStr) : null
           }
         } else {
-          current[fieldKey] = valStr
+          current[fieldKey] = (fieldKey === "item_name" && valStr.includes("::")) ? valStr.split("::")[0] : valStr
         }
         rowsMap.set(idx, current)
       }
@@ -611,7 +611,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
           })
           
           // Calculate Balance
-           const balanceMap = new Map<string, { id: string, name: string, qty: number, serial: string, desc: string, brand: string, type_of_material: string }>()
+           const balanceMap = new Map<string, { id: string, name: string, qty: number, serial: string, desc: string, brand: string, type_of_material: string, building_id: string, floor_id: string, room_id: string, owner_customer_id: string }>()
            
            goodsInItems.forEach(item => {
              const d = (item.data ?? {}) as Record<string, unknown>
@@ -621,19 +621,27 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
              const desc = String(d.description || "")
              const brand = String(d.brand || "")
              const typeOfMaterial = String(d.type_of_material || "")
+             const buildingId = String(d.building_id || "")
+             const floorId = String(d.floor_id || "")
+             const roomId = String(d.room_id || "")
+             const ownerCustomerId = String(d.owner_customer_id || "")
              
              // Create a unique key for grouping. If serial number exists, it should be unique.
-             // If no serial, group by name.
-             const key = sn ? `${name}::${sn}` : name
+             // If no serial, group by name + material + location.
+             const key = sn ? `${name}::${sn}` : `${name}::${typeOfMaterial}::${buildingId}::${floorId}::${roomId}`
              
              if (!balanceMap.has(key)) {
-               balanceMap.set(key, { id: key, name, qty: 0, serial: sn, desc, brand, type_of_material: typeOfMaterial })
+               balanceMap.set(key, { id: key, name, qty: 0, serial: sn, desc, brand, type_of_material: typeOfMaterial, building_id: buildingId, floor_id: floorId, room_id: roomId, owner_customer_id: ownerCustomerId })
              }
              const entry = balanceMap.get(key)!
              entry.qty += qty
              if (desc && !entry.desc) entry.desc = desc
              if (brand && !entry.brand) entry.brand = brand
              if (typeOfMaterial && !entry.type_of_material) entry.type_of_material = typeOfMaterial
+             if (buildingId && !entry.building_id) entry.building_id = buildingId
+             if (floorId && !entry.floor_id) entry.floor_id = floorId
+             if (roomId && !entry.room_id) entry.room_id = roomId
+             if (ownerCustomerId && !entry.owner_customer_id) entry.owner_customer_id = ownerCustomerId
            })
           
           goodsOutItems.forEach(item => {
@@ -641,10 +649,19 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
             const name = String(d.item_name || "Unknown")
             const qty = Number(d.quantity || 0)
             const sn = String(d.serial_number || "")
-            const key = sn ? `${name}::${sn}` : name
+            const typeOfMaterial = String(d.type_of_material || "")
+            const buildingId = String(d.building_id || "")
+            const floorId = String(d.floor_id || "")
+            const roomId = String(d.room_id || "")
+            const key = sn ? `${name}::${sn}` : `${name}::${typeOfMaterial}::${buildingId}::${floorId}::${roomId}`
             
             if (balanceMap.has(key)) {
               balanceMap.get(key)!.qty -= qty
+            } else {
+              const fallbackKey = sn ? `${name}::${sn}` : name
+              if (balanceMap.has(fallbackKey)) {
+                balanceMap.get(fallbackKey)!.qty -= qty
+              }
             }
           })
           
@@ -653,9 +670,7 @@ export default async function NewRecordPage({ params, searchParams }: { params?:
             .filter(i => i.qty > 0)
             .map(i => ({
               label: `${i.name} (Qty: ${i.qty}${i.serial ? `, SN: ${i.serial}` : ""})`,
-              value: i.name, // We use name as value because that's what usually stored. 
-                             // Ideally we should store ID or have a way to select specific batch.
-                             // For now, let's use name and maybe auto-fill other fields.
+              value: i.id,
               original: i
             }))
             

@@ -111,11 +111,6 @@ export function InventoryManagementClient({
     [filteredRooms]
   )
 
-  const customerFilterOpts = useMemo(() =>
-    customers.map(c => ({ label: c.name, value: c.id })),
-    [customers]
-  )
-
   const branchFilterOpts = useMemo(() =>
     branches.map(b => ({ label: b.name, value: b.id })),
     [branches]
@@ -124,12 +119,14 @@ export function InventoryManagementClient({
   const balanceItems = useMemo(() => {
     const map = new Map<string, BalanceEntry>()
 
-    const addItem = (d: Record<string, any>, sign: number) => {
+    const addItem = (d: Record<string, any>, sign: number, rec?: any) => {
       const typeOfMaterial = d.type_of_material || ""
       const buildingId = d.building_id || ""
       const floorId = d.floor_id || ""
       const roomId = d.room_id || ""
-      const customerId = d.owner_customer_id || ""
+      const rawCustomer = d.owner_customer_id || rec?.createdBy?.company?.id || rec?.createdBy?.company?.name || ""
+      const customerName = customerMap[rawCustomer] || (rawCustomer ? String(rawCustomer) : "") || rec?.createdBy?.company?.name || "-"
+      const customerId = rawCustomer || customerName
       const key = `${typeOfMaterial}|${buildingId}|${floorId}|${roomId}|${customerId}`
 
       if (!map.has(key)) {
@@ -144,7 +141,7 @@ export function InventoryManagementClient({
           roomId,
           roomName: roomMap[roomId] || "-",
           customerId,
-          customerName: customerMap[customerId] || "-",
+          customerName,
           serialNumbers: new Set(),
           lastUpdate: new Date(0),
         })
@@ -157,21 +154,22 @@ export function InventoryManagementClient({
         if (sign > 0) entry.serialNumbers.add(d.serial_number)
         else entry.serialNumbers.delete(d.serial_number)
       }
+      return key
     }
 
     inItems.forEach(item => {
       const d = item.data || {}
-      addItem(d, 1)
-      const date = new Date(item.record.createdAt)
-      const entry = map.get(`${d.type_of_material || ""}|${d.building_id || ""}|${d.floor_id || ""}|${d.room_id || ""}|${d.owner_customer_id || ""}`)
+      const itemKey = addItem(d, 1, item.record)
+      const date = new Date(item.record?.createdAt || 0)
+      const entry = map.get(itemKey)
       if (entry && date > entry.lastUpdate) entry.lastUpdate = date
     })
 
     outItems.forEach(item => {
       const d = item.data || {}
-      addItem(d, -1)
-      const date = new Date(item.record.createdAt)
-      const entry = map.get(`${d.type_of_material || ""}|${d.building_id || ""}|${d.floor_id || ""}|${d.room_id || ""}|${d.owner_customer_id || ""}`)
+      const itemKey = addItem(d, -1, item.record)
+      const date = new Date(item.record?.createdAt || 0)
+      const entry = map.get(itemKey)
       if (entry && date > entry.lastUpdate) entry.lastUpdate = date
     })
 
@@ -197,6 +195,17 @@ export function InventoryManagementClient({
 
     return items
   }, [inItems, outItems, filterBuilding, filterFloor, filterRoom, filterCustomer, sortField, buildingMap, floorMap, roomMap, customerMap])
+
+  const customerFilterOpts = useMemo(() => {
+    const optsMap = new Map<string, string>()
+    customers.forEach(c => optsMap.set(c.id, c.name))
+    balanceItems.forEach(i => {
+      if (i.customerId && i.customerName && i.customerName !== "-") {
+        optsMap.set(i.customerId, i.customerName)
+      }
+    })
+    return Array.from(optsMap.entries()).map(([value, label]) => ({ label, value }))
+  }, [customers, balanceItems])
 
   const totalItems = balanceItems.reduce((sum, i) => sum + Math.abs(i.qty), 0)
   const totalRooms = new Set(balanceItems.filter(i => i.qty > 0).map(i => i.roomId)).size

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building, Phone, Mail, MapPin, Users, FileText, LayoutGrid, Trash2, ChevronRight, Building2, Globe, Hash, CircleDashed, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ArrowLeft, Building, Phone, Mail, MapPin, Users, FileText, LayoutGrid, Trash2, ChevronRight, Building2, Globe, Hash, CircleDashed, CheckCircle2, Clock, XCircle, Package, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { LogoUpload } from "@/components/logo-upload";
@@ -99,7 +99,7 @@ function statusColor(status: string | null) {
 }
 
 function DocListCard({ docs, docTypeKey, label, icon: Icon, emptyMessage, filterParam }: {
-  docs: Array<{ id: string; code: string | null; status: string | null; createdAt: Date; docType: { key: string } }>
+  docs: Array<{ id: string; code: string | null; status: string | null; createdAt: Date; data?: any; docType: { key: string } }>
   docTypeKey: string
   label: string
   icon: typeof FileText
@@ -126,8 +126,11 @@ function DocListCard({ docs, docTypeKey, label, icon: Icon, emptyMessage, filter
       <CardContent className="p-0">
         {docs.length > 0 ? (
           <div className="divide-y divide-slate-50">
-            {docs.slice(0, 10).map((doc) => {
+            {docs.slice(0, 50).map((doc) => {
               const StatusIcon = statusIcon(doc.status)
+              const d = (doc.data || {}) as Record<string, any>
+              const displayTitle = d.rack_name || d.name || d.title || doc.code || doc.id
+              const displaySubtitle = doc.code && d.rack_name ? doc.code : undefined
               return (
                 <Link
                   key={doc.id}
@@ -139,8 +142,9 @@ function DocListCard({ docs, docTypeKey, label, icon: Icon, emptyMessage, filter
                       <FileText className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900 truncate">{doc.code || doc.id}</div>
+                      <div className="text-sm font-medium text-slate-900 truncate">{displayTitle}</div>
                       <div className="text-[11px] text-slate-400 mt-0.5">
+                        {displaySubtitle ? `${displaySubtitle} · ` : ""}
                         {new Date(doc.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </div>
                     </div>
@@ -195,7 +199,16 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
       OR: [
         { data: { path: "$.customer_id", equals: company.id as any } },
         { data: { path: "$.owner_customer_id", equals: company.id as any } },
-        { data: { path: "$.customer", equals: company.id as any } }
+        { data: { path: "$.customer", equals: company.id as any } },
+        { data: { path: "$.company_id", equals: company.id as any } },
+        { data: { path: "$.company_id", equals: company.name as any } },
+        { data: { path: "$.customer_id", equals: company.name as any } },
+        { data: { path: "$.owner_customer_id", equals: company.name as any } },
+        { data: { path: "$.customer", equals: company.name as any } },
+        { data: { path: "$.company", equals: company.id as any } },
+        { data: { path: "$.company", equals: company.name as any } },
+        { data: { path: "$.company_name", equals: company.name as any } },
+        { createdBy: { companyId: company.id } },
       ]
     },
     include: { docType: true },
@@ -208,18 +221,178 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
     return acc;
   }, {} as Record<string, typeof relatedDocs>);
 
-  const totalDocs = relatedDocs.length
+  const totalDocs = relatedDocs.length;
 
-  const docTabs: Array<{ key: string; label: string; icon: typeof FileText }> = [
+  const goodsInItemType = await prisma.docType.findUnique({ where: { key: "goods_in_item" } });
+  const goodsOutItemType = await prisma.docType.findUnique({ where: { key: "goods_out_item" } });
+
+  const completedRecordStatus = {
+    OR: [
+      { status: { equals: "Completed" } },
+      { status: { contains: "Complete" } },
+      { status: { contains: "COMPLETED" } },
+    ]
+  };
+
+  const docRowCompanyFilter = [
+    { data: { path: "$.owner_customer_id", equals: company.id as any } },
+    { data: { path: "$.owner_customer_id", equals: company.name as any } },
+    { data: { path: "$.customer_id", equals: company.id as any } },
+    { data: { path: "$.customer_id", equals: company.name as any } },
+    { data: { path: "$.company_id", equals: company.id as any } },
+    { data: { path: "$.company_id", equals: company.name as any } },
+    { record: { createdBy: { companyId: company.id } } },
+    { record: { data: { path: "$.customer_id", equals: company.id as any } } },
+    { record: { data: { path: "$.customer_id", equals: company.name as any } } },
+    { record: { data: { path: "$.owner_customer_id", equals: company.id as any } } },
+    { record: { data: { path: "$.owner_customer_id", equals: company.name as any } } },
+  ];
+
+  const [companyGoodsInRows, companyGoodsOutRows, allBuildings, allFloors, allRooms] = await Promise.all([
+    goodsInItemType ? prisma.docRow.findMany({
+      where: {
+        childDocTypeId: goodsInItemType.id,
+        record: completedRecordStatus,
+        OR: docRowCompanyFilter,
+      },
+      include: { record: true }
+    }) : [],
+    goodsOutItemType ? prisma.docRow.findMany({
+      where: {
+        childDocTypeId: goodsOutItemType.id,
+        record: completedRecordStatus,
+        OR: docRowCompanyFilter,
+      },
+      include: { record: true }
+    }) : [],
+    prisma.building.findMany({ select: { id: true, name: true } }),
+    prisma.floor.findMany({ select: { id: true, name: true } }),
+    prisma.room.findMany({ select: { id: true, name: true } }),
+  ]);
+
+  const buildingNameMap = new Map(allBuildings.map(b => [b.id, b.name]));
+  const floorNameMap = new Map(allFloors.map(f => [f.id, f.name]));
+  const roomNameMap = new Map(allRooms.map(r => [r.id, r.name]));
+
+  interface CompanyInventoryEntry {
+    key: string;
+    itemName: string;
+    typeOfMaterial: string;
+    brand: string;
+    buildingName: string;
+    floorName: string;
+    roomName: string;
+    qty: number;
+    serialNumbers: Set<string>;
+    lastUpdate: Date;
+  }
+
+  const inventoryMap = new Map<string, CompanyInventoryEntry>();
+
+  const processInventoryRow = (row: typeof companyGoodsInRows[0], sign: number) => {
+    const d = (row.data ?? {}) as Record<string, any>;
+    const itemName = String(d.item_name || d.name || "").trim();
+    const typeOfMaterial = String(d.type_of_material || "").trim();
+    const brand = String(d.brand || "").trim();
+    const buildingId = String(d.building_id || "").trim();
+    const floorId = String(d.floor_id || "").trim();
+    const roomId = String(d.room_id || "").trim();
+    const qty = Number(d.quantity || d.qty || 0);
+    const sn = String(d.serial_number || "").trim();
+
+    const key = `${itemName}|${typeOfMaterial}|${brand}|${buildingId}|${floorId}|${roomId}`;
+
+    if (!inventoryMap.has(key)) {
+      inventoryMap.set(key, {
+        key,
+        itemName: itemName || typeOfMaterial || "Item",
+        typeOfMaterial,
+        brand,
+        buildingName: buildingNameMap.get(buildingId) || buildingId || "-",
+        floorName: floorNameMap.get(floorId) || floorId || "-",
+        roomName: roomNameMap.get(roomId) || roomId || "-",
+        qty: 0,
+        serialNumbers: new Set(),
+        lastUpdate: new Date(0)
+      });
+    }
+
+    const entry = inventoryMap.get(key)!;
+    entry.qty += qty * sign;
+    if (sn) {
+      if (sign > 0) entry.serialNumbers.add(sn);
+      else entry.serialNumbers.delete(sn);
+    }
+    const createdAt = new Date(row.record.createdAt);
+    if (createdAt > entry.lastUpdate) entry.lastUpdate = createdAt;
+  };
+
+  companyGoodsInRows.forEach(row => processInventoryRow(row, 1));
+  companyGoodsOutRows.forEach(row => processInventoryRow(row, -1));
+
+  const companyInventory = Array.from(inventoryMap.values()).filter(i => Math.abs(i.qty) > 0 || i.serialNumbers.size > 0);
+
+  const companyMovements = [
+    ...companyGoodsInRows.map((row) => {
+      const d = (row.data ?? {}) as Record<string, any>;
+      const buildingId = String(d.building_id || "").trim();
+      const floorId = String(d.floor_id || "").trim();
+      const roomId = String(d.room_id || "").trim();
+      return {
+        id: row.id,
+        type: "IN" as const,
+        docKey: "goods_in_request",
+        recordId: row.record.id,
+        code: row.record.code || row.record.id,
+        itemName: String(d.item_name || d.name || d.type_of_material || "Item").trim(),
+        typeOfMaterial: String(d.type_of_material || "").trim(),
+        brand: String(d.brand || "").trim(),
+        buildingName: buildingNameMap.get(buildingId) || buildingId || "-",
+        floorName: floorNameMap.get(floorId) || floorId || "-",
+        roomName: roomNameMap.get(roomId) || roomId || "-",
+        qty: Number(d.quantity || d.qty || 0),
+        serialNumber: String(d.serial_number || "").trim(),
+        createdAt: new Date(row.createdAt || row.record.createdAt),
+      };
+    }),
+    ...companyGoodsOutRows.map((row) => {
+      const d = (row.data ?? {}) as Record<string, any>;
+      const buildingId = String(d.building_id || "").trim();
+      const floorId = String(d.floor_id || "").trim();
+      const roomId = String(d.room_id || "").trim();
+      return {
+        id: row.id,
+        type: "OUT" as const,
+        docKey: "goods_out_request",
+        recordId: row.record.id,
+        code: row.record.code || row.record.id,
+        itemName: String(d.item_name || d.name || d.type_of_material || "Item").trim(),
+        typeOfMaterial: String(d.type_of_material || "").trim(),
+        brand: String(d.brand || "").trim(),
+        buildingName: buildingNameMap.get(buildingId) || buildingId || "-",
+        floorName: floorNameMap.get(floorId) || floorId || "-",
+        roomName: roomNameMap.get(roomId) || roomId || "-",
+        qty: Number(d.quantity || d.qty || 0),
+        serialNumber: String(d.serial_number || "").trim(),
+        createdAt: new Date(row.createdAt || row.record.createdAt),
+      };
+    }),
+  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const docTabs: Array<{
+    key: string;
+    label: string;
+    icon: typeof FileText;
+  }> = [
     { key: "quotation", label: "Quotation", icon: FileText },
-    { key: "visitor_request", label: "Request", icon: FileText },
-    { key: "sales_order", label: "Sales Order", icon: FileText },
-    { key: "subscription_management", label: "Subscription", icon: FileText },
+    { key: "visitor_request", label: "Request", icon: Clock },
+    { key: "sales_order", label: "Sales Order", icon: CheckCircle2 },
+    { key: "subscription_management", label: "Subscription", icon: Globe },
     { key: "master_rack", label: "Rack", icon: LayoutGrid },
     { key: "invoice", label: "Invoices", icon: FileText },
-    { key: "transaction", label: "Transaction", icon: FileText },
-    { key: "work_order", label: "Work Order", icon: FileText },
-  ]
+    { key: "transaction", label: "Transaction", icon: Hash },
+    { key: "work_order", label: "Work Order", icon: Building2 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -318,10 +491,35 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
       {/* Tabs */}
       <Tabs defaultValue="info" className="space-y-6">
         <div className="overflow-x-auto -mx-4 px-4">
-          <TabsList className="inline-flex h-10 items-center gap-1 bg-white border border-slate-200/60 p-1 rounded-xl shadow-sm w-max">
-            <TabsTrigger value="info" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">General Info</TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Users</TabsTrigger>
-            <TabsTrigger value="documents" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Documents</TabsTrigger>
+          <TabsList className="inline-flex h-11 items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80 w-max">
+            <TabsTrigger
+              value="info"
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all shadow-xs flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              General Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all shadow-xs flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all shadow-xs flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Documents
+            </TabsTrigger>
+            <TabsTrigger
+              value="inventory"
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all shadow-xs flex items-center gap-2"
+            >
+              <Package className="w-4 h-4" />
+              Inventory
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -524,20 +722,192 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         {/* Documents */}
-        <TabsContent value="documents">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="documents" className="space-y-6">
+          <Tabs defaultValue={docTabs[0].key} className="space-y-6">
+            <div className="overflow-x-auto -mx-4 px-4">
+              <TabsList className="inline-flex h-10 items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 shadow-xs w-max">
+                {docTabs.map(({ key, label, icon: SubIcon }) => (
+                  <TabsTrigger
+                    key={key}
+                    value={key}
+                    className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center gap-2"
+                  >
+                    <SubIcon className="w-3.5 h-3.5 text-slate-400" />
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+
             {docTabs.map(({ key, label, icon }) => (
-              <DocListCard
-                key={key}
-                docs={docsByKey[key] || []}
-                docTypeKey={key}
-                label={label}
-                icon={icon}
-                emptyMessage={`No ${label.toLowerCase()} history found.`}
-                filterParam={key === "visitor_request" ? `owner_customer_id=${company.id}` : `customer_id=${company.id}`}
-              />
+              <TabsContent key={key} value={key}>
+                <DocListCard
+                  docs={docsByKey[key] || []}
+                  docTypeKey={key}
+                  label={label}
+                  icon={icon}
+                  emptyMessage={`No ${label.toLowerCase()} history found.`}
+                  filterParam={key === "visitor_request" ? `owner_customer_id=${company.id}` : key === "master_rack" ? `company_id=${company.id}` : `customer_id=${company.id}`}
+                />
+              </TabsContent>
             ))}
-          </div>
+          </Tabs>
+        </TabsContent>
+
+        {/* Inventory */}
+        <TabsContent value="inventory" className="space-y-6">
+          {/* Active Stock Balance */}
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold text-slate-900">Current Stock Balance</CardTitle>
+                  <p className="text-xs text-slate-400 mt-0.5">{companyInventory.length} active inventory item{companyInventory.length !== 1 ? "s" : ""} in stock</p>
+                </div>
+                <Button size="sm" asChild className="h-8 text-xs bg-slate-900 hover:bg-slate-800 text-white">
+                  <Link href="/admin/inventory/management">Open Inventory Management</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {companyInventory.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/50">
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Item Name / Material</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Brand</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Location (Building / Floor / Room)</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Qty</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Serial Numbers</th>
+                        <th className="text-right py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Last Movement</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {companyInventory.map((item) => (
+                        <tr key={item.key} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3.5 px-6 font-medium text-slate-900">
+                            <div>{item.itemName}</div>
+                            {item.typeOfMaterial && item.typeOfMaterial !== item.itemName && (
+                              <div className="text-xs text-slate-400 font-normal">{item.typeOfMaterial}</div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-600">{item.brand || "-"}</td>
+                          <td className="py-3.5 px-6 text-slate-600">
+                            {item.buildingName} / {item.floorName} / {item.roomName}
+                          </td>
+                          <td className="py-3.5 px-6">
+                            <Badge variant={item.qty > 0 ? "default" : "secondary"}>
+                              {item.qty} unit{item.qty !== 1 ? "s" : ""}
+                            </Badge>
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-500 max-w-[200px] truncate" title={Array.from(item.serialNumbers).join(", ")}>
+                            {item.serialNumbers.size > 0 ? Array.from(item.serialNumbers).join(", ") : "-"}
+                          </td>
+                          <td className="py-3.5 px-6 text-right text-slate-500 whitespace-nowrap">
+                            {item.lastUpdate.getTime() > 0 ? item.lastUpdate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                    <Package className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-sm text-slate-500 font-medium">No active stock</p>
+                  <p className="text-xs text-slate-400 mt-1">This company has no active stock or inventory recorded.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Inbound & Outbound Movement History */}
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold text-slate-900">Inbound & Outbound Movement History</CardTitle>
+                  <p className="text-xs text-slate-400 mt-0.5">{companyMovements.length} total movement transaction{companyMovements.length !== 1 ? "s" : ""}</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {companyMovements.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/50">
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Type</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Reference Code</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Item / Material</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Brand</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Location</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Qty</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Serial Number</th>
+                        <th className="text-right py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {companyMovements.map((mov) => (
+                        <tr key={`${mov.type}-${mov.id}`} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3.5 px-6">
+                            {mov.type === "IN" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <ArrowDownToLine className="w-3 h-3" />
+                                INBOUND
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <ArrowUpFromLine className="w-3 h-3" />
+                                OUTBOUND
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-6 font-medium text-slate-900">
+                            <Link href={`/admin/docs/${mov.docKey}/${mov.recordId}`} className="hover:underline text-blue-600">
+                              {mov.code}
+                            </Link>
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-900 font-medium">
+                            <div>{mov.itemName}</div>
+                            {mov.typeOfMaterial && mov.typeOfMaterial !== mov.itemName && (
+                              <div className="text-xs text-slate-400 font-normal">{mov.typeOfMaterial}</div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-600">{mov.brand || "-"}</td>
+                          <td className="py-3.5 px-6 text-slate-600">
+                            {mov.buildingName} / {mov.floorName} / {mov.roomName}
+                          </td>
+                          <td className="py-3.5 px-6 font-medium">
+                            <span className={mov.type === "IN" ? "text-emerald-600 font-semibold" : "text-amber-600 font-semibold"}>
+                              {mov.type === "IN" ? `+${mov.qty}` : `-${mov.qty}`}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-500 max-w-[150px] truncate" title={mov.serialNumber}>
+                            {mov.serialNumber || "-"}
+                          </td>
+                          <td className="py-3.5 px-6 text-right text-slate-500 whitespace-nowrap">
+                            {mov.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                    <FileText className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-sm text-slate-500 font-medium">No movement history</p>
+                  <p className="text-xs text-slate-400 mt-1">No inbound or outbound movement transactions found for this company.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
