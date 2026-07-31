@@ -52,6 +52,7 @@ export function isQRExpired(expiresAt: string): boolean {
 export interface QRValidationResult {
   valid: boolean
   error?: string
+  isAccessCard?: boolean
   record?: {
     id: string
     code: string | null
@@ -73,13 +74,17 @@ export interface QRValidationResult {
 }
 
 export async function validateQRToken(token: string): Promise<QRValidationResult> {
-  const dt = await prisma.docType.findUnique({ where: { key: "visitor_request" } })
-  if (!dt) return { valid: false, error: "Visitor request DocType tidak ditemukan" }
+  const dtVisitor = await prisma.docType.findUnique({ where: { key: "visitor_request" } })
+  const dtAccessCard = await prisma.docType.findUnique({ where: { key: "access_card" } })
+
+  const docTypeIds = []
+  if (dtVisitor) docTypeIds.push(dtVisitor.id)
+  if (dtAccessCard) docTypeIds.push(dtAccessCard.id)
 
   const records = await prisma.docRecord.findMany({
-    where: { docTypeId: dt.id },
-    take: 1000,
-  })
+    where: { docTypeId: { in: docTypeIds } },
+    orderBy: { createdAt: "desc" },
+      })
 
   const record = records.find((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
@@ -90,35 +95,60 @@ export async function validateQRToken(token: string): Promise<QRValidationResult
     return { valid: false, error: "QR code tidak valid" }
   }
 
+  const isAccessCard = dtAccessCard ? record.docTypeId === dtAccessCard.id : false
   const data = (record.data ?? {}) as Record<string, unknown>
-  const expiresAt = typeof data["qr_expires_at"] === "string" ? data["qr_expires_at"] : null
 
-  if (!expiresAt || isQRExpired(expiresAt)) {
-    return { valid: false, error: "QR code sudah expired" }
+  if (!isAccessCard) {
+    const expiresAt = typeof data["qr_expires_at"] === "string" ? data["qr_expires_at"] : null
+    if (!expiresAt || isQRExpired(expiresAt)) {
+      return { valid: false, error: "QR code sudah expired" }
+    }
+    const recordStatus = (record.status ?? "").toLowerCase()
+    if (recordStatus !== "approved") {
+      const statusLabel = record.status || "Draft"
+      return { valid: false, error: `Visitor request belum di-approve (status: ${statusLabel})` }
+    }
+  } else {
+    if (record.status?.toLowerCase() !== "active") {
+      return { valid: false, error: "Access card sudah tidak aktif / di-revoke" }
+    }
   }
 
-  const recordStatus = (record.status ?? "").toLowerCase()
-  if (recordStatus !== "approved") {
-    const statusLabel = record.status || "Draft"
-    return { valid: false, error: `Visitor request belum di-approve (status: ${statusLabel})` }
-  }
-
-  // Fetch visitor rows from DocRow (the `visitors` TABLE field stores data here)
   const visitorRows = await prisma.docRow.findMany({
     where: { recordId: record.id },
     orderBy: { idx: "asc" },
   })
-  const visitors = visitorRows.map((row) => {
-    const d = (row.data ?? {}) as Record<string, unknown>
-    return {
-      visitor_name: String(d["visitor_name"] || "-"),
-      nik: String(d["nik"] || "-"),
-      phone_number: typeof d["phone_number"] === "string" ? d["phone_number"] : undefined,
-      email: typeof d["email"] === "string" ? d["email"] : undefined,
-      ktp_file: typeof d["ktp_file"] === "string" ? d["ktp_file"] : undefined,
-      notes: typeof d["notes"] === "string" ? d["notes"] : undefined,
+  
+  let visitors: Array<any> = [];
+
+  if (isAccessCard) {
+    const userId = data["user_id"] as string;
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, include: { company: true } });
+      if (user) {
+        visitors = [{
+          visitor_name: user.name || user.email,
+          nik: "-",
+          phone_number: user.phoneNumber || "-",
+          email: user.email,
+          ktp_file: undefined,
+          notes: user.company ? `Company: ${user.company.name}` : "Access Card",
+        }];
+      }
     }
-  })
+  } else {
+    visitors = visitorRows.map((row) => {
+      const d = (row.data ?? {}) as Record<string, unknown>
+      return {
+        visitor_name: String(d["visitor_name"] || "-"),
+        nik: String(d["nik"] || "-"),
+        phone_number: typeof d["phone_number"] === "string" ? d["phone_number"] : undefined,
+        email: typeof d["email"] === "string" ? d["email"] : undefined,
+        ktp_file: typeof d["ktp_file"] === "string" ? d["ktp_file"] : undefined,
+        notes: typeof d["notes"] === "string" ? d["notes"] : undefined,
+      }
+    })
+  }
 
   // Merge visitors into data so the scanner page can access them via data.visitors
   const enrichedData: Record<string, unknown> = {
@@ -128,6 +158,7 @@ export async function validateQRToken(token: string): Promise<QRValidationResult
 
   return {
     valid: true,
+    isAccessCard,
     record: {
       id: record.id,
       code: record.code,

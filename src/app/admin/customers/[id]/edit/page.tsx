@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,17 +5,104 @@ import { redirect, notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // keep for type compatibility (unused but imported)
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import { SearchableSelect } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Building, Phone, Mail, CreditCard, Activity, Package, ShieldCheck, MapPin, FileText, LayoutGrid, FileSearch, ShoppingCart, ChevronRight, Save, ChevronLeft } from "lucide-react";
+import { ArrowLeft, User, Building, Phone, Mail, CreditCard, Activity, Package, ShieldCheck, MapPin, FileText, LayoutGrid, FileSearch, ShoppingCart, ChevronRight, CheckCircle2, CircleDashed, Clock, XCircle } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import QRCode from "qrcode";
+import crypto from "crypto";
+import { QrCode, PowerOff } from "lucide-react";
 import type { PartnerType } from "@/generated/prisma/enums";
-import { Prisma } from "@/generated/prisma/client";
 import { sendPasswordResetEmail } from "@/lib/mail";
+import { cn } from "@/lib/utils";
+
+
+async function generateAccessCard(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const emailSession = session?.user?.email ?? "";
+  const meSession = emailSession ? await prisma.user.findUnique({ where: { email: emailSession }, include: { role: { include: { permissions: { include: { permission: true } } } } } }) : null;
+  const permSession = new Set((meSession?.role?.permissions ?? []).map((rp) => rp.permission.key));
+  if (!permSession.has("CUSTOMER_MANAGEMENT")) return;
+
+  const id = String(formData.get("id"));
+  const companyId = String(formData.get("companyId") || "");
+  if (!id) return;
+
+  let dt = await prisma.docType.findUnique({ where: { key: "access_card" } });
+  if (!dt) {
+    dt = await prisma.docType.create({
+      data: {
+        key: "access_card",
+        name: "Access Card",
+      }
+    });
+  }
+
+  const allCards = await prisma.docRecord.findMany({
+    where: { docTypeId: dt.id }
+  });
+  const exist = allCards.find((r) => {
+    const d = (r.data ?? {}) as Record<string, any>;
+    return d.user_id === id;
+  });
+
+  if (exist) {
+    const curData = (exist.data ?? {}) as Record<string, any>;
+    const token = curData.qr_token || crypto.randomUUID();
+    await prisma.docRecord.update({
+      where: { id: exist.id },
+      data: {
+        status: "active",
+        data: {
+          ...curData,
+          user_id: id,
+          customer_id: companyId || curData.customer_id || "",
+          qr_token: token,
+        } as any
+      }
+    });
+  } else {
+    const token = crypto.randomUUID();
+    const qrData = {
+      user_id: id,
+      customer_id: companyId || "",
+      qr_token: token,
+    };
+    await prisma.docRecord.create({
+      data: {
+        docTypeId: dt.id,
+        code: `AC-${id.substring(0,6).toUpperCase()}`,
+        status: "active",
+        data: qrData as any,
+        createdById: meSession?.id,
+      }
+    });
+  }
+  revalidatePath(`/admin/customers/${id}/edit`);
+}
+
+async function revokeAccessCard(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const emailSession = session?.user?.email ?? "";
+  const meSession = emailSession ? await prisma.user.findUnique({ where: { email: emailSession }, include: { role: { include: { permissions: { include: { permission: true } } } } } }) : null;
+  const permSession = new Set((meSession?.role?.permissions ?? []).map((rp) => rp.permission.key));
+  if (!permSession.has("CUSTOMER_MANAGEMENT")) return;
+
+  const recordId = String(formData.get("recordId"));
+  const id = String(formData.get("id"));
+  if (!recordId) return;
+  await prisma.docRecord.update({
+    where: { id: recordId },
+    data: { status: "revoked" }
+  });
+  revalidatePath(`/admin/customers/${id}/edit`);
+}
 
 async function updateCustomer(formData: FormData) {
   "use server";
@@ -69,7 +155,6 @@ async function updateCustomer(formData: FormData) {
   if (password) {
     const hash = await bcrypt.hash(password, 10);
     data.passwordHash = hash;
-    // Send email notification to customer
     try {
       await sendPasswordResetEmail(finalEmail, finalName, password);
     } catch (error) {
@@ -81,6 +166,76 @@ async function updateCustomer(formData: FormData) {
   revalidatePath(`/admin/customers/${id}/edit`);
   revalidatePath("/admin/customers");
   redirect(`/admin/customers?toast=Customer%20berhasil%20diperbarui`);
+}
+
+function statusIcon(status: string | null) {
+  const s = (status || "").toLowerCase()
+  if (s.includes("active") || s.includes("complete") || s.includes("approve")) return CheckCircle2
+  if (s.includes("draft")) return CircleDashed
+  if (s.includes("submit") || s.includes("review") || s.includes("progress")) return Clock
+  if (s.includes("cancel") || s.includes("reject")) return XCircle
+  return CircleDashed
+}
+
+function statusColor(status: string | null) {
+  const s = (status || "").toLowerCase()
+  if (s.includes("active") || s.includes("complete") || s.includes("approve")) return "text-emerald-600"
+  if (s.includes("draft")) return "text-slate-400"
+  if (s.includes("submit") || s.includes("review") || s.includes("progress")) return "text-amber-600"
+  if (s.includes("cancel") || s.includes("reject")) return "text-red-600"
+  return "text-slate-400"
+}
+
+function formatIDR(v: unknown): string {
+  const n = typeof v === "number" ? v : Number(v ?? 0)
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number.isFinite(n) ? n : 0)
+}
+
+function DocListCard({ docs, docTypeKey, label, icon: Icon }: {
+  docs: Array<{ id: string; code: string | null; status: string | null; createdAt: Date; docType: { key: string } }>
+  docTypeKey: string
+  label: string
+  icon: typeof FileText
+}) {
+  return (
+    <div className="divide-y divide-slate-50">
+      {docs.length > 0 ? (
+        docs.map((doc) => {
+          const StatusIcon = statusIcon(doc.status)
+          return (
+            <Link
+              key={doc.id}
+              href={`/admin/docs/${doc.docType.key}/${doc.id}`}
+              className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50/60 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 shrink-0 group-hover:border-slate-900/20 group-hover:bg-slate-100 transition-all">
+                  <Icon className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-slate-900 truncate">{doc.code || doc.id}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    {new Date(doc.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusIcon className={cn("w-3.5 h-3.5", statusColor(doc.status))} />
+                <span className="text-xs font-medium text-slate-600 capitalize">{doc.status?.toLowerCase() || "draft"}</span>
+              </div>
+            </Link>
+          )
+        })
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+            <Icon className="w-6 h-6 text-slate-300" />
+          </div>
+          <p className="text-sm text-slate-400">No data available.</p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default async function EditCustomerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -96,18 +251,41 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
 
   const customer = await prisma.user.findUnique({
     where: { id },
-    include: {
-      company: true,
-      role: true,
-    }
+    include: { company: true, role: true }
   });
 
   if (!customer) return notFound();
 
-  // Fetch related information
+  const accessCardDt = await prisma.docType.findUnique({ where: { key: "access_card" } });
+  const allAccessCards = accessCardDt ? await prisma.docRecord.findMany({
+    where: { docTypeId: accessCardDt.id }
+  }) : [];
+  const accessCardRecord = allAccessCards.find((r) => {
+    const d = (r.data ?? {}) as Record<string, any>;
+    return d.user_id === customer.id;
+  }) || null;
+
+  let qrDataUrl = null;
+  if (accessCardRecord && accessCardRecord.status === "active") {
+    const data = (accessCardRecord.data ?? {}) as Record<string, any>;
+    const token = data.qr_token;
+    if (token) {
+      const payload = {
+        docType: "access_card",
+        token: token,
+        customerId: data.customer_id || "",
+        userId: customer.id
+      };
+      qrDataUrl = await QRCode.toDataURL(JSON.stringify(payload), {
+        width: 300,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" }
+      });
+    }
+  }
+
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
-  
-  // Recent Activities (DocRecords created by or linked to customer/company)
+
   const relatedDocs = await prisma.docRecord.findMany({
     where: {
       OR: [
@@ -121,7 +299,6 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
     take: 10
   }) as any[];
 
-  // Active Subscriptions
   const subDt = await prisma.docType.findUnique({ where: { key: "subscription_management" } });
   const subscriptions = subDt && customer.companyId ? await prisma.docRecord.findMany({
     where: {
@@ -131,7 +308,6 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
     orderBy: { createdAt: "desc" }
   }) : [];
 
-  // Racks
   const rackDt = await prisma.docType.findUnique({ where: { key: "master_rack" } });
   const customerRacks = rackDt && customer.companyId ? await prisma.docRecord.findMany({
     where: {
@@ -141,19 +317,17 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
     orderBy: { createdAt: "desc" }
   }) : [];
 
-  // Fetch Room and Building names for Racks
   const roomIds = Array.from(new Set(customerRacks.map(r => (r.data as any)?.room_id).filter(Boolean))) as string[];
   const buildingIds = Array.from(new Set(customerRacks.map(r => (r.data as any)?.building_id).filter(Boolean))) as string[];
-  
+
   const [rooms, buildings] = await Promise.all([
     prisma.room.findMany({ where: { id: { in: roomIds } }, select: { id: true, name: true } }),
     prisma.building.findMany({ where: { id: { in: buildingIds } }, select: { id: true, name: true } })
   ]);
-  
+
   const roomMap = Object.fromEntries(rooms.map(r => [r.id, r.name]));
   const buildingMap = Object.fromEntries(buildings.map(b => [b.id, b.name]));
 
-  // Inventory Data (Matching Customer Inventory Page Logic)
   const goodsInItemType = await prisma.docType.findUnique({ where: { key: "goods_in_item" } });
   const goodsOutItemType = await prisma.docType.findUnique({ where: { key: "goods_out_item" } });
 
@@ -162,20 +336,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
       childDocTypeId: goodsInItemType.id,
       record: {
         AND: [
-          {
-            OR: [
-              { createdById: customer.id },
-              { data: { path: "$.customer_id", equals: customer.companyId as any } },
-              { data: { path: "$.customer", equals: customer.companyId as any } }
-            ]
-          },
-          {
-            OR: [
-              { status: { equals: "Completed" } },
-              { status: { contains: "Complete" } },
-              { status: { contains: "COMPLETED" } },
-            ]
-          }
+          { OR: [
+            { createdById: customer.id },
+            { data: { path: "$.customer_id", equals: customer.companyId as any } },
+            { data: { path: "$.customer", equals: customer.companyId as any } }
+          ]},
+          { OR: [
+            { status: { equals: "Completed" } },
+            { status: { contains: "Complete" } },
+            { status: { contains: "COMPLETED" } },
+          ]}
         ]
       }
     },
@@ -188,20 +358,16 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
       childDocTypeId: goodsOutItemType.id,
       record: {
         AND: [
-          {
-            OR: [
-              { createdById: customer.id },
-              { data: { path: "$.customer_id", equals: customer.companyId as any } },
-              { data: { path: "$.customer", equals: customer.companyId as any } }
-            ]
-          },
-          {
-            OR: [
-              { status: { equals: "Completed" } },
-              { status: { contains: "Complete" } },
-              { status: { contains: "COMPLETED" } },
-            ]
-          }
+          { OR: [
+            { createdById: customer.id },
+            { data: { path: "$.customer_id", equals: customer.companyId as any } },
+            { data: { path: "$.customer", equals: customer.companyId as any } }
+          ]},
+          { OR: [
+            { status: { equals: "Completed" } },
+            { status: { contains: "Complete" } },
+            { status: { contains: "COMPLETED" } },
+          ]}
         ]
       }
     },
@@ -209,7 +375,6 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
     orderBy: { createdAt: "desc" }
   }) : [];
 
-  // Calculate Balance (Stock)
   const balanceMap = new Map<string, { itemName: string, qty: number, lastUpdate: Date, serialNumbers: Set<string> }>();
 
   inventoryInRows.forEach(item => {
@@ -243,7 +408,6 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
 
   const stockBalance = Array.from(balanceMap.values()).filter(i => i.qty !== 0);
 
-  // Quotations
   const quotationDt = await prisma.docType.findUnique({ where: { key: "quotation" } });
   const quotations = quotationDt && customer.companyId ? await prisma.docRecord.findMany({
     where: {
@@ -253,7 +417,6 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
     orderBy: { createdAt: "desc" }
   }) : [];
 
-  // Sales Orders
   const soDt = await prisma.docType.findUnique({ where: { key: "sales_order" } });
   const salesOrders = soDt && customer.companyId ? await prisma.docRecord.findMany({
     where: {
@@ -268,596 +431,576 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
   const firstName = nameParts[0] ?? "";
   const lastName = nameParts.slice(1).join(" ");
 
+  const activeSubs = subscriptions.filter(s => s.status === "Active").length;
+  const totalMRC = subscriptions.reduce((acc, s) => acc + Number((s.data as any)?.total_mrc ?? 0), 0);
+
   return (
-    <div className="min-h-screen bg-slate-50/30 -m-4 sm:-m-6 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/admin/customers" className="hover:text-slate-900 transition-colors flex items-center gap-1">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Customers
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" asChild className="h-9 w-9 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+            <Link href="/admin/customers">
+              <ArrowLeft className="h-4 w-4" />
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-            <span className="text-slate-900 font-medium">{customer.name}</span>
-          </div>
-
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center">
-                <User className="h-8 w-8 text-slate-700" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{customer.name}</h1>
-                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                  <span>{customer.email}</span>
-                  {customer.company?.name && (
-                    <>
-                      <span className="text-slate-300">·</span>
-                      <Building className="h-3.5 w-3.5" />
-                      <span>{customer.company.name}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {customer.company ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200/60">
-                  <Building className="h-3 w-3" />
-                  {customer.company.name}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
-                  Individual
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
-                {customer.partnerType ?? "Standard"}
-              </span>
+          </Button>
+          <div>
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <Link href="/admin/customers" className="hover:text-slate-600 transition-colors">Customers</Link>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-slate-900 font-medium">{customer.name}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Top Summary Card */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
-              <span className="text-2xl font-semibold tracking-tight text-slate-700">
+      {/* Profile Card */}
+      <Card className="border-slate-200/60 bg-white overflow-hidden">
+        <div className="sm:flex">
+          <div className="sm:flex sm:items-center gap-6 p-6 flex-1">
+            <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-100 overflow-hidden shrink-0 mx-auto sm:mx-0">
+              <span className="text-xl font-bold text-slate-600">
                 {customer.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
               </span>
             </div>
-            <div className="flex-1 text-center md:text-left space-y-2">
-              <p className="text-slate-900 font-medium">{customer.jobTitle ?? "No Job Title"}</p>
-
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-1">
-                <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <Mail className="h-3.5 w-3.5" />
+            <div className="flex-1 text-center sm:text-left mt-4 sm:mt-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">{customer.name}</h1>
+                {customer.company && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    <Building className="w-3 h-3" />
+                    {customer.company.name}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-1.5 mt-2 text-sm text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <span>{customer.email}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <Phone className="h-3.5 w-3.5" />
-                  <span>{customer.phoneNumber ?? "-"}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{customer.address ? `${customer.address}, ${customer.country}` : "-"}</span>
-                </div>
+                {customer.phoneNumber && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{customer.phoneNumber}</span>
+                  </div>
+                )}
+                {customer.jobTitle && (
+                  <div className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{customer.jobTitle}</span>
+                  </div>
+                )}
               </div>
+              {(customer.address || customer.country) && (
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-1 text-sm text-slate-400">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span>{[customer.address, customer.country].filter(Boolean).join(", ")}</span>
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="flex items-center gap-8 border-l border-slate-200 pl-8 hidden md:flex">
-              <div className="text-center">
-                <p className="text-xs text-slate-500 font-medium mb-1">Active Services</p>
-                <p className="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
-                  {subscriptions.filter(s => s.status === "Active").length}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-slate-500 font-medium mb-1">Total MRC</p>
-                <p className="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
-                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
-                    subscriptions.reduce((acc, s) => acc + Number((s.data as any)?.total_mrc ?? 0), 0)
-                  )}
-                </p>
-              </div>
+          <div className="flex sm:flex-col border-t sm:border-t-0 sm:border-l border-slate-100 divide-x sm:divide-x-0 sm:divide-y divide-slate-100">
+            <div className="flex-1 px-6 py-4 text-center sm:min-w-[110px]">
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Active Services</p>
+              <p className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{activeSubs}</p>
+            </div>
+            <div className="flex-1 px-6 py-4 text-center sm:min-w-[110px]">
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total MRC</p>
+              <p className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{formatIDR(totalMRC)}</p>
             </div>
           </div>
         </div>
+      </Card>
 
-        {/* Detailed Info & Forms - Now Full Width */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Profile Info</TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Activity</TabsTrigger>
-            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Subscriptions</TabsTrigger>
-            <TabsTrigger value="racks" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Racks</TabsTrigger>
-            <TabsTrigger value="inventory" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Inventory</TabsTrigger>
-            <TabsTrigger value="quotations" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Quotations</TabsTrigger>
-            <TabsTrigger value="sales_orders" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-slate-200/80 data-[state=active]:border-slate-900">Sales Orders</TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="profile" className="space-y-6">
+        <div className="overflow-x-auto -mx-4 px-4">
+          <TabsList className="inline-flex h-10 items-center gap-1 bg-white border border-slate-200/60 p-1 rounded-xl shadow-sm w-max">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Profile Info</TabsTrigger>
+            <TabsTrigger value="activity" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Activity</TabsTrigger>
+            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Subscriptions</TabsTrigger>
+            <TabsTrigger value="racks" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Racks</TabsTrigger>
+            <TabsTrigger value="inventory" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Inventory</TabsTrigger>
+            <TabsTrigger value="quotations" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Quotations</TabsTrigger>
+            <TabsTrigger value="sales_orders" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Sales Orders</TabsTrigger>
+            <TabsTrigger value="access_card" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white rounded-lg px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">Access Card</TabsTrigger>
           </TabsList>
+        </div>
 
-            <TabsContent value="profile">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Detailed Information</h3>
-                <form action={updateCustomer} className="space-y-8">
-                    <input type="hidden" name="id" value={customer.id} />
-                    
-                    {/* Personal Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 font-semibold text-slate-900 tracking-tight">
-                        <User className="h-4 w-4" />
-                        <span>Personal & Contact</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="first_name">First Name</Label>
-                          <Input id="first_name" name="first_name" defaultValue={firstName} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="last_name">Last Name</Label>
-                          <Input id="last_name" name="last_name" defaultValue={lastName} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email_address">Email Address</Label>
-                          <Input id="email_address" name="email_address" type="email" defaultValue={customer.email} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone_number">Phone Number</Label>
-                          <Input id="phone_number" name="phone_number" defaultValue={customer.phoneNumber ?? ""} />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input id="address" name="address" defaultValue={customer.address ?? ""} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="country">Country</Label>
-                          <SearchableSelect name="country" defaultValue={customer.country ?? ""} options={countries.map(c => ({ label: c, value: c }))} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="job_title">Job Title</Label>
-                          <Input id="job_title" name="job_title" defaultValue={customer.jobTitle ?? ""} />
-                        </div>
-                      </div>
-                    </div>
+        {/* Profile Info */}
+        <TabsContent value="profile">
+          <Card className="border-slate-200/60 bg-white">
+            <CardHeader className="px-6 py-5 border-b border-slate-100">
+              <CardTitle className="text-base font-semibold text-slate-900">Edit Customer Information</CardTitle>
+              <p className="text-sm text-slate-400 mt-0.5">Update customer profile details, contacts, and account settings.</p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form action={updateCustomer} className="space-y-8">
+                <input type="hidden" name="id" value={customer.id} />
 
-                    {/* Technical Section */}
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="flex items-center gap-2 font-semibold text-blue-600">
-                        <Activity className="h-4 w-4" />
-                        <span>Technical Point of Contact</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="technical_contact_name">Name</Label>
-                          <Input id="technical_contact_name" name="technical_contact_name" defaultValue={customer.technicalContactName ?? ""} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="technical_phone_number">Phone</Label>
-                          <Input id="technical_phone_number" name="technical_phone_number" defaultValue={customer.technicalPhoneNumber ?? ""} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="technical_email">Email</Label>
-                          <Input id="technical_email" name="technical_email" type="email" defaultValue={customer.technicalEmail ?? ""} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Billing Section */}
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="flex items-center gap-2 font-semibold text-emerald-600">
-                        <CreditCard className="h-4 w-4" />
-                        <span>Billing Point of Contact</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="billing_contact_name">Name</Label>
-                          <Input id="billing_contact_name" name="billing_contact_name" defaultValue={customer.billingContactName ?? ""} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="billing_phone_number">Phone</Label>
-                          <Input id="billing_phone_number" name="billing_phone_number" defaultValue={customer.billingPhoneNumber ?? ""} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="billing_email">Email</Label>
-                          <Input id="billing_email" name="billing_email" type="email" defaultValue={customer.billingEmail ?? ""} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Company Section */}
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="flex items-center gap-2 font-semibold text-orange-600">
-                        <Building className="h-4 w-4" />
-                        <span>Company & Partner Status</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="companyId">Company Assignment</Label>
-                          <SearchableSelect name="companyId" defaultValue={customer.companyId ?? ""} options={companies.map(c => ({ label: c.name, value: c.id }))} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="partner_type">Partner Type</Label>
-                          <SearchableSelect name="partner_type" defaultValue={customer.partnerType ?? ""} options={[{ label: "Reseller", value: "RESELLER" }, { label: "End User", value: "END_USER" }]} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Security Section */}
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="flex items-center gap-2 font-semibold text-destructive">
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Security</span>
-                      </div>
-                      <div className="max-w-xs space-y-2">
-                        <Label htmlFor="password">New Password (leave blank to keep current)</Label>
-                        <Input id="password" name="password" type="password" />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-6">
-                      <Button variant="outline" asChild>
-                        <Link href="/admin/customers">Cancel</Link>
-                      </Button>
-                      <Button type="submit">Save Changes</Button>
-                    </div>
-                  </form>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="activity">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Recent Documents & Requests</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="space-y-4">
-                    {relatedDocs.length > 0 ? (
-                      relatedDocs.map((doc) => (
-                        <Link 
-                          key={doc.id} 
-                          href={`/admin/docs/${doc.docType.key}/${doc.id}`}
-                          className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">{doc.docType.name} - {doc.code ?? doc.id}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(doc.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge variant="outline">{doc.status}</Badge>
-                        </Link>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground italic">
-                        No recent document activities found.
-                      </div>
-                    )}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Personal & Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="first_name" className="text-sm font-medium text-slate-700">First Name</Label>
+                      <Input id="first_name" name="first_name" defaultValue={firstName} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="last_name" className="text-sm font-medium text-slate-700">Last Name</Label>
+                      <Input id="last_name" name="last_name" defaultValue={lastName} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email_address" className="text-sm font-medium text-slate-700">Email Address</Label>
+                      <Input id="email_address" name="email_address" type="email" defaultValue={customer.email} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone_number" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                      <Input id="phone_number" name="phone_number" defaultValue={customer.phoneNumber ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="md:col-span-2 space-y-1.5">
+                      <Label htmlFor="address" className="text-sm font-medium text-slate-700">Address</Label>
+                      <Input id="address" name="address" defaultValue={customer.address ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="country" className="text-sm font-medium text-slate-700">Country</Label>
+                      <SearchableSelect name="country" defaultValue={customer.country ?? ""} options={countries.map(c => ({ label: c, value: c }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="job_title" className="text-sm font-medium text-slate-700">Job Title</Label>
+                      <Input id="job_title" name="job_title" defaultValue={customer.jobTitle ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="subscriptions">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Active Service Subscriptions</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="space-y-4">
-                    {subscriptions.length > 0 ? (
-                      subscriptions.map((sub) => {
-                        const d = (sub.data ?? {}) as any;
-                        return (
-                          <div key={sub.id} className="p-4 rounded-lg border space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 font-bold">
-                                <Package className="h-4 w-4 text-primary" />
-                                <span>{d.service_name || "Unknown Service"}</span>
-                              </div>
-                              <Badge variant={sub.status === "Active" ? "default" : "secondary"}>
-                                {sub.status}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                              <div>
-                                <div className="text-muted-foreground mb-1">Code</div>
-                                <div className="font-medium">{sub.code ?? "-"}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">MRC</div>
-                                <div className="font-medium text-primary">
-                                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(d.total_mrc ?? 0)}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">Start Date</div>
-                                <div className="font-medium">{d.start_date ?? "-"}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">Frequency</div>
-                                <div className="font-medium">{d.frequency ?? "Monthly"}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground italic">
-                        No active subscriptions found.
-                      </div>
-                    )}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Technical Point of Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="technical_contact_name" className="text-sm font-medium text-slate-700">Name</Label>
+                      <Input id="technical_contact_name" name="technical_contact_name" defaultValue={customer.technicalContactName ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="technical_phone_number" className="text-sm font-medium text-slate-700">Phone</Label>
+                      <Input id="technical_phone_number" name="technical_phone_number" defaultValue={customer.technicalPhoneNumber ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="technical_email" className="text-sm font-medium text-slate-700">Email</Label>
+                      <Input id="technical_email" name="technical_email" type="email" defaultValue={customer.technicalEmail ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="racks">
-              <div className="bg-white rounded-xl border border-slate-200/80 p-6">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Racks</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="space-y-4">
-                    {customerRacks.length > 0 ? (
-                      customerRacks.map((rack) => {
-                        const d = (rack.data ?? {}) as any;
-                        return (
-                          <div key={rack.id} className="p-4 rounded-lg border space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 font-bold">
-                                <LayoutGrid className="h-4 w-4 text-primary" />
-                                <span>{d.rack_name || d.id_rack || "Unnamed Rack"}</span>
-                              </div>
-                              <Badge variant={rack.status === "Active" || rack.status === "In Use" ? "default" : "secondary"}>
-                                {rack.status}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                              <div>
-                                <div className="text-muted-foreground mb-1">Rack ID</div>
-                                <div className="font-medium">{d.id_rack || "-"}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">Room</div>
-                                <div className="font-medium">{roomMap[d.room_id] || d.room_id || "-"}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">Building</div>
-                                <div className="font-medium">{buildingMap[d.building_id] || d.building_id || "-"}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground mb-1">Code</div>
-                                <div className="font-medium">{rack.code ?? "-"}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground italic">
-                        No racks assigned to this customer.
-                      </div>
-                    )}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Billing Point of Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="billing_contact_name" className="text-sm font-medium text-slate-700">Name</Label>
+                      <Input id="billing_contact_name" name="billing_contact_name" defaultValue={customer.billingContactName ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="billing_phone_number" className="text-sm font-medium text-slate-700">Phone</Label>
+                      <Input id="billing_phone_number" name="billing_phone_number" defaultValue={customer.billingPhoneNumber ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="billing_email" className="text-sm font-medium text-slate-700">Email</Label>
+                      <Input id="billing_email" name="billing_email" type="email" defaultValue={customer.billingEmail ?? ""} className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    </div>
                   </div>
                 </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Company & Partner Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyId" className="text-sm font-medium text-slate-700">Company</Label>
+                      <SearchableSelect name="companyId" defaultValue={customer.companyId ?? ""} options={companies.map(c => ({ label: c.name, value: c.id }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="partner_type" className="text-sm font-medium text-slate-700">Partner Type</Label>
+                      <SearchableSelect name="partner_type" defaultValue={customer.partnerType ?? ""} options={[{ label: "Reseller", value: "RESELLER" }, { label: "End User", value: "END_USER" }]} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Security</h3>
+                  <div className="max-w-xs space-y-1.5">
+                    <Label htmlFor="password" className="text-sm font-medium text-slate-700">New Password</Label>
+                    <Input id="password" name="password" type="password" placeholder="Leave blank to keep current" className="h-10 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20" />
+                    <p className="text-xs text-slate-400 mt-1">Enter a new password to reset it. An email will be sent to the customer.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+                  <Button variant="outline" asChild className="border-slate-200 hover:border-slate-300">
+                    <Link href="/admin/customers">Cancel</Link>
+                  </Button>
+                  <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white">Save Changes</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity */}
+        <TabsContent value="activity">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-slate-500" />
+                Recent Documents & Requests
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{relatedDocs.length}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DocListCard docs={relatedDocs as any} docTypeKey="" label="Activity" icon={FileText} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Subscriptions */}
+        <TabsContent value="subscriptions">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Package className="w-4 h-4 text-slate-500" />
+                Service Subscriptions
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{subscriptions.length}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-50">
+                {subscriptions.length > 0 ? (
+                  subscriptions.map((sub) => {
+                    const d = (sub.data ?? {}) as any;
+                    const StatusIcon = statusIcon(sub.status);
+                    return (
+                      <Link
+                        key={sub.id}
+                        href={`/admin/docs/subscription_management/${sub.id}`}
+                        className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/60 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 shrink-0">
+                            <Package className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{d.service_name || "Unknown Service"}</p>
+                            <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400">
+                              <span>{sub.code || "-"}</span>
+                              {d.total_mrc && <span>{formatIDR(d.total_mrc)}/mo</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <StatusIcon className={cn("w-3.5 h-3.5", statusColor(sub.status))} />
+                          <span className="text-xs font-medium text-slate-600 capitalize">{sub.status?.toLowerCase() || "draft"}</span>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                      <Package className="w-6 h-6 text-slate-300" />
+                    </div>
+                    <p className="text-sm text-slate-400">No subscriptions found.</p>
+                  </div>
+                )}
               </div>
-            </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="inventory">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
-                 <div>
-                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Inventory (Current Stock)</h3>
-                 </div>
-                 <div className="space-y-3">
-                   <div className="space-y-6">
-                     {/* Stock Balance Table */}
-                     <div className="rounded-md border overflow-hidden">
-                       <table className="w-full text-sm">
-                         <thead className="bg-slate-50 border-b">
-                           <tr className="text-left text-xs font-semibold text-slate-500 uppercase">
-                             <th className="px-4 py-3">Item Name</th>
-                             <th className="px-4 py-3">Current Stock</th>
-                             <th className="px-4 py-3">Serial Numbers</th>
-                             <th className="px-4 py-3">Last Update</th>
-                           </tr>
-                         </thead>
-                         <tbody className="divide-y">
-                           {stockBalance.length > 0 ? (
-                             stockBalance.map((item, idx) => (
-                               <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                 <td className="px-4 py-3 font-medium text-slate-900">{item.itemName}</td>
-                                 <td className="px-4 py-3">
-                                   <Badge variant={item.qty > 0 ? "default" : "destructive"}>{item.qty}</Badge>
-                                 </td>
-                                 <td className="px-4 py-3 text-slate-500 max-w-[200px] truncate" title={Array.from(item.serialNumbers).join(", ")}>
-                                   {item.serialNumbers.size > 0 ? Array.from(item.serialNumbers).join(", ") : "-"}
-                                 </td>
-                                 <td className="px-4 py-3 text-slate-500">{item.lastUpdate.toLocaleDateString("en-GB")}</td>
-                               </tr>
-                             ))
-                           ) : (
-                             <tr>
-                               <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground italic">
-                                 No stock items found for this customer.
-                               </td>
-                             </tr>
-                           )}
-                         </tbody>
-                       </table>
-                     </div>
+        {/* Racks */}
+        <TabsContent value="racks">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-slate-500" />
+                Customer Racks
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{customerRacks.length}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-50">
+                {customerRacks.length > 0 ? (
+                  customerRacks.map((rack) => {
+                    const d = (rack.data ?? {}) as any;
+                    const StatusIcon = statusIcon(rack.status);
+                    return (
+                      <Link
+                        key={rack.id}
+                        href={`/admin/docs/master_rack/${rack.id}`}
+                        className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/60 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 shrink-0">
+                            <LayoutGrid className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{d.rack_name || d.id_rack || "Unnamed Rack"}</p>
+                            <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400">
+                              <span>{d.id_rack || "-"}</span>
+                              {(roomMap[d.room_id] || buildingMap[d.building_id]) && (
+                                <span>{[buildingMap[d.building_id], roomMap[d.room_id]].filter(Boolean).join(" / ")}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <StatusIcon className={cn("w-3.5 h-3.5", statusColor(rack.status))} />
+                          <span className="text-xs font-medium text-slate-600 capitalize">{rack.status?.toLowerCase() || "draft"}</span>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                      <LayoutGrid className="w-6 h-6 text-slate-300" />
+                    </div>
+                    <p className="text-sm text-slate-400">No racks assigned.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                     {/* Recent Inbound History */}
-                     <div className="space-y-3">
-                       <h3 className="text-sm font-semibold text-slate-700">Recent Inbound History (In)</h3>
-                       <div className="space-y-3">
-                         {inventoryInRows.slice(0, 5).map((item) => {
-                           const d = (item.data ?? {}) as any;
-                           return (
-                             <div key={item.id} className="p-3 rounded-lg border bg-slate-50/50 flex items-center justify-between text-xs">
-                               <div className="flex items-center gap-3">
-                                 <Package className="h-4 w-4 text-primary" />
-                                 <div>
-                                   <div className="font-bold">{d.item_name} (x{d.quantity})</div>
-                                   <div className="text-slate-400">{item.record.code} • {new Date(item.createdAt).toLocaleDateString("en-GB")}</div>
-                                 </div>
-                               </div>
-                               <Badge variant="outline" className="bg-white">Inbound</Badge>
-                             </div>
-                           );
-                         })}
-                       </div>
-                     </div>
+        {/* Inventory */}
+        <TabsContent value="inventory">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Package className="w-4 h-4 text-slate-500" />
+                Current Stock
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{stockBalance.length} items</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {stockBalance.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/50">
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Item</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Stock</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Serial Numbers</th>
+                        <th className="text-left py-3 px-6 font-medium text-slate-400 text-[11px] uppercase tracking-wider">Last Update</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {stockBalance.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3.5 px-6 font-medium text-slate-900">{item.itemName}</td>
+                          <td className="py-3.5 px-6">
+                            <span className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium",
+                              item.qty > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                            )}>
+                              {item.qty}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-500 max-w-[240px] truncate" title={Array.from(item.serialNumbers).join(", ")}>
+                            {item.serialNumbers.size > 0 ? Array.from(item.serialNumbers).join(", ") : "-"}
+                          </td>
+                          <td className="py-3.5 px-6 text-slate-500">{item.lastUpdate.toLocaleDateString("en-GB")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                    <Package className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-sm text-slate-400">No stock items found.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                     {/* Recent Outbound History */}
-                     {inventoryOutRows.length > 0 && (
-                       <div className="space-y-3">
-                         <h3 className="text-sm font-semibold text-slate-700">Recent Outbound History (Out)</h3>
-                         <div className="space-y-3">
-                           {inventoryOutRows.slice(0, 5).map((item) => {
-                             const d = (item.data ?? {}) as any;
-                             return (
-                               <div key={item.id} className="p-3 rounded-lg border bg-slate-50/50 flex items-center justify-between text-xs">
-                                 <div className="flex items-center gap-3">
-                                   <ShoppingCart className="h-4 w-4 text-destructive" />
-                                   <div>
-                                     <div className="font-bold">{d.item_name} (x{d.quantity})</div>
-                                     <div className="text-slate-400">{item.record.code} • {new Date(item.createdAt).toLocaleDateString("en-GB")}</div>
-                                   </div>
-                                 </div>
-                                 <Badge variant="outline" className="bg-white">Outbound</Badge>
-                               </div>
-                             );
-                           })}
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 </div>
-               </div>
-             </TabsContent>
+          {/* Inbound History */}
+          <Card className="border-slate-200/60 bg-white overflow-hidden mt-6">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Package className="w-4 h-4 text-slate-500" />
+                Recent Inbound
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {inventoryInRows.length > 0 ? (
+                <div className="divide-y divide-slate-50">
+                  {inventoryInRows.slice(0, 5).map((item) => {
+                    const d = (item.data ?? {}) as any;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <Package className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{d.item_name} <span className="text-slate-500 font-normal">x{d.quantity}</span></p>
+                            <p className="text-xs text-slate-400">{item.record.code} &middot; {new Date(item.createdAt).toLocaleDateString("en-GB")}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Inbound</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 px-6 text-center">
+                  <p className="text-sm text-slate-400">No inbound history.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-             <TabsContent value="quotations">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
-                 <div>
-                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Quotations</h3>
-                 </div>
-                 <div className="space-y-3">
-                   <div className="space-y-4">
-                     {quotations.length > 0 ? (
-                       quotations.map((q) => {
-                         const d = (q.data ?? {}) as any;
-                         return (
-                           <Link 
-                             key={q.id} 
-                             href={`/admin/docs/quotation/${q.id}`}
-                             className="block p-4 rounded-lg border space-y-3 hover:bg-muted transition-colors"
-                           >
-                             <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-2 font-bold">
-                                 <FileSearch className="h-4 w-4 text-primary" />
-                                 <span>{q.code || q.id}</span>
-                               </div>
-                               <Badge variant="outline">
-                                 {q.status}
-                               </Badge>
-                             </div>
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Date</div>
-                                 <div className="font-medium">{new Date(q.createdAt).toLocaleDateString("en-GB")}</div>
-                               </div>
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Total Amount</div>
-                                 <div className="font-medium text-primary">
-                                   {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(d.total_amount ?? 0)}
-                                 </div>
-                               </div>
-                               <div className="md:col-span-2">
-                                 <div className="text-muted-foreground mb-1">Subject/Notes</div>
-                                 <div className="font-medium truncate">{d.notes || "-"}</div>
-                               </div>
-                             </div>
-                           </Link>
-                         );
-                       })
-                     ) : (
-                       <div className="text-center py-8 text-muted-foreground italic">
-                         No quotations found for this customer.
-                       </div>
-                     )}
-                   </div>
-                 </div>
-               </div>
-             </TabsContent>
+          {/* Outbound History */}
+          {inventoryOutRows.length > 0 && (
+            <Card className="border-slate-200/60 bg-white overflow-hidden mt-6">
+              <CardHeader className="px-6 py-4 border-b border-slate-100">
+                <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-slate-500" />
+                  Recent Outbound
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-slate-50">
+                  {inventoryOutRows.slice(0, 5).map((item) => {
+                    const d = (item.data ?? {}) as any;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <ShoppingCart className="w-4 h-4 text-red-500 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{d.item_name} <span className="text-slate-500 font-normal">x{d.quantity}</span></p>
+                            <p className="text-xs text-slate-400">{item.record.code} &middot; {new Date(item.createdAt).toLocaleDateString("en-GB")}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Outbound</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-             <TabsContent value="sales_orders">
-               <div className="bg-white rounded-xl border border-slate-200/80 p-6">
-                 <div>
-                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Customer Sales Orders</h3>
-                 </div>
-                 <div className="space-y-3">
-                   <div className="space-y-4">
-                     {salesOrders.length > 0 ? (
-                       salesOrders.map((so) => {
-                         const d = (so.data ?? {}) as any;
-                         return (
-                           <Link 
-                             key={so.id} 
-                             href={`/admin/docs/sales_order/${so.id}`}
-                             className="block p-4 rounded-lg border space-y-3 hover:bg-muted transition-colors"
-                           >
-                             <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-2 font-bold">
-                                 <ShoppingCart className="h-4 w-4 text-primary" />
-                                 <span>{so.code || so.id}</span>
-                               </div>
-                               <Badge variant={so.status === "Approved" ? "default" : "outline"}>
-                                 {so.status}
-                               </Badge>
-                             </div>
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Date</div>
-                                 <div className="font-medium">{new Date(so.createdAt).toLocaleDateString("en-GB")}</div>
-                               </div>
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Total MRC</div>
-                                 <div className="font-medium text-primary">
-                                   {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(d.subtotal_mrc ?? 0)}
-                                 </div>
-                               </div>
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Total Contract</div>
-                                 <div className="font-medium text-primary">
-                                   {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(d.total_contract ?? 0)}
-                                 </div>
-                               </div>
-                               <div>
-                                 <div className="text-muted-foreground mb-1">Ref Quotation</div>
-                                 <div className="font-medium">{d.quotation_id || "-"}</div>
-                               </div>
-                             </div>
-                           </Link>
-                         );
-                       })
-                     ) : (
-                       <div className="text-center py-8 text-muted-foreground italic">
-                         No sales orders found for this customer.
-                       </div>
-                     )}
-                   </div>
-                 </div>
-               </div>
-             </TabsContent>
-          </Tabs>
-      </div>
+        {/* Quotations */}
+        <TabsContent value="quotations">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <FileSearch className="w-4 h-4 text-slate-500" />
+                Quotations
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{quotations.length}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DocListCard docs={quotations as any} docTypeKey="quotation" label="Quotations" icon={FileSearch} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sales Orders */}
+        <TabsContent value="sales_orders">
+          <Card className="border-slate-200/60 bg-white overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-slate-500" />
+                Sales Orders
+                <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{salesOrders.length}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DocListCard docs={salesOrders as any} docTypeKey="sales_order" label="Sales Orders" icon={ShoppingCart} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      
+        {/* Access Card */}
+        <TabsContent value="access_card">
+          <Card className="border-slate-200/60 bg-white">
+            <CardHeader className="px-6 py-5 border-b border-slate-100 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold text-slate-900">Visit Access Card</CardTitle>
+                <p className="text-sm text-slate-400 mt-0.5">Generate a reusable QR code access card for visits.</p>
+              </div>
+              <Badge variant="outline" className={cn("font-medium", accessCardRecord?.status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
+                {accessCardRecord?.status === "active" ? "Active" : accessCardRecord?.status === "revoked" ? "Revoked" : "Not Generated"}
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div className="flex-1 w-full max-w-md">
+                  {accessCardRecord?.status === "active" && qrDataUrl ? (
+                    <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center">
+                      <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 mb-6">
+                        <img src={qrDataUrl} alt="Access Card QR Code" className="w-64 h-64" />
+                      </div>
+                      <h4 className="font-semibold text-slate-900 text-lg mb-1">{customer.name}</h4>
+                      <p className="text-sm text-slate-500 mb-4">{customer.company?.name || "Independent User"}</p>
+                      
+                      <form action={revokeAccessCard} className="w-full">
+                        <input type="hidden" name="id" value={customer.id} />
+                        <input type="hidden" name="recordId" value={accessCardRecord.id} />
+                        <Button variant="destructive" type="submit" className="w-full gap-2">
+                          <PowerOff className="w-4 h-4" />
+                          Revoke Access Card
+                        </Button>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center py-16">
+                      <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mb-4 text-slate-500">
+                        <QrCode className="w-8 h-8" />
+                      </div>
+                      <h4 className="font-semibold text-slate-900 mb-2">No Active Access Card</h4>
+                      <p className="text-sm text-slate-500 max-w-xs mx-auto mb-6">Generate a permanent QR code for this customer to use during visits.</p>
+                      <form action={generateAccessCard}>
+                        <input type="hidden" name="id" value={customer.id} />
+                        <input type="hidden" name="companyId" value={customer.companyId || ""} />
+                        <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white gap-2">
+                          <QrCode className="w-4 h-4" />
+                          Generate Access Card
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
+                  <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-4">
+                    <FileText className="w-4 h-4" />
+                    Cara kerjanya
+                  </h4>
+                  <ul className="space-y-3 text-sm text-blue-800">
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-medium">1</div>
+                      <p>Buat access card untuk menghasilkan QR code permanen.</p>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-medium">2</div>
+                      <p>QR code ini dapat dipindai pada saat check-in kapan saja.</p>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-medium">3</div>
+                      <p>Berbeda dengan tiket visitor biasa, QR code ini tidak memiliki batas waktu 24 jam.</p>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-medium">4</div>
+                      <p>Jika akses ingin dicabut, klik "Revoke Access Card" untuk menonaktifkan QR code tersebut.</p>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+</Tabs>
     </div>
   );
 }

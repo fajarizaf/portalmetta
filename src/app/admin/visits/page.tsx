@@ -23,8 +23,17 @@ export default async function AdminVisitsPage() {
     redirect("/admin")
   }
 
-  const dt = await prisma.docType.findUnique({ where: { key: "visitor_request" } })
-  if (!dt) redirect("/admin")
+  const dtVisitor = await prisma.docType.findUnique({ where: { key: "visitor_request" } })
+  const dtAccessCard = await prisma.docType.findUnique({ where: { key: "access_card" } })
+
+  const docTypeIds: string[] = []
+  if (dtVisitor) docTypeIds.push(dtVisitor.id)
+  if (dtAccessCard) docTypeIds.push(dtAccessCard.id)
+
+  if (docTypeIds.length === 0) redirect("/admin")
+
+  const users = await prisma.user.findMany({ include: { company: true } })
+  const userMap = Object.fromEntries(users.map((u) => [u.id, u]))
 
   // Get today and 7 days ahead
   const today = new Date()
@@ -37,7 +46,7 @@ export default async function AdminVisitsPage() {
   const weekLaterStr = `${weekLater.getFullYear()}-${String(weekLater.getMonth() + 1).padStart(2, "0")}-${String(weekLater.getDate()).padStart(2, "0")}`
 
   const records = await prisma.docRecord.findMany({
-    where: { docTypeId: dt.id },
+    where: { docTypeId: { in: docTypeIds } },
     orderBy: { updatedAt: "desc" },
     take: 500,
     include: { rows: true }
@@ -46,7 +55,15 @@ export default async function AdminVisitsPage() {
   // Filter records whose visit_date is within range
   const filtered = records.filter((r) => {
     const data = (r.data ?? {}) as Record<string, unknown>
+    const isAccess = dtAccessCard && r.docTypeId === dtAccessCard.id
     const visitDate = typeof data["visit_date"] === "string" ? data["visit_date"] : null
+
+    if (isAccess) {
+      if (!visitDate && !data["qr_status"]) return false
+      if (visitDate) return visitDate >= todayStr && visitDate <= weekLaterStr
+      return true
+    }
+
     if (!visitDate) return false
     return visitDate >= todayStr && visitDate <= weekLaterStr
   })
@@ -191,20 +208,33 @@ export default async function AdminVisitsPage() {
           ) : (
             filtered.map((r: any) => {
               const data = (r.data ?? {}) as Record<string, unknown>
+              const isAccess = dtAccessCard && r.docTypeId === dtAccessCard.id
               const rows = Array.isArray(r.rows) ? r.rows : []
-              const firstVisitorRow = rows.length > 0 ? (rows[0].data ?? {}) as Record<string, unknown> : null
-              const visitorName = firstVisitorRow
-                ? String(firstVisitorRow["visitor_name"] || "N/A")
-                : "N/A"
-              const visitorNik = firstVisitorRow
-                ? String(firstVisitorRow["nik"] || "-")
-                : "-"
-              const visitorPhone = firstVisitorRow
-                ? String(firstVisitorRow["phone_number"] || "-")
-                : "-"
-              const purpose = String(data["purpose"] || "-")
-              const visitDate = String(data["visit_date"] || "-")
-              const ownerCustomer = String(data["owner_customer_id"] || "-")
+
+              let visitorName = "-"
+              let visitorNik = "-"
+              let visitorPhone = "-"
+              let ownerCustomer = String(data["owner_customer_id"] || data["customer"] || "-")
+
+              if (isAccess) {
+                const userId = data["user_id"] as string
+                if (userId && userMap[userId]) {
+                  const u = userMap[userId]
+                  visitorName = u.name || u.email
+                  visitorPhone = u.phoneNumber || "-"
+                  ownerCustomer = u.company?.name || "Access Card Holder"
+                } else {
+                  visitorName = "Access Card Holder"
+                }
+              } else {
+                const firstVisitorRow = rows.length > 0 ? (rows[0].data ?? {}) as Record<string, unknown> : null
+                visitorName = firstVisitorRow ? String(firstVisitorRow["visitor_name"] || "N/A") : "N/A"
+                visitorNik = firstVisitorRow ? String(firstVisitorRow["nik"] || "-") : "-"
+                visitorPhone = firstVisitorRow ? String(firstVisitorRow["phone_number"] || "-") : "-"
+              }
+
+              const purpose = isAccess ? "Access Card Visit" : String(data["purpose"] || "-")
+              const visitDate = String(data["visit_date"] || (isAccess ? "Permanent" : "-"))
 
               // Calculate duration if both check-in and check-out exist
               let duration = ""
@@ -229,12 +259,16 @@ export default async function AdminVisitsPage() {
                       {/* Top line: Code + Status + Visitors count */}
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <Link
-                          href={`/admin/docs/visitor_request/${r.id}`}
+                          href={isAccess ? `/admin/customers/${data["user_id"] || ""}/edit` : `/admin/docs/visitor_request/${r.id}`}
                           className="font-mono text-sm font-semibold text-slate-900 hover:text-slate-700 transition-colors"
                         >
                           {r.code ?? r.id.slice(0, 8)}
                         </Link>
-                        {docStatusBadge(r.status ?? "Draft")}
+                        {isAccess ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-blue-50 text-blue-700 border-blue-200/60">
+                            <QrCode className="h-3 w-3" /> Access Card
+                          </span>
+                        ) : docStatusBadge(r.status ?? "Draft")}
                         {qrStatusBadge(data["qr_status"])}
                         {rows.length > 0 && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200/60">
@@ -314,7 +348,7 @@ export default async function AdminVisitsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <Link href={`/admin/docs/visitor_request/${r.id}`}>
+                      <Link href={isAccess ? `/admin/customers/${data["user_id"] || ""}/edit` : `/admin/docs/visitor_request/${r.id}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
                           <Eye className="h-4 w-4" />
                         </Button>

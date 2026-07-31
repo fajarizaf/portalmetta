@@ -402,13 +402,6 @@ export default async function CustomersPage(props: {
                         </div>
                         <div className="min-w-0">
                           <div className="font-medium text-slate-900 truncate">{c.name || "Unnamed"}</div>
-                          {c.partnerType && (
-                            <span className="inline-flex items-center mt-0.5">
-                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${c.partnerType === "RESELLER" ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
-                                {c.partnerType === "RESELLER" ? "Reseller" : "End User"}
-                              </span>
-                            </span>
-                          )}
                         </div>
                       </div>
                     </td>

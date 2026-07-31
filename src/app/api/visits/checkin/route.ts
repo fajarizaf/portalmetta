@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   const rec = validation.record
-  if (rec.qrStatus === "checked_in" || rec.qrStatus === "checked_out") {
+  if (rec.qrStatus === "checked_in" || (!validation.isAccessCard && rec.qrStatus === "checked_out")) {
     await logScanActivity({
       recordId: rec.id,
       token,
@@ -63,11 +63,15 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  const now = new Date().toISOString()
+  const nowObj = new Date()
+  const now = nowObj.toISOString()
+  const todayStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, "0")}-${String(nowObj.getDate()).padStart(2, "0")}`
+
   const updatedData = {
     ...rec.data,
     qr_status: "checked_in",
     check_in_time: now,
+    visit_date: validation.isAccessCard ? todayStr : ((rec.data as any)?.visit_date || todayStr),
   }
 
   await prisma.docRecord.update({

@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Camera, CameraOff, LogIn, LogOut, QrCode, ArrowLeft, History, CheckCircle2, AlertCircle } from "lucide-react"
+import { Camera, CameraOff, LogIn, LogOut, QrCode, ArrowLeft, History, CheckCircle2, AlertCircle, XCircle, Upload, Search, FileText } from "lucide-react"
 import Link from "next/link"
 
 interface ScanResult {
   valid: boolean
   error?: string
+  isAccessCard?: boolean
   record?: {
     id: string
     code: string | null
@@ -62,6 +63,84 @@ export default function ScannerPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  
+  const [manualToken, setManualToken] = React.useState("")
+
+  const processDecodedText = async (rawText: string) => {
+    try {
+      const cleanText = rawText.trim()
+      let token = ""
+      
+      try {
+        const payload = JSON.parse(cleanText)
+        token = payload.token || ""
+      } catch {
+        token = cleanText
+      }
+
+      if (!token) {
+        showToast("Format QR code tidak valid / token kosong", "error")
+        return
+      }
+
+      const validateRes = await fetch(`/api/visits/qr/${token}/validate`)
+      const validation = await validateRes.json()
+      setScanResult(validation)
+
+      if (validation.valid) {
+        const rec = validation.record
+        setScanHistory((prev) => [{
+          token: token,
+          recordId: rec.id,
+          recordCode: rec.code || rec.id.slice(0, 8),
+          action: "scan",
+          result: "QR Valid",
+          timestamp: new Date().toLocaleString("id-ID"),
+          visitorName: (() => {
+            const v = rec.data?.visitors
+            if (Array.isArray(v) && v.length > 0) return String((v[0] as Record<string, unknown>)?.visitor_name || "N/A")
+            return "N/A"
+          })(),
+        }, ...prev].slice(0, 50))
+        showToast("QR Code Valid!", "success")
+      } else {
+        showToast(validation.error || "QR Code tidak valid", "error")
+      }
+    } catch (error: any) {
+      console.error("Error processing QR:", error)
+      showToast("Gagal memproses QR code", "error")
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const tempId = "qr-reader-file-temp"
+      let tempDiv = document.getElementById(tempId)
+      if (!tempDiv) {
+        tempDiv = document.createElement("div")
+        tempDiv.id = tempId
+        tempDiv.style.display = "none"
+        document.body.appendChild(tempDiv)
+      }
+      const html5QrCode = new Html5Qrcode(tempId)
+      const decodedText = await html5QrCode.scanFile(file, true)
+      await processDecodedText(decodedText)
+    } catch {
+      showToast("Gagal membaca QR Code dari file gambar", "error")
+    } finally {
+      e.target.value = ""
+    }
+  }
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!manualToken.trim()) return
+    processDecodedText(manualToken)
+  }
+
   const startScanner = React.useCallback(async () => {
     if (!containerRef.current) return
     setCameraError(null)
@@ -84,52 +163,40 @@ export default function ScannerPage() {
       const scanner = new Html5Qrcode("qr-reader")
       scannerRef.current = scanner
 
+      let cameraConfig: any = { facingMode: "environment" }
+      try {
+        const cameras = await Html5Qrcode.getCameras()
+        if (cameras && cameras.length > 0) {
+          const backCam = cameras.find(c => 
+            c.label.toLowerCase().includes("back") || 
+            c.label.toLowerCase().includes("rear") || 
+            c.label.toLowerCase().includes("environment") ||
+            c.label.toLowerCase().includes("belakang")
+          )
+          cameraConfig = backCam ? { deviceId: { exact: backCam.id } } : cameras[0].id
+        }
+      } catch {}
+
       await scanner.start(
-        { facingMode: "environment" },
+        cameraConfig,
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        async (decodedText) => {
-          // Pause scanner while processing
-          try { await scanner.pause(true) } catch {}
-
-          try {
-            const payload = JSON.parse(decodedText)
-            if (payload.docType !== "visitor_request" || !payload.token) {
-              showToast("QR code bukan visitor pass", "error")
-              try { await scanner.resume() } catch {}
-              return
+          fps: 15,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight)
+            return {
+              width: Math.floor(minEdge * 0.85),
+              height: Math.floor(minEdge * 0.85)
             }
-
-            // Validate token
-            const validateRes = await fetch(`/api/visits/qr/${payload.token}/validate`)
-            const validation = await validateRes.json()
-            setScanResult(validation)
-
-            if (validation.valid) {
-              const rec = validation.record
-              setScanHistory((prev) => [{
-                token: payload.token,
-                recordId: rec.id,
-                recordCode: rec.code || rec.id.slice(0, 8),
-                action: "scan",
-                result: "QR Valid",
-                timestamp: new Date().toLocaleString("id-ID"),
-                visitorName: (() => {
-                  const v = rec.data?.visitors
-                  if (Array.isArray(v) && v.length > 0) return String((v[0] as Record<string, unknown>)?.visitor_name || "N/A")
-                  return "N/A"
-                })(),
-              }, ...prev].slice(0, 50))
-            }
-          } catch {
-            showToast("Format QR code tidak valid", "error")
-            try { await scanner.resume() } catch {}
+          },
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
           }
+        } as any,
+        async (decodedText) => {
+          try { await scanner.pause(true) } catch {}
+          await processDecodedText(decodedText)
         },
-        () => {} // Ignore errors during scanning
+        () => {}
       )
       setScanning(true)
     } catch (err: any) {
@@ -334,7 +401,13 @@ export default function ScannerPage() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">QR Scanner</h1>
             <p className="text-sm text-slate-500">Scan digital passes for instant check-in and authentication.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium shadow-sm transition-all cursor-pointer">
+              <Upload className="w-4 h-4 text-slate-500" />
+              Upload Image
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+            </label>
+
             {!scanning ? (
               <Button onClick={startScanner} className="h-10 px-5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm shadow-md shadow-slate-900/10 transition-all">
                 <Camera className="w-4 h-4 mr-2" />
@@ -353,6 +426,23 @@ export default function ScannerPage() {
           {/* Main Scanner & Result Area (Left Col) */}
           <div className="lg:col-span-8 space-y-5">
             
+            {/* Manual Code / Token Input */}
+            <form onSubmit={handleManualSubmit} className="bg-white rounded-md p-3 border border-slate-200/80 shadow-sm flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Paste QR payload JSON atau Token disini..."
+                  value={manualToken}
+                  onChange={(e) => setManualToken(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 rounded-md border-0 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-slate-900 transition-all font-mono"
+                />
+              </div>
+              <Button type="submit" className="h-9 px-4 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shrink-0">
+                Check Code
+              </Button>
+            </form>
+
             {/* Scanner Window */}
             <div className="relative overflow-hidden rounded-md bg-slate-900 shadow-xl shadow-slate-900/10 ring-1 ring-white/10 aspect-[4/3] sm:aspect-[16/9] flex items-center justify-center">
               <div id="qr-reader" ref={containerRef} className="w-full h-full [&>video]:object-cover" />
@@ -410,15 +500,27 @@ export default function ScannerPage() {
                         <p className="text-xs font-medium text-slate-500 mt-0.5 uppercase tracking-wider">{rec.code || rec.id.slice(0,8)}</p>
                       </div>
                     </div>
-                    {scanResult?.valid ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium ring-1 ring-inset ring-emerald-600/20">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Valid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium ring-1 ring-inset ring-red-600/20">
-                        <AlertCircle className="w-3.5 h-3.5" /> Invalid
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {scanResult?.valid ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium ring-1 ring-inset ring-emerald-600/20">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Valid
+                          </span>
+                          {scanResult.isAccessCard && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium ring-1 ring-inset ring-blue-600/20">
+                              <QrCode className="w-3.5 h-3.5" /> Access Card
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium ring-1 ring-inset ring-red-600/20">
+                          <AlertCircle className="w-3.5 h-3.5" /> Invalid
+                        </span>
+                      )}
+                      <button onClick={() => { setScanResult(null); try { scannerRef.current?.resume() } catch {} }} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
 
                   {visitorInfo && (
@@ -437,7 +539,7 @@ export default function ScannerPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scheduled Date</p>
-                        <p className="text-sm font-medium text-slate-700">{String(rec.data["visit_date"] || "-")}</p>
+                        <p className="text-sm font-medium text-slate-700">{scanResult.isAccessCard ? "Permanent" : String(rec.data["visit_date"] || "-")}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Purpose</p>
@@ -466,7 +568,7 @@ export default function ScannerPage() {
 
                   {/* Actions */}
                   <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-3">
-                    {rec.qrStatus !== "checked_in" && rec.qrStatus !== "checked_out" && (
+                    {(rec.qrStatus !== "checked_in" && (rec.qrStatus !== "checked_out" || scanResult.isAccessCard)) && (
                       <Button onClick={handleCheckIn} disabled={processing} className="h-10 px-6 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-md shadow-emerald-600/20 transition-all w-full sm:w-auto">
                         <LogIn className="w-4 h-4 mr-2" />
                         {processing ? "Processing..." : "Confirm Check In"}
@@ -478,7 +580,7 @@ export default function ScannerPage() {
                         {processing ? "Processing..." : "Complete Check Out"}
                       </Button>
                     )}
-                    {rec.qrStatus === "checked_out" && (
+                    {(rec.qrStatus === "checked_out" && !scanResult.isAccessCard) && (
                       <div className="flex items-center justify-center h-10 px-6 rounded-md bg-slate-50 text-slate-500 font-medium text-sm border border-slate-200 w-full sm:w-auto">
                         Visit Completed
                       </div>

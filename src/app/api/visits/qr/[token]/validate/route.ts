@@ -13,5 +13,5 @@ export async function GET(
     return NextResponse.json({ valid: false, error: result.error }, { status: 400 })
   }
 
-  return NextResponse.json({ valid: true, record: result.record })
+  return NextResponse.json({ valid: true, isAccessCard: result.isAccessCard, record: result.record })
 }
